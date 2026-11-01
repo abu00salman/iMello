@@ -1,0 +1,100 @@
+name: Native test builds (APK + unsigned IPA)
+
+# Test builds without Expo or Apple accounts:
+#  - Android: release APK signed with the default *debug* key (installable by sideloading; not for Play Store).
+#  - iOS: UNSIGNED .ipa. It will NOT install on a normal iPhone as-is; it must be re-signed
+#    (e.g. Sideloadly/AltStore with your Apple ID, or a paid Apple Developer certificate).
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: "iMello API URL baked into the app"
+        required: false
+        default: ""
+  push:
+    branches: ["claude/**"]
+    paths:
+      - "apps/mobile/**"
+      - "packages/**"
+      - ".github/workflows/native-test-builds.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMELLO_API_URL: ${{ inputs.api_url || vars.IMELLO_API_URL || 'http://localhost:8787' }}
+
+jobs:
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - run: pnpm install --frozen-lockfile
+      - name: Generate native Android project
+        working-directory: apps/mobile
+        env: { CI: "1" }
+        run: npx expo prebuild --platform android --no-install
+      - name: Build release APK (debug-key signed)
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a,x86_64
+      - name: Collect APK
+        run: |
+          mkdir -p out
+          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk out/iMello-1.0.0-test.apk
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iMello-android-apk
+          path: out/iMello-1.0.0-test.apk
+          retention-days: 14
+
+  ios:
+    name: iOS unsigned IPA
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select newest Xcode
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          echo "Using $XCODE"
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Generate native iOS project (+ CocoaPods)
+        working-directory: apps/mobile
+        env: { CI: "1" }
+        run: npx expo prebuild --platform ios
+      - name: Archive without code signing
+        working-directory: apps/mobile/ios
+        run: |
+          set -o pipefail
+          xcodebuild -workspace iMello.xcworkspace -scheme iMello -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/iMello.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            archive | tail -n 80
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p "$RUNNER_TEMP/ipa/Payload" out
+          cp -R "$RUNNER_TEMP/iMello.xcarchive/Products/Applications/iMello.app" "$RUNNER_TEMP/ipa/Payload/"
+          (cd "$RUNNER_TEMP/ipa" && zip -qry "$GITHUB_WORKSPACE/out/iMello-1.0.0-unsigned.ipa" Payload)
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iMello-ios-unsigned-ipa
+          path: out/iMello-1.0.0-unsigned.ipa
+          retention-days: 14

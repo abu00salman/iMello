@@ -83,9 +83,12 @@ jobs:
         working-directory: apps/mobile/ios
         run: |
           set -o pipefail
+          # Xcode 26.3's Swift 6 mode rejects a data-race diagnostic in expo-modules-jsi (SDK 58);
+          # Swift 5 language mode reports it as a warning. Revisit when Expo ships a fix.
           xcodebuild -workspace iMello.xcworkspace -scheme iMello -configuration Release \
             -sdk iphoneos -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/iMello.xcarchive" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            SWIFT_VERSION=5 SWIFT_STRICT_CONCURRENCY=minimal \
             archive > "$RUNNER_TEMP/xcodebuild.log" 2>&1 || {
               echo "::group::xcodebuild errors"
               grep -nE "error:|fatal error|\*\* ARCHIVE FAILED|Command PhaseScriptExecution failed" "$RUNNER_TEMP/xcodebuild.log" | head -n 60

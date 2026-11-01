@@ -1,6 +1,7 @@
 import { ApiError, type ChildSummary, type Family, type GuardianApproval } from "@imello/core";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { usePrefs } from "../lib/prefs";
+import { inviteUrl } from "../lib/router";
 import { useSession } from "../lib/session";
 import { Avatar, Button, Card, EmptyState, Field } from "../ui/components";
 
@@ -58,7 +59,7 @@ export function FamilyScreen() {
 
   async function inviteToFamily(f: Family) {
     const inv = (await api.createFamilyInvite(f.familyId)) as { token: string; link?: string };
-    setFamilyLink(inv.link ?? `${location.origin}/#/i/${inv.token}`);
+    setFamilyLink(inviteUrl(inv.token));
   }
 
   if (!isAdult) {

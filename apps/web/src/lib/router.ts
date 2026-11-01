@@ -53,3 +53,11 @@ export function useRoute(): Route {
   }, []);
   return route;
 }
+
+/**
+ * Invite links always point at the site the user is on (works on GitHub Pages sub-paths and custom
+ * domains alike). The token lives in the #fragment, so it never reaches any server's logs.
+ */
+export function inviteUrl(token: string): string {
+  return `${location.origin}${import.meta.env.BASE_URL}#/i/${token}`;
+}

@@ -3,7 +3,7 @@ import { startDirectChat } from "@imello/core/messaging";
 import QRCode from "qrcode";
 import { useCallback, useEffect, useState } from "react";
 import { usePrefs } from "../lib/prefs";
-import { navigate } from "../lib/router";
+import { inviteUrl, navigate } from "../lib/router";
 import { useSession } from "../lib/session";
 import { Avatar, Button, Card, EmptyState } from "../ui/components";
 
@@ -80,7 +80,7 @@ export function ContactsScreen({ initialToken }: { initialToken?: string }) {
       const inv = (await api.createContactInvite()) as Invite & { link?: string };
       setInvite(inv);
       setCopied(false);
-      const link = inv.link ?? `${location.origin}/#/i/${inv.token}`;
+      const link = inviteUrl(inv.token);
       setQr(await QRCode.toDataURL(link, { margin: 1, width: 220, errorCorrectionLevel: "M" }));
     } catch {
       setError(t("common.error"));
@@ -130,7 +130,7 @@ export function ContactsScreen({ initialToken }: { initialToken?: string }) {
     setMessage("Thank you. The report was sent.");
   }
 
-  const link = invite ? invite.link ?? `${location.origin}/#/i/${invite.token}` : "";
+  const link = invite ? inviteUrl(invite.token) : "";
 
   return (
     <div className="page">

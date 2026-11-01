@@ -5,6 +5,7 @@ import { CallsProvider } from "./lib/calls";
 import { PrefsProvider } from "./lib/prefs";
 import { SessionProvider } from "./lib/session";
 import "./styles.css";
+import "./theme.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

@@ -20,13 +20,14 @@ import { useCalls } from "../lib/calls";
 import { useClientVersion, useSession } from "../lib/session";
 import { AttachmentView, formatDuration, imageSize, useVoiceRecorder } from "../ui/attachments";
 import { Avatar, Button, EmptyState, LockBadge } from "../ui/components";
+import { prettyName } from "../lib/names";
 
 // Drafts are kept in memory only: they may contain sensitive text.
 const drafts = new Map<string, string>();
 
 function displayNameOf(client: MatrixClient, userId: string | null, fallback: string): string {
-  if (!userId) return fallback;
-  return client.getUser(userId)?.displayName ?? fallback;
+  if (!userId) return prettyName(fallback);
+  return prettyName(client.getUser(userId)?.displayName ?? fallback);
 }
 
 export function ChatsScreen({ roomId }: { roomId?: string }) {
@@ -36,7 +37,7 @@ export function ChatsScreen({ roomId }: { roomId?: string }) {
   const [query, setQuery] = useState("");
   const list = useMemo(() => (client ? conversations(client) : []), [client, version]);
   const filtered = query
-    ? list.filter((c) => c.name.toLowerCase().includes(query.toLowerCase()) || (c.lastMessage?.body ?? "").toLowerCase().includes(query.toLowerCase()))
+    ? list.filter((c) => prettyName(c.name).toLowerCase().includes(query.toLowerCase()) || (c.lastMessage?.body ?? "").toLowerCase().includes(query.toLowerCase()))
     : list;
   if (!client) return null;
 
@@ -88,10 +89,10 @@ function ConversationRow({ client, c, active }: { client: MatrixClient; c: Conve
   return (
     <li>
       <a className={`conv-row ${active ? "active" : ""} ${c.membership === "invite" ? "invite" : ""}`} href={`#/chats/${encodeURIComponent(c.roomId)}`} aria-current={active ? "page" : undefined}>
-        <Avatar name={c.name} id={c.otherUserId ?? c.roomId} size={48} />
+        <Avatar name={prettyName(c.name)} id={c.otherUserId ?? c.roomId} size={52} />
         <span className="conv-main">
           <span className="conv-top">
-            <strong className="conv-name">{c.name}</strong>
+            <strong className="conv-name" dir="auto">{prettyName(c.name)}</strong>
             {c.lastActivity > 0 && <time className="conv-time">{formatTime(new Date(c.lastActivity), locale)}</time>}
           </span>
           <span className="conv-preview" dir="auto">{preview}</span>
@@ -135,7 +136,7 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
 
   if (!room) return <EmptyState>{t("common.loading")}</EmptyState>;
 
-  const otherName = room.name;
+  const otherName = prettyName(room.name);
   if (membership === "invite") {
     const inviter = room.getDMInviter() ?? room.getMember(client.getSafeUserId())?.events.member?.getSender() ?? "";
     return (
@@ -226,9 +227,9 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
     <div className="conversation">
       <header className="conv-header">
         <button className="back" onClick={() => navigate({ name: "chats" })} aria-label={t("common.back")}>‹</button>
-        <Avatar name={otherName} id={roomId} size={36} />
+        <Avatar name={otherName} id={roomId} size={40} />
         <div className="conv-title">
-          <strong>{otherName}</strong>
+          <strong dir="auto">{otherName}</strong>
           {encrypted ? <LockBadge label={t("chat.encrypted")} /> : encrypted === false ? <span className="warn">{t("chat.notEncrypted")}</span> : null}
         </div>
         {calls.supported && encrypted && (
@@ -258,13 +259,17 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
                     <time>{formatTime(new Date(m.timestamp), locale)}</time>
                     {m.isOwn && (
                       <span className={`state ${m.state}`} aria-label={t(`chat.status.${m.state}`)}>
-                        {m.state === "sending" ? "○" : m.state === "failed" ? "!" : "✓"}
+                        {m.state === "sending" ? (
+                          <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 8v4l2.5 1.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+                        ) : m.state === "failed" ? "!" : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12.5 4.5 4.5L19 6.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        )}
                       </span>
                     )}
                   </span>
                 </div>
                 {!m.decryptionFailed && (
-                  <button className="reply-btn" onClick={() => setReplyTo(m)} aria-label="Reply">↩</button>
+                  <button className="reply-btn" onClick={() => setReplyTo(m)} aria-label="Reply"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 8V4l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11Z" fill="currentColor" /></svg></button>
                 )}
               </div>
             </div>

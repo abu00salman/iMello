@@ -12,6 +12,7 @@ import { Avatar } from "../ui/components";
 import { inApp, notificationsEnabled } from "./notifications";
 import { usePrefs } from "./prefs";
 import { useSession } from "./session";
+import { prettyName } from "./names";
 
 interface CallsState {
   supported: boolean;
@@ -112,7 +113,7 @@ export function CallsProvider({ children }: { children: ReactNode }) {
       attach(call);
       ring.start();
       if (document.visibilityState !== "visible" && notificationsEnabled()) {
-        const name = call.getOpponentMember()?.name ?? "";
+        const name = prettyName(call.getOpponentMember()?.name ?? client.getRoom(call.roomId)?.name ?? "");
         const title = t("call.incoming", { name });
         if (inApp()) window.ReactNativeWebView!.postMessage(JSON.stringify({ type: "notify", title, body: "📞", roomId: call.roomId }));
         else if (typeof Notification !== "undefined" && Notification.permission === "granted") new Notification(title, { tag: call.callId });
@@ -143,7 +144,7 @@ export function CallsProvider({ children }: { children: ReactNode }) {
   );
 
   const incoming = active && state === CallState.Ringing;
-  const name = active?.getOpponentMember()?.name ?? "";
+  const name = prettyName(active?.getOpponentMember()?.name ?? (active ? client?.getRoom(active.roomId)?.name : "") ?? "");
   const label =
     error ??
     (state === CallState.Ringing ? t("call.incomingShort")
@@ -159,16 +160,19 @@ export function CallsProvider({ children }: { children: ReactNode }) {
       <audio ref={audio} autoPlay playsInline />
       {active && (
         <div className="call-overlay" role="dialog" aria-label={t("call.title")} data-testid="call-overlay">
+          <div className="call-aurora" aria-hidden="true" />
           <div className="call-card">
-            <Avatar name={name || "?"} id={active.getOpponentMember()?.userId ?? active.roomId} size={104} />
+            <div className="call-ring">
+            <Avatar name={name || "?"} id={active.getOpponentMember()?.userId ?? active.roomId} size={120} />
+            </div>
             <h2>{name}</h2>
             <p className="call-status" data-testid="call-status">{label}</p>
-            <p className="lock-badge">🔒 {t("call.encrypted")}</p>
+            <p className="lock-badge"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17 9V7A5 5 0 0 0 7 7v2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2ZM9 7a3 3 0 0 1 6 0v2H9V7Z" /></svg> {t("call.encrypted")}</p>
             <div className="call-actions">
               {incoming ? (
                 <>
-                  <button className="call-btn decline" onClick={() => { ring.stop(); active.reject(); }} aria-label={t("call.decline")}>✕</button>
-                  <button className="call-btn accept" onClick={() => { ring.stop(); void active.answer(true, false); }} aria-label={t("call.accept")}>📞</button>
+                  <button className="call-btn decline" onClick={() => { ring.stop(); active.reject(); }} aria-label={t("call.decline")}><svg width="32" height="32" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85a1 1 0 0 1-1.4-.02L.29 13.08a1 1 0 0 1 0-1.41C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67a1 1 0 0 1 0 1.41l-2.48 2.48a1 1 0 0 1-1.4.02 11.3 11.3 0 0 0-2.67-1.85 1 1 0 0 1-.56-.9v-3.1A15 15 0 0 0 12 9Z" /></svg></button>
+                  <button className="call-btn accept" onClick={() => { ring.stop(); void active.answer(true, false); }} aria-label={t("call.accept")}><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11 11 0 0 0 3.6.6 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11 11 0 0 0 .6 3.6 1 1 0 0 1-.25 1Z" /></svg></button>
                 </>
               ) : state !== CallState.Ended ? (
                 <>
@@ -178,9 +182,9 @@ export function CallsProvider({ children }: { children: ReactNode }) {
                     aria-label={muted ? t("call.unmute") : t("call.mute")}
                     aria-pressed={muted}
                   >
-                    {muted ? "🔇" : "🎙️"}
+                    {muted ? <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 11h-1.7a5.3 5.3 0 0 1-.7 2.6l1.2 1.2A6.9 6.9 0 0 0 19 11ZM15 11.2V5a3 3 0 0 0-5.9-.8L15 10.1v1.1ZM4.3 3 3 4.3l6 6V11a3 3 0 0 0 4.5 2.6l1.6 1.6A5 5 0 0 1 7 11H5a7 7 0 0 0 6 6.9V21h2v-3.1a6.9 6.9 0 0 0 3.5-1.4l3.2 3.2 1.3-1.3L4.3 3Z" /></svg> : <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z" /></svg>}
                   </button>
-                  <button className="call-btn decline" onClick={() => active.hangup(CallErrorCode.UserHangup, false)} aria-label={t("call.hangup")}>✕</button>
+                  <button className="call-btn decline" onClick={() => active.hangup(CallErrorCode.UserHangup, false)} aria-label={t("call.hangup")}><svg width="32" height="32" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85a1 1 0 0 1-1.4-.02L.29 13.08a1 1 0 0 1 0-1.41C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67a1 1 0 0 1 0 1.41l-2.48 2.48a1 1 0 0 1-1.4.02 11.3 11.3 0 0 0-2.67-1.85 1 1 0 0 1-.56-.9v-3.1A15 15 0 0 0 12 9Z" /></svg></button>
                 </>
               ) : null}
             </div>

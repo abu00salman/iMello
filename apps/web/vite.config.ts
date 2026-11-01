@@ -72,7 +72,9 @@ export default defineConfig(({ mode }) => {
       },
     ],
     optimizeDeps: { exclude: ["@matrix-org/matrix-sdk-crypto-wasm"] },
-    build: { target: "es2022", sourcemap: false, chunkSizeWarningLimit: 6000 },
+    build: { target: "es2022", sourcemap: false, chunkSizeWarningLimit: 6000,
+      // Fonts must be real files: the CSP allows font-src 'self' only (no data: URIs).
+      assetsInlineLimit: (file: string) => (/\.(woff2?|ttf|otf)$/.test(file) ? false : undefined) },
     server: { port: 5173, strictPort: true, headers: securityHeaders(contentSecurityPolicy(connect, true)) },
     preview: { port: 4173, strictPort: true, headers: securityHeaders(contentSecurityPolicy(connect)) },
   };

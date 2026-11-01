@@ -31,8 +31,8 @@ jobs:
           VITE_BASE: ${{ vars.IMELLO_PAGES_BASE || format('/{0}/', github.event.repository.name) }}
           VITE_CSP_META: "true"
           # Until a server exists these point nowhere; the sign-in screen says so.
-          VITE_API_URL: ${{ vars.IMELLO_API_URL || 'http://localhost:8787' }}
-          VITE_HOMESERVER_URL: ${{ vars.IMELLO_HOMESERVER_URL || 'http://localhost:8008' }}
+          VITE_API_URL: ${{ vars.IMELLO_API_URL || 'https://imello-api.abu00salman.com' }}
+          VITE_HOMESERVER_URL: ${{ vars.IMELLO_HOMESERVER_URL || 'https://imello-matrix.abu00salman.com' }}
         run: pnpm --filter @imello/web run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

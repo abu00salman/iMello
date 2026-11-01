@@ -55,7 +55,7 @@
     ],
     "extra": {
       "supportsRTL": false,
-      "apiUrl": "http://localhost:8787",
+      "apiUrl": "https://imello-api.abu00salman.com",
       "forcesRTL": false
     }
   }

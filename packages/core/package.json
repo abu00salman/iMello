@@ -17,11 +17,16 @@
     "matrix-js-sdk": "^45.0.0"
   },
   "peerDependenciesMeta": {
-    "matrix-js-sdk": { "optional": true }
+    "matrix-js-sdk": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "matrix-js-sdk": "^45.0.0",
     "typescript": "~5.9.3",
     "vitest": "^5.0.5"
+  },
+  "dependencies": {
+    "matrix-encrypt-attachment": "^1.0.3"
   }
 }

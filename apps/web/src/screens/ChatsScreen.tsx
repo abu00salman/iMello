@@ -4,7 +4,9 @@ import {
   conversations,
   isRoomEncrypted,
   NotEncryptedError,
+  AttachmentTooLargeError,
   roomMessages,
+  sendAttachment,
   sendText,
   setTyping,
   type ChatMessage,
@@ -15,6 +17,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import { usePrefs } from "../lib/prefs";
 import { navigate } from "../lib/router";
 import { useClientVersion, useSession } from "../lib/session";
+import { AttachmentView, formatDuration, imageSize, useVoiceRecorder } from "../ui/attachments";
 import { Avatar, Button, EmptyState, LockBadge } from "../ui/components";
 
 // Drafts are kept in memory only: they may contain sensitive text.
@@ -74,7 +77,13 @@ function ConversationRow({ client, c, active }: { client: MatrixClient; c: Conve
     ? t("chat.invitedYou", { name: displayNameOf(client, c.otherUserId, c.name) })
     : c.lastMessage?.decryptionFailed
       ? "🔒"
-      : c.lastMessage?.body ?? "";
+      : c.lastMessage?.attachment
+        ? c.lastMessage.attachment.voice
+          ? `🎤 ${t("chat.voiceMessage")}`
+          : c.lastMessage.attachment.kind === "image"
+            ? `📷 ${t("chat.photo")}`
+            : `📄 ${c.lastMessage.attachment.name}`
+        : c.lastMessage?.body ?? "";
   return (
     <li>
       <a className={`conv-row ${active ? "active" : ""} ${c.membership === "invite" ? "invite" : ""}`} href={`#/chats/${encodeURIComponent(c.roomId)}`} aria-current={active ? "page" : undefined}>
@@ -102,6 +111,10 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const typingRef = useRef<number>(0);
+  // All hooks must run before any early return below (invite / loading states).
+  const recorder = useVoiceRecorder();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState<{ name: string; progress: number } | null>(null);
   const membership = room?.getMyMembership();
   const messages = useMemo(() => roomMessages(client, roomId), [client, roomId, version]);
   const typing = room?.currentState.getMembers().filter((m) => m.typing && m.userId !== client.getUserId()) ?? [];
@@ -131,6 +144,43 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
         <Button onClick={() => void acceptInvite(client, roomId)}>{t("chat.accept")}</Button>
       </div>
     );
+  }
+
+
+  async function sendFile(file: Blob, name: string, extra: { voice?: boolean; durationMs?: number } = {}) {
+    setError(null);
+    const mimetype = file.type || "application/octet-stream";
+    setUploading({ name, progress: 0 });
+    try {
+      const size = mimetype.startsWith("image/") ? await imageSize(file) : null;
+      await sendAttachment(client, roomId, file, {
+        name,
+        mimetype,
+        ...extra,
+        ...(size ?? {}),
+        onProgress: (p) => setUploading({ name, progress: p }),
+      });
+    } catch (err) {
+      setError(err instanceof AttachmentTooLargeError ? t("chat.tooLarge") : t("chat.status.failed"));
+    } finally {
+      setUploading(null);
+    }
+  }
+
+  async function toggleRecording() {
+    if (!recorder.recording) {
+      try {
+        await recorder.start();
+      } catch {
+        setError(t("chat.micDenied"));
+      }
+      return;
+    }
+    const rec = await recorder.stop();
+    if (rec && rec.durationMs > 700) {
+      const ext = rec.mimetype.includes("mp4") ? "m4a" : rec.mimetype.includes("ogg") ? "ogg" : "webm";
+      await sendFile(rec.blob, `voice-message.${ext}`, { voice: true, durationMs: rec.durationMs });
+    }
   }
 
   async function send(body: string, txnId?: string) {
@@ -192,7 +242,11 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
               <div className={`msg ${m.isOwn ? "own" : "theirs"} ${m.decryptionFailed ? "undecryptable" : ""}`} data-testid="message">
                 <div className="bubble" onDoubleClick={() => !m.decryptionFailed && setReplyTo(m)}>
                   {quoted && <div className="quote" dir="auto">{quoted.body ?? "🔒"}</div>}
-                  <span dir="auto" className="body">{m.decryptionFailed ? t("chat.unableToDecrypt") : m.body}</span>
+                  {m.attachment ? (
+                    <AttachmentView client={client} info={m.attachment} />
+                  ) : (
+                    <span dir="auto" className="body">{m.decryptionFailed ? t("chat.unableToDecrypt") : m.body}</span>
+                  )}
                   <span className="meta">
                     <time>{formatTime(new Date(m.timestamp), locale)}</time>
                     {m.isOwn && (
@@ -219,7 +273,37 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
         </div>
       )}
       {error && <p className="error composer-error" role="alert">{error}</p>}
+      {uploading && (
+        <div className="upload-bar" role="status">
+          <span dir="auto">⬆ {t("chat.uploading", { name: uploading.name })}</span>
+          <span className="upload-track"><span ref={(el) => el?.style.setProperty("--p", `${Math.round(uploading.progress * 100)}%`)} /></span>
+        </div>
+      )}
+      {recorder.recording ? (
+        <div className="composer recording" role="status">
+          <button className="icon-btn" onClick={recorder.cancel} aria-label={t("common.cancel")}>✕</button>
+          <span className="rec-dot" aria-hidden="true" />
+          <span className="rec-label">{t("chat.recording")} {formatDuration(recorder.elapsed)}</span>
+          <Button onClick={() => void toggleRecording()} aria-label={t("chat.sendVoice")} className="send">
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" className="send-icon"><path fill="currentColor" d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z" /></svg>
+          </Button>
+        </div>
+      ) : (
       <div className="composer">
+        <input
+          ref={fileInput}
+          type="file"
+          hidden
+          data-testid="file-input"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (f) void sendFile(f, f.name);
+          }}
+        />
+        <button className="icon-btn" onClick={() => fileInput.current?.click()} disabled={!encrypted || !!uploading} aria-label={t("chat.attach")}>
+          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.5 6.5v10a4.5 4.5 0 0 1-9 0V5a3 3 0 0 1 6 0v10.5a1.5 1.5 0 0 1-3 0V6.5H9v9a3 3 0 0 0 6 0V5a4.5 4.5 0 0 0-9 0v11.5a6 6 0 0 0 12 0v-10Z" /></svg>
+        </button>
         <textarea
           rows={1}
           dir="auto"
@@ -231,10 +315,17 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
           disabled={!encrypted}
           maxLength={20000}
         />
-        <Button onClick={submit} disabled={!text.trim() || !encrypted} aria-label={t("chat.send")} className="send">
-          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" className="send-icon"><path fill="currentColor" d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z" /></svg>
-        </Button>
+        {text.trim() ? (
+          <Button onClick={submit} disabled={!encrypted} aria-label={t("chat.send")} className="send">
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" className="send-icon"><path fill="currentColor" d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z" /></svg>
+          </Button>
+        ) : (
+          <Button onClick={() => void toggleRecording()} disabled={!encrypted || !!uploading} aria-label={t("chat.record")} className="send">
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z" /></svg>
+          </Button>
+        )}
       </div>
+      )}
     </div>
   );
 }

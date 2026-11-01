@@ -150,6 +150,10 @@ importers:
         version: 5.0.5(@types/node@22.20.5)(vite@8.3.5(@types/node@22.20.5)(esbuild@0.28.2)(terser@5.51.2)(tsx@4.23.15))
 
   packages/core:
+    dependencies:
+      matrix-encrypt-attachment:
+        specifier: ^1.0.3
+        version: 1.0.3
     devDependencies:
       matrix-js-sdk:
         specifier: ^45.0.0
@@ -2817,6 +2821,10 @@ packages:
 
   makeerror@1.0.12:
     resolution: {integrity: sha512-JmqCvUhmt43madlpFzG4BQzG2Z3m6tvQDNKdClZnO3VbIudJYmxsT0FNJMeiB2+JTSlTQTSbU8QdesVmwJcmLg==}
+
+  matrix-encrypt-attachment@1.0.3:
+    resolution: {integrity: sha512-NwfoDY/yHL9Zo8KrY5GP8ymAoZJpEFKEK+IgJKdWf5xtsIFf7KIU2pbw8+Eq592j//nSDOC+/Ff4Fk8gVvDZpw==}
+    engines: {node: '>=12.0'}
 
   matrix-events-sdk@0.0.1:
     resolution: {integrity: sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==}
@@ -6806,6 +6814,8 @@ snapshots:
   makeerror@1.0.12:
     dependencies:
       tmpl: 1.0.5
+
+  matrix-encrypt-attachment@1.0.3: {}
 
   matrix-events-sdk@0.0.1: {}
 

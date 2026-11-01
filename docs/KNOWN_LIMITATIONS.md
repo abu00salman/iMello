@@ -30,10 +30,17 @@ Honest list of what does **not** work yet or works with caveats. Kept in sync wi
 - Changing language on mobile requires an app restart for the RTL/LTR layout direction to flip (React Native limit).
 - Desktop: use the web client.
 
-## Messaging features not yet implemented
+## Messaging features
+
+Implemented (web): text, replies, typing, delivery state, **encrypted photos, files (≤25 MB) and voice messages**
+(AES-256-CTR per Matrix's EncryptedFile spec; server stores ciphertext only — verified by e2e media-store scan).
+Dangerous file types are never opened automatically and warn before download. Not yet:
+
+
 
 Edit, delete, reactions, forwarding, pinning, archive, mute, disappearing messages, read-receipt display (receipts
-are sent but not shown), message search beyond the conversation list filter, media/voice/files, group-chat UI
+are sent but not shown), message search beyond the conversation list filter, image compression/thumbnails, video
+recording, voice "hold to record / slide to cancel / lock" gestures (voice uses tap-to-record), location sharing, group-chat UI
 (group *rules* are enforced server-side), push notifications, voice/video calls.
 
 ## Product

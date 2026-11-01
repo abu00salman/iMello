@@ -11,7 +11,7 @@
 		X-Content-Type-Options nosniff
 		Referrer-Policy no-referrer
 		Cross-Origin-Opener-Policy same-origin
-		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		Permissions-Policy "camera=(), microphone=(self), geolocation=(), payment=(), usb=()"
 		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; connect-src 'self' https://{$IMELLO_API_DOMAIN} https://{$IMELLO_MATRIX_DOMAIN}; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; manifest-src 'self'"
 	}
 }

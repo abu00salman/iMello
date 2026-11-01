@@ -16,6 +16,8 @@ export default defineConfig({
     baseURL: "http://localhost:4173",
     trace: "retain-on-failure",
     ...devices["Desktop Chrome"],
+    // Fake microphone for voice-message tests (no real device or permission prompt in CI).
+    launchOptions: { args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"] },
   },
   webServer: {
     command: "pnpm --filter @imello/web run build && pnpm --filter @imello/web run preview",

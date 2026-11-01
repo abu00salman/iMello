@@ -28,6 +28,9 @@ import {
   type Room,
 } from "matrix-js-sdk";
 import { logger as sdkLogger } from "matrix-js-sdk/lib/logger.js";
+import { parseAttachment, type AttachmentInfo } from "./attachments";
+
+export * from "./attachments";
 
 export const MEGOLM_ALGORITHM = "m.megolm.v1.aes-sha2";
 
@@ -256,6 +259,8 @@ export interface ChatMessage {
   decryptionFailed: boolean;
   state: MessageState;
   replyTo: string | null;
+  /** Photo, file or voice message (always end-to-end encrypted). */
+  attachment: AttachmentInfo | null;
 }
 
 export function toChatMessage(client: MatrixClient, ev: MatrixEvent): ChatMessage | null {
@@ -277,6 +282,7 @@ export function toChatMessage(client: MatrixClient, ev: MatrixEvent): ChatMessag
     decryptionFailed,
     state: status === "not_sent" ? "failed" : status && status !== "sent" ? "sending" : "sent",
     replyTo: (content["m.relates_to"] as { "m.in_reply_to"?: { event_id?: string } } | undefined)?.["m.in_reply_to"]?.event_id ?? null,
+    attachment: decryptionFailed ? null : parseAttachment(content),
   };
 }
 

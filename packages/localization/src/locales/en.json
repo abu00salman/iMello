@@ -118,5 +118,20 @@
   "contacts.wantsToAdd": "{name} wants to add you",
   "contacts.accept": "Accept",
   "contacts.decline": "Decline",
-  "contacts.waiting": "Waiting for {name} to accept"
+  "contacts.waiting": "Waiting for {name} to accept",
+  "chat.attach": "Attach a photo or file",
+  "chat.record": "Record a voice message",
+  "chat.recording": "Recording…",
+  "chat.sendVoice": "Send voice message",
+  "chat.uploading": "Encrypting and sending {name}…",
+  "chat.download": "Download",
+  "chat.tooLarge": "That file is larger than 25 MB.",
+  "chat.dangerousFile": "This kind of file can be harmful. Only open it if you trust the sender. Download anyway?",
+  "chat.micDenied": "Microphone access was not allowed. Check your browser settings.",
+  "chat.voiceMessage": "Voice message",
+  "chat.photo": "Photo",
+  "chat.retry": "Retry",
+  "chat.play": "Play",
+  "chat.pause": "Pause",
+  "chat.speed": "Playback speed"
 }

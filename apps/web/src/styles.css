@@ -197,3 +197,35 @@ input:focus, textarea:focus { border-color: var(--color-accent); outline: none; 
 .protect-card { border-color: var(--color-warning); }
 .protect-banner { display: block; margin: 0 1rem 0.5rem; padding: 0.6rem 0.9rem; border-radius: 12px; background: var(--color-lavender); color: var(--color-text-primary); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
 .row input { flex: 1; }
+
+/* ── Attachments & voice ──────────────────────────────────────────────── */
+.icon-btn { border: 0; background: none; color: var(--color-text-secondary); min-width: 44px; min-height: 44px; border-radius: 50%; cursor: pointer; display: grid; place-items: center; flex-shrink: 0; }
+.icon-btn:hover:not(:disabled) { background: var(--color-background); color: var(--color-accent); }
+.icon-btn:disabled { opacity: 0.4; }
+.att-image { display: block; max-width: min(320px, 100%); height: auto; max-height: 360px; object-fit: cover; border-radius: 14px; margin: -0.2rem -0.45rem 0.2rem; }
+.att-image-link { display: block; }
+.att-placeholder { width: 220px; height: 160px; display: grid; place-items: center; border-radius: 14px; background: rgb(0 0 0 / 0.08); }
+.att-video { max-width: min(320px, 100%); border-radius: 14px; }
+.att-file { display: flex; align-items: center; gap: 0.6rem; min-width: 220px; }
+.att-file-icon { font-size: 1.6rem; }
+.att-file-main { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.att-file-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+.msg.own .att-file .muted { color: inherit; opacity: 0.8; }
+.att-download { min-height: 36px; padding: 0 0.8rem; }
+.att-voice { display: flex; align-items: center; gap: 0.5rem; min-width: 220px; }
+.voice-player { display: flex; align-items: center; gap: 0.5rem; flex: 1; }
+.voice-play { width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer; background: currentColor; flex-shrink: 0; position: relative; color: inherit; }
+.voice-play { background: rgb(255 255 255 / 0.25); }
+.msg.theirs .voice-play { background: var(--color-accent); color: #fff; }
+.voice-track { flex: 1; height: 4px; border-radius: 4px; background: rgb(127 127 127 / 0.35); position: relative; min-width: 80px; }
+.voice-fill { position: absolute; inset-block: 0; inset-inline-start: 0; width: var(--p, 0%); background: currentColor; border-radius: 4px; }
+.voice-time { font-variant-numeric: tabular-nums; opacity: 0.8; }
+.voice-speed { border: 0; background: rgb(127 127 127 / 0.2); color: inherit; border-radius: 999px; padding: 0.1rem 0.45rem; font-size: 0.75rem; cursor: pointer; }
+.composer.recording { align-items: center; }
+.rec-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--color-danger); animation: pulse 1.2s infinite; }
+.rec-label { flex: 1; font-variant-numeric: tabular-nums; color: var(--color-danger); font-weight: 600; }
+@keyframes pulse { 50% { opacity: 0.3; } }
+.upload-bar { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.4rem 1rem; background: var(--color-surface); border-top: 1px solid var(--color-border); font-size: 0.85rem; color: var(--color-text-secondary); }
+.upload-track { height: 3px; background: var(--color-border); border-radius: 3px; overflow: hidden; }
+.upload-track span { display: block; height: 100%; width: var(--p, 0%); background: var(--color-accent); transition: width 150ms; }
+.shell.kids .btn.send svg { width: 30px; height: 30px; }

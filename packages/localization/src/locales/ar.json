@@ -118,5 +118,20 @@
   "contacts.wantsToAdd": "{name} يبغى يضيفك",
   "contacts.accept": "قبول",
   "contacts.decline": "رفض",
-  "contacts.waiting": "بانتظار قبول {name}"
+  "contacts.waiting": "بانتظار قبول {name}",
+  "chat.attach": "إرفاق صورة أو ملف",
+  "chat.record": "تسجيل رسالة صوتية",
+  "chat.recording": "جارٍ التسجيل…",
+  "chat.sendVoice": "إرسال الرسالة الصوتية",
+  "chat.uploading": "جارٍ تشفير وإرسال {name}…",
+  "chat.download": "تحميل",
+  "chat.tooLarge": "الملف أكبر من 25 ميجابايت.",
+  "chat.dangerousFile": "هذا النوع من الملفات قد يكون ضارًا. افتحه فقط إذا كنت تثق بالمرسل. هل تريد التحميل؟",
+  "chat.micDenied": "لم يُسمح باستخدام الميكروفون. تحقق من إعدادات المتصفح.",
+  "chat.voiceMessage": "رسالة صوتية",
+  "chat.photo": "صورة",
+  "chat.retry": "إعادة المحاولة",
+  "chat.play": "تشغيل",
+  "chat.pause": "إيقاف مؤقت",
+  "chat.speed": "سرعة التشغيل"
 }

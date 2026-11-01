@@ -74,11 +74,13 @@ start() {
   fi
 
   # API first: Synapse's policy module fails closed without it.
-  (cd "$ROOT/services/api" && nohup pnpm exec tsx src/server.ts >"$STATE/api.log" 2>&1 & echo $! >"$STATE/api.pid")
+  # exec: the background PID is the API process itself, and no shell keeps our stdout open.
+  (cd "$ROOT/services/api" && exec nohup node --import tsx src/server.ts >"$STATE/api.log" 2>&1 </dev/null) &
+  echo $! >"$STATE/api.pid"
   wait_for "http://${API_HOST}:${API_PORT}/health" "iMello API"
 
   PYTHONPATH="$ROOT/infrastructure/synapse/modules" nohup "$SYNAPSE_PYTHON" -m synapse.app.homeserver \
-    -c "$SYNAPSE_DATA_DIR/homeserver.yaml" >"$STATE/synapse.stdout.log" 2>&1 &
+    -c "$SYNAPSE_DATA_DIR/homeserver.yaml" >"$STATE/synapse.stdout.log" 2>&1 </dev/null &
   echo $! >"$STATE/synapse.pid"
   wait_for "${HOMESERVER_URL}/health" "Synapse"
 }
@@ -90,8 +92,6 @@ stop() {
       rm -f "$STATE/$svc.pid"
     fi
   done
-  # tsx spawns a child node process.
-  pkill -f "tsx src/server.ts" 2>/dev/null || true
   echo "stopped"
 }
 

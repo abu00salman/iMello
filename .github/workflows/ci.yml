@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 22
+
+jobs:
+  checks:
+    name: Lint, typecheck, unit tests, builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - name: Unit tests
+        run: pnpm --filter @imello/core --filter @imello/ui --filter @imello/localization --filter @imello/web run test
+      - name: Build web client
+        run: pnpm --filter @imello/web run build
+      - name: Bundle mobile app (Android + iOS JS)
+        working-directory: apps/mobile
+        env: { CI: "1" }
+        run: |
+          npx expo export --platform android --output-dir dist-android
+          npx expo export --platform ios --output-dir dist-ios
+      - name: Dependency audit (report only)
+        run: pnpm audit --prod || true
+
+  api:
+    name: API integration tests (PostgreSQL)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_USER: imello, POSTGRES_PASSWORD: imello, POSTGRES_DB: imello_test }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U imello" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @imello/api run test
+        env: { TEST_DATABASE_URL: "postgres://imello:imello@127.0.0.1:5432/imello_test" }
+
+  e2e:
+    name: End-to-end (Synapse + API + browsers)
+    runs-on: ubuntu-latest
+    needs: [checks]
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_USER: imello, POSTGRES_PASSWORD: imello, POSTGRES_DB: imello }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U imello" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pnpm install --frozen-lockfile
+      - name: Install Synapse
+        run: |
+          python -m venv /tmp/synapse-venv
+          /tmp/synapse-venv/bin/pip install --quiet matrix-synapse psycopg2-binary
+      - name: Create Synapse database (C collation required)
+        env: { PGPASSWORD: imello }
+        run: psql -h 127.0.0.1 -U imello -d imello -c "CREATE DATABASE synapse ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
+      - name: Start iMello stack
+        env: { SYNAPSE_PYTHON: /tmp/synapse-venv/bin/python }
+        run: bash scripts/dev-stack.sh start
+      - name: Protocol-level end-to-end tests
+        run: |
+          eval "$(bash scripts/dev-stack.sh env)"
+          pnpm --filter @imello/e2e run test
+      - name: Install Playwright browser
+        working-directory: tests/e2e
+        run: npx playwright install --with-deps chromium
+      - name: Browser end-to-end tests
+        run: pnpm --filter @imello/e2e run test:browser
+      - name: Server logs (on failure)
+        if: failure()
+        run: tail -n 200 .dev-stack/api.log .dev-stack/synapse/homeserver.log || true

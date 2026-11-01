@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "iMello",
+    "slug": "imello",
+    "scheme": "imello",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "description": "Stay Close. Feel Connected. A private, ad-free, end-to-end encrypted family messenger.",
+    "owner": "abu00salman",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F7F8FB",
+      "dark": {
+        "backgroundColor": "#0E1015"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.abu00salman.imello",
+      "supportsTablet": true,
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true
+      },
+      "privacyManifests": {
+        "NSPrivacyTracking": false,
+        "NSPrivacyTrackingDomains": [],
+        "NSPrivacyCollectedDataTypes": []
+      }
+    },
+    "android": {
+      "package": "com.abu00salman.imello",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#3D7FE0"
+      },
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.READ_PHONE_STATE",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "com.google.android.gms.permission.AD_ID"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-localization"
+    ],
+    "extra": {
+      "supportsRTL": true,
+      "apiUrl": "http://localhost:8787"
+    }
+  }
+}

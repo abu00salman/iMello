@@ -77,7 +77,9 @@ test("two independent browser sessions exchange end-to-end encrypted messages", 
   await expect(alice.locator("html")).toHaveAttribute("lang", "ar");
   await expect(alice.getByRole("link", { name: "المحادثات" })).toBeVisible();
   await alice.getByRole("link", { name: "المحادثات" }).click();
-  await expect(alice.getByText("مشفّرة من طرف إلى طرف").first()).toBeAttached();
+  await alice.getByRole("link", { name: /Bob/ }).first().click();
+  await expect(alice.getByText("مشفّرة من طرف إلى طرف")).toBeVisible();
+  await expect(alice.getByLabel("رسالة", { exact: true })).toBeVisible();
 
   // Reloading restores the session from encrypted IndexedDB and can still decrypt history.
   await bob.reload();

@@ -1,0 +1,31 @@
+# TLS is automatic (Let's Encrypt). Security headers for the web client come from apps/web/dist/_headers
+# values; they are repeated here because Caddy does not read _headers files.
+
+{$IMELLO_DOMAIN} {
+	root * /srv/web
+	file_server
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		X-Frame-Options DENY
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		Cross-Origin-Opener-Policy same-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; connect-src 'self' https://{$IMELLO_API_DOMAIN} https://{$IMELLO_MATRIX_DOMAIN}; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; manifest-src 'self'"
+	}
+}
+
+{$IMELLO_API_DOMAIN} {
+	@internal path /internal/*
+	respond @internal 404
+	reverse_proxy api:8787
+}
+
+{$IMELLO_MATRIX_DOMAIN} {
+	# Synapse admin API is never exposed publicly.
+	@admin path /_synapse/admin/*
+	respond @admin 404
+	reverse_proxy /_matrix/* synapse:8008
+	reverse_proxy /_synapse/client/* synapse:8008
+}

@@ -9,9 +9,15 @@ export interface PolicyAccount {
 
 export type ContactStatus = "accepted" | "pending_guardian" | "denied";
 
+export type CredentialKind = "password" | "device";
+
 export interface Me {
   userId: string;
   username: string;
+  /** The account's iMello number (mell-xxxxxx), if it was created with "Start now". */
+  pin: string | null;
+  /** "device": the password is a random secret only this device knows; the user has not protected the account yet. */
+  credential: CredentialKind;
   displayName: string;
   kind: AccountKind;
   locale: string;
@@ -25,6 +31,14 @@ export interface Contact {
   displayName: string;
   kind: AccountKind;
   status: ContactStatus;
+  createdAt: string;
+}
+
+export interface ContactRequest {
+  requestId: string;
+  userId: string;
+  displayName: string;
+  pin: string | null;
   createdAt: string;
 }
 

@@ -11,6 +11,7 @@ import { getAccount, type AccountRow } from "./repo";
 import { registerFamilyRoutes } from "./routes/family";
 import { registerInternalRoutes } from "./routes/internal";
 import { registerPublicRoutes } from "./routes/public";
+import { registerRequestRoutes } from "./routes/requests";
 import { registerSocialRoutes } from "./routes/social";
 
 export interface AppDeps {
@@ -128,6 +129,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 
   await registerPublicRoutes(app);
   await registerSocialRoutes(app);
+  await registerRequestRoutes(app);
   await registerFamilyRoutes(app);
   await registerInternalRoutes(app);
 

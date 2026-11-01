@@ -111,6 +111,31 @@ export async function loadSession(): Promise<Session | null> {
   }
 }
 
+/**
+ * "Start now" accounts: the homeserver password is a random secret generated on this device.
+ * It is sealed like the session and removed once the user sets their own password.
+ */
+export async function saveDeviceSecret(userId: string, secret: string): Promise<void> {
+  const id = `device-secret:${userId}`;
+  await put(id, await seal(new TextEncoder().encode(secret), id));
+}
+
+export async function loadDeviceSecret(userId: string): Promise<string | null> {
+  const id = `device-secret:${userId}`;
+  const sealed = await get<Sealed>(id);
+  if (!sealed) return null;
+  return new TextDecoder().decode(await unseal(sealed, id));
+}
+
+export async function clearDeviceSecret(userId: string): Promise<void> {
+  await del(`device-secret:${userId}`);
+}
+
+export function generateDeviceSecret(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
 /** Remove every trace of iMello key material from this browser profile. */
 export async function wipeAll(): Promise<void> {
   await del(SESSION).catch(() => undefined);

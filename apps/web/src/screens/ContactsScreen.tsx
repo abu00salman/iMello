@@ -1,4 +1,4 @@
-import { ApiError, extractInviteToken, type Contact, type Invite, type InvitePreview } from "@imello/core";
+import { ApiError, extractInviteToken, normalizePin, type Contact, type ContactRequest, type Invite, type InvitePreview } from "@imello/core";
 import { startDirectChat } from "@imello/core/messaging";
 import QRCode from "qrcode";
 import { useCallback, useEffect, useState } from "react";
@@ -19,8 +19,41 @@ export function ContactsScreen({ initialToken }: { initialToken?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [incoming, setIncoming] = useState<ContactRequest[]>([]);
 
-  const load = useCallback(() => api.contacts().then(setContacts).catch(() => setError(t("common.error"))), [api, t]);
+  const load = useCallback(
+    () =>
+      Promise.all([api.contacts(), api.contactRequests()])
+        .then(([c, r]) => {
+          setContacts(c);
+          setIncoming(r.incoming);
+        })
+        .catch(() => setError(t("common.error"))),
+    [api, t],
+  );
+
+  async function addByNumber() {
+    setError(null);
+    setMessage(null);
+    const pin = normalizePin(pinInput);
+    if (!pin) return setError(t("contacts.invalidNumber"));
+    if (pin === me?.pin) return setError(t("contacts.invalidNumber"));
+    try {
+      const res = await api.sendContactRequest(pin);
+      setPinInput("");
+      setMessage(res.status === "already_contact" ? t("contacts.alreadyContact") : t("contacts.requestSent"));
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError && err.status === 429 ? t("auth.rateLimited") : err instanceof ApiError && err.status === 400 ? t("contacts.invalidNumber") : t("common.error"));
+    }
+  }
+
+  async function respond(r: ContactRequest, accept: boolean) {
+    const res = await api.respondToContactRequest(r.requestId, accept);
+    if (accept) setMessage(res.contactStatus === "pending_guardian" ? t("contacts.pendingGuardian") : t("contacts.added"));
+    await load();
+  }
   useEffect(() => {
     void load();
     // Contact status can change elsewhere (e.g. a guardian approves): refresh on focus and periodically while visible.
@@ -104,6 +137,53 @@ export function ContactsScreen({ initialToken }: { initialToken?: string }) {
       <header className="pane-header"><h1>{t("contacts.title")}</h1></header>
       {message && <p className="notice" role="status">{message}</p>}
       {error && <p className="error" role="alert">{error}</p>}
+
+      <Card>
+        <h2>{t("contacts.addByNumber")}</h2>
+        <form
+          className="row"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void addByNumber();
+          }}
+        >
+          <input
+            value={pinInput}
+            onChange={(e) => setPinInput(e.target.value)}
+            placeholder="mell-123456"
+            aria-label={t("contacts.addByNumber")}
+            dir="ltr"
+            inputMode="text"
+            autoCapitalize="none"
+            data-testid="pin-input"
+          />
+          <Button type="submit" disabled={!pinInput.trim()}>{t("contacts.add")}</Button>
+        </form>
+        {me?.pin && (
+          <p className="muted small">
+            {t("me.yourNumber")}: <strong dir="ltr" className="pin-inline">{me.pin}</strong>
+          </p>
+        )}
+      </Card>
+
+      {incoming.length > 0 && (
+        <Card>
+          <h2>{t("contacts.requests")}</h2>
+          <ul className="contact-list" role="list">
+            {incoming.map((r) => (
+              <li key={r.requestId} className="contact-row" data-testid="incoming-request">
+                <Avatar name={r.displayName} id={r.userId} size={44} />
+                <span className="contact-main">
+                  <strong>{t("contacts.wantsToAdd", { name: r.displayName })}</strong>
+                  {r.pin && <small className="muted" dir="ltr">{r.pin}</small>}
+                </span>
+                <Button onClick={() => void respond(r, true)}>{t("contacts.accept")}</Button>
+                <Button variant="ghost" onClick={() => void respond(r, false)}>{t("contacts.decline")}</Button>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <div className="grid-2">
         <Card>

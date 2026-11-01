@@ -9,9 +9,30 @@ export type UsernameProblem = "length" | "characters" | "reserved";
 export function validateUsername(username: string): UsernameProblem | null {
   if (username.length < 3 || username.length > 32) return "length";
   if (!USERNAME_RE.test(username)) return "characters";
-  if (RESERVED_USERNAMES.has(username) || username.startsWith("imello")) return "reserved";
+  if (RESERVED_USERNAMES.has(username) || username.startsWith("imello") || username.startsWith(PIN_PREFIX)) return "reserved";
   return null;
 }
+
+/** iMello numbers ("PINs"), BBM-style: `mell-` + 6 digits, e.g. mell-447729. They are the account's username. */
+export const PIN_PREFIX = "mell-";
+export const PIN_DIGITS = 6;
+export const PIN_RE = /^mell-\d{6}$/;
+
+/** Accept what people actually type: "MELL-447 729", "mell447729", "447729", "٤٤٧٧٢٩" (Arabic-Indic digits). */
+export function normalizePin(input: string): string | null {
+  const western = input.replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660)).replace(/[\u06f0-\u06f9]/g, (d) => String(d.charCodeAt(0) - 0x06f0));
+  const compact = western.toLowerCase().replace(/[\s_-]/g, "");
+  const digits = compact.startsWith("mell") ? compact.slice(4) : compact;
+  if (!/^\d+$/.test(digits) || digits.length !== PIN_DIGITS) return null;
+  return `${PIN_PREFIX}${digits}`;
+}
+
+export function isPin(username: string): boolean {
+  return PIN_RE.test(username);
+}
+
+/** Password a device generates for itself when the user starts without choosing one. */
+export const DEVICE_SECRET_MIN_LENGTH = 32;
 
 export const MIN_PASSWORD_LENGTH = 10;
 export const MAX_PASSWORD_LENGTH = 512;

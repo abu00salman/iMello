@@ -23,6 +23,7 @@ async function register(page: Page, name: string, username: string) {
 
 async function signIn(page: Page, username: string) {
   await page.goto("/");
+  await page.getByRole("button", { name: "Sign in" }).click();
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in" }).last().click();

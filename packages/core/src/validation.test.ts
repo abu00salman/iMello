@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractInviteToken, normalizeDisplayName, validatePassword, validateUsername } from "./validation";
+import { extractInviteToken, normalizeDisplayName, normalizePin, validatePassword, validateUsername } from "./validation";
 
 describe("validation", () => {
   it("validates usernames", () => {
@@ -10,6 +10,18 @@ describe("validation", () => {
     expect(validateUsername(".mona")).toBe("characters");
     expect(validateUsername("admin")).toBe("reserved");
     expect(validateUsername("imello-team")).toBe("reserved");
+  });
+  it("reserves the mell- prefix for generated numbers", () => {
+    expect(validateUsername("mell-123456")).toBe("reserved");
+  });
+  it("normalizes iMello numbers", () => {
+    expect(normalizePin("mell-447729")).toBe("mell-447729");
+    expect(normalizePin("MELL-447 729")).toBe("mell-447729");
+    expect(normalizePin("447729")).toBe("mell-447729");
+    expect(normalizePin("mell447729")).toBe("mell-447729");
+    expect(normalizePin("٤٤٧٧٢٩")).toBe("mell-447729");
+    expect(normalizePin("mell-4477")).toBeNull();
+    expect(normalizePin("hello")).toBeNull();
   });
   it("validates passwords", () => {
     expect(validatePassword("short")).toBe("too_short");

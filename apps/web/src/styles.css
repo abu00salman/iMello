@@ -183,3 +183,17 @@ input:focus, textarea:focus { border-color: var(--color-accent); outline: none; 
   .back { display: inline-block; }
   .bubble { max-width: 85%; }
 }
+
+/* ── iMello numbers & Start now ───────────────────────────────────────── */
+.btn.big { min-height: 54px; font-size: 1.1rem; }
+.center { text-align: center; }
+.small { font-size: 0.85rem; }
+.link.subtle { color: var(--color-text-secondary); font-weight: 500; }
+.auth-switch { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+.auth-switch p { margin: 0; }
+.pin-card { display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; }
+.pin { font-size: 1.9rem; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; color: var(--color-accent); }
+.pin-inline { letter-spacing: 0.04em; }
+.protect-card { border-color: var(--color-warning); }
+.protect-banner { display: block; margin: 0 1rem 0.5rem; padding: 0.6rem 0.9rem; border-radius: 12px; background: var(--color-lavender); color: var(--color-text-primary); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+.row input { flex: 1; }

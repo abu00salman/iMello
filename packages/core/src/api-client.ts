@@ -1,5 +1,5 @@
 import type {
-  ChildSummary, Contact, Family, GuardianApproval, Invite, InvitePreview, Me, RedeemResult,
+  ChildSummary, Contact, ContactRequest, Family, GuardianApproval, Invite, InvitePreview, Me, RedeemResult,
 } from "./types";
 
 export class ApiError extends Error {
@@ -53,6 +53,25 @@ export class ImelloApiClient {
 
   register(input: RegisterInput) {
     return this.request<{ userId: string; homeserverUrl: string; serverName: string }>("POST", "/v1/auth/register", input);
+  }
+  /** "Start now": create an account with a generated iMello number. `deviceSecret` is a random password kept on the device. */
+  quickStart(input: { deviceSecret: string; displayName?: string; locale?: string }) {
+    return this.request<{ userId: string; pin: string; homeserverUrl: string; serverName: string }>("POST", "/v1/auth/quick", input);
+  }
+  /** Tell iMello the user has set their own password (after changing it on the homeserver). */
+  markProtected() {
+    return this.request<Me>("POST", "/v1/me/protected", {});
+  }
+  /** Ask to connect by iMello number. The response is the same whether or not the number exists. */
+  sendContactRequest(pin: string) {
+    return this.request<{ status: "sent" | "already_contact" }>("POST", "/v1/contact-requests", { pin });
+  }
+  contactRequests() {
+    // Only incoming requests are listed: listing sent ones would reveal whether a number exists.
+    return this.request<{ incoming: ContactRequest[] }>("GET", "/v1/contact-requests");
+  }
+  respondToContactRequest(requestId: string, accept: boolean) {
+    return this.request<{ contactStatus: string | null }>("POST", `/v1/contact-requests/${requestId}`, { accept });
   }
   config() {
     return this.request<{ homeserverUrl: string; serverName: string }>("GET", "/v1/config");

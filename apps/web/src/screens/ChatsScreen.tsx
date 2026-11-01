@@ -26,7 +26,7 @@ function displayNameOf(client: MatrixClient, userId: string | null, fallback: st
 }
 
 export function ChatsScreen({ roomId }: { roomId?: string }) {
-  const { client } = useSession();
+  const { client, me } = useSession();
   const { t } = usePrefs();
   const version = useClientVersion(client);
   const [query, setQuery] = useState("");
@@ -42,6 +42,9 @@ export function ChatsScreen({ roomId }: { roomId?: string }) {
         <header className="pane-header">
           <h1>{t("nav.chats")}</h1>
         </header>
+        {me?.credential === "device" && (
+          <a className="protect-banner" href="#/settings">🔐 {t("protect.banner")}</a>
+        )}
         <div className="search">
           <input type="search" placeholder={t("chats.search")} aria-label={t("chats.search")} value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>

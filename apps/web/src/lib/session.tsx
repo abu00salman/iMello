@@ -1,4 +1,4 @@
-import { ApiError, ImelloApiClient, type Me } from "@imello/core";
+import { ApiError, ImelloApiClient, normalizePin, type Me } from "@imello/core";
 import {
   configureSdkLogging,
   loginWithPassword,
@@ -15,7 +15,17 @@ import {
   RoomMemberEvent,
 } from "matrix-js-sdk";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { cryptoDbPrefix, cryptoStorageKey, loadSession, saveSession, wipeAll } from "./keystore";
+import {
+  clearDeviceSecret,
+  cryptoDbPrefix,
+  cryptoStorageKey,
+  generateDeviceSecret,
+  loadDeviceSecret,
+  loadSession,
+  saveDeviceSecret,
+  saveSession,
+  wipeAll,
+} from "./keystore";
 
 configureSdkLogging(import.meta.env.DEV ? "warn" : "error");
 
@@ -32,6 +42,12 @@ interface SessionState {
   notice: string | null;
   signIn: (username: string, password: string, temporary: boolean) => Promise<void>;
   register: (input: { username: string; password: string; displayName: string; locale: "en" | "ar" }, temporary: boolean) => Promise<void>;
+  /** "Start now": create an account with a generated iMello number, no password needed. */
+  quickStart: (displayName: string, locale: "en" | "ar") => Promise<void>;
+  /** Replace the device-only secret with a password the user chooses. */
+  protectAccount: (newPassword: string) => Promise<void>;
+  /** The account password if this device holds it (unprotected "Start now" accounts), else null. */
+  deviceSecret: () => Promise<string | null>;
   signOut: () => Promise<void>;
   refreshMe: () => Promise<void>;
   /** Called after the account was deleted/deactivated: wipe locally without contacting the server. */
@@ -135,7 +151,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(
     async (username: string, password: string, isTemporary: boolean) => {
       const { homeserverUrl } = await apiRef.current.config();
-      const session = await loginWithPassword(homeserverUrl, username.trim().toLowerCase(), password, deviceName() + (isTemporary ? " (temporary)" : ""));
+      // Accept an iMello number in any common spelling (mell-447729, 447729, MELL 447 729, Arabic digits).
+      const user = normalizePin(username) ?? username.trim().toLowerCase();
+      const session = await loginWithPassword(homeserverUrl, user, password, deviceName() + (isTemporary ? " (temporary)" : ""));
       if (!isTemporary) await saveSession(session);
       await start(session, isTemporary, password);
     },
@@ -150,6 +168,41 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [signIn],
   );
 
+  const quickStart = useCallback<SessionState["quickStart"]>(
+    async (displayName, locale) => {
+      const secret = generateDeviceSecret();
+      const { pin, homeserverUrl } = await apiRef.current.quickStart({ deviceSecret: secret, displayName: displayName.trim() || undefined, locale });
+      const session = await loginWithPassword(homeserverUrl, pin, secret, deviceName());
+      await saveSession(session);
+      await saveDeviceSecret(session.userId, secret);
+      await start(session, false, secret);
+    },
+    [start],
+  );
+
+  const deviceSecret = useCallback(async () => {
+    const userId = clientRef.current?.getUserId();
+    return userId ? loadDeviceSecret(userId) : null;
+  }, []);
+
+  const protectAccount = useCallback(async (newPassword: string) => {
+    const c = clientRef.current;
+    if (!c) throw new Error("not signed in");
+    const secret = await loadDeviceSecret(c.getSafeUserId());
+    if (!secret) throw new Error("no device secret");
+    const auth = { type: "m.login.password", identifier: { type: "m.id.user", user: c.getSafeUserId() }, password: secret };
+    try {
+      await c.setPassword(auth as never, newPassword, false);
+    } catch (err) {
+      // User-interactive auth: retry inside the session the server opened.
+      const session = (err as { data?: { session?: string } }).data?.session;
+      if (!session) throw err;
+      await c.setPassword({ ...auth, session } as never, newPassword, false);
+    }
+    setMe(await apiRef.current.markProtected());
+    await clearDeviceSecret(c.getSafeUserId());
+  }, []);
+
   const signOut = useCallback(async () => {
     const c = clientRef.current;
     if (c) await matrixSignOut(c).catch(() => undefined);
@@ -160,7 +213,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   return (
     <SessionContext.Provider
-      value={{ status, client, api: apiRef.current, me, temporary, notice, signIn, register, signOut, refreshMe, forget }}
+      value={{ status, client, api: apiRef.current, me, temporary, notice, signIn, register, quickStart, protectAccount, deviceSecret, signOut, refreshMe, forget }}
     >
       {children}
     </SessionContext.Provider>

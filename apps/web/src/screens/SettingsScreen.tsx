@@ -1,15 +1,47 @@
+import { MIN_PASSWORD_LENGTH } from "@imello/core";
 import { listDevices, revokeDevice, type DeviceInfo } from "@imello/core/messaging";
 import { formatDay } from "@imello/localization";
 import { useCallback, useEffect, useState } from "react";
 import { usePrefs, type ThemePref } from "../lib/prefs";
 import { useSession } from "../lib/session";
-import { Button, Card, LockBadge } from "../ui/components";
+import { Button, Card, Field, LockBadge } from "../ui/components";
 
 const VERSION = "1.0.0";
 
 export function SettingsScreen() {
   const { t, locale, setLocale, theme, setTheme } = usePrefs();
-  const { client, api, me, signOut, forget, temporary } = useSession();
+  const { client, api, me, signOut, forget, temporary, deviceSecret, protectAccount } = useSession();
+  const unprotected = me?.credential === "device";
+  const [pw1, setPw1] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [protectMsg, setProtectMsg] = useState<string | null>(null);
+  const [copiedPin, setCopiedPin] = useState(false);
+
+  /** Password for user-interactive auth: the device secret for unprotected accounts, otherwise ask. */
+  async function accountPassword(question: string): Promise<string | null> {
+    if (unprotected) return deviceSecret();
+    return prompt(question);
+  }
+
+  async function protect() {
+    setError(null);
+    setProtectMsg(null);
+    if (pw1.length < MIN_PASSWORD_LENGTH) return setError(t("auth.passwordHint"));
+    if (pw1 !== pw2) return setError(t("protect.mismatch"));
+    try {
+      await protectAccount(pw1);
+      setPw1("");
+      setPw2("");
+      setProtectMsg(t("protect.done"));
+    } catch {
+      setError(t("common.error"));
+    }
+  }
+
+  async function confirmSignOut() {
+    if (unprotected && !confirm(`${t("protect.title")}\n\n${t("protect.body")}`)) return;
+    await signOut();
+  }
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +52,8 @@ export function SettingsScreen() {
 
   async function revoke(d: DeviceInfo) {
     if (!client) return;
-    const password = prompt(`${t("settings.signOutDevice")}: ${d.displayName ?? d.deviceId}\n${t("auth.password")}`);
+    if (!confirm(`${t("settings.signOutDevice")}: ${d.displayName ?? d.deviceId}?`)) return;
+    const password = await accountPassword(t("auth.password"));
     if (!password) return;
     try {
       await revokeDevice(client, d.deviceId, password);
@@ -42,7 +75,8 @@ export function SettingsScreen() {
 
   async function deleteAccount() {
     if (!client) return;
-    const password = prompt(t("settings.deleteAccountConfirm"));
+    if (unprotected && !confirm(t("settings.deleteAccountConfirm"))) return;
+    const password = await accountPassword(t("settings.deleteAccountConfirm"));
     if (!password) return;
     try {
       // 1) Remove iMello policy data (immediately isolates the account), 2) deactivate on the homeserver and erase.
@@ -61,9 +95,43 @@ export function SettingsScreen() {
 
       <Card>
         <h2>{me?.displayName}</h2>
-        <p className="muted" dir="ltr">{me?.userId}</p>
+        {me?.pin ? (
+          <div className="pin-card">
+            <span className="muted small">{t("me.yourNumber")}</span>
+            <strong className="pin" dir="ltr" data-testid="my-pin">{me.pin}</strong>
+            <Button variant="secondary" onClick={() => void navigator.clipboard.writeText(me.pin!).then(() => setCopiedPin(true))}>
+              {copiedPin ? t("common.copied") : t("common.copy")}
+            </Button>
+            <p className="muted small">{t("me.shareNumber")}</p>
+          </div>
+        ) : (
+          <p className="muted" dir="ltr">{me?.userId}</p>
+        )}
         {temporary && <p className="notice">{t("auth.temporarySessionHint")}</p>}
       </Card>
+
+      {(unprotected || protectMsg) && (
+        <Card className="protect-card">
+          <h2>🔐 {t("protect.title")}</h2>
+          {protectMsg ? (
+            <p className="notice" role="status">{protectMsg}</p>
+          ) : (
+            <form
+              className="stack"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void protect();
+              }}
+            >
+              <p className="muted">{t("protect.body")}</p>
+              <input type="text" name="username" autoComplete="username" value={me?.pin ?? ""} readOnly hidden />
+              <Field label={t("protect.newPassword")} type="password" value={pw1} onChange={(e) => setPw1(e.target.value)} autoComplete="new-password" dir="ltr" hint={t("auth.passwordHint")} />
+              <Field label={t("protect.confirm")} type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} autoComplete="new-password" dir="ltr" />
+              <Button type="submit">{t("protect.title")}</Button>
+            </form>
+          )}
+        </Card>
+      )}
 
       <Card>
         <h2>{t("settings.language")}</h2>
@@ -103,7 +171,7 @@ export function SettingsScreen() {
         <LockBadge label={t("chat.encrypted")} />
         <div className="row wrap">
           <Button variant="secondary" onClick={() => void exportData()}>{t("settings.exportData")}</Button>
-          <Button variant="secondary" onClick={() => void signOut()}>{t("auth.signOut")}</Button>
+          <Button variant="secondary" onClick={() => void confirmSignOut()}>{t("auth.signOut")}</Button>
           {me?.kind === "adult" && <Button variant="danger" onClick={() => void deleteAccount()}>{t("settings.deleteAccount")}</Button>}
         </div>
       </Card>

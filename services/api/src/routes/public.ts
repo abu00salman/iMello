@@ -1,10 +1,38 @@
-import { normalizeDisplayName, validatePassword, validateUsername } from "@imello/core";
+import { randomInt } from "node:crypto";
+import {
+  DEVICE_SECRET_MIN_LENGTH,
+  isPin,
+  normalizeDisplayName,
+  PIN_DIGITS,
+  PIN_PREFIX,
+  validatePassword,
+  validateUsername,
+} from "@imello/core";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { HttpError } from "../app";
 import { withTransaction } from "../db";
 import { HomeserverError } from "../homeserver";
-import { audit, guardiansOf, insertAccount } from "../repo";
+import { audit, guardiansOf, insertAccount, type AccountRow } from "../repo";
+import type { Queryable } from "../db";
+
+export async function meView(db: Queryable, row: AccountRow) {
+  return {
+    userId: row.user_id,
+    username: row.username,
+    pin: isPin(row.username) ? row.username : null,
+    credential: row.credential,
+    displayName: row.display_name,
+    kind: row.kind,
+    locale: row.locale,
+    createdAt: row.created_at.toISOString(),
+    guardians: await guardiansOf(db, row.user_id),
+  };
+}
+
+function generatePin(): string {
+  return PIN_PREFIX + String(randomInt(0, 10 ** PIN_DIGITS)).padStart(PIN_DIGITS, "0");
+}
 
 export const registerBody = z.object({
   username: z.string().max(64),
@@ -64,17 +92,47 @@ export async function registerPublicRoutes(app: FastifyInstance) {
     },
   );
 
-  app.get("/v1/me", async (req) => {
+  /**
+   * "Start now": create an account with a generated iMello number and no user-chosen password.
+   * The client generates a strong random `deviceSecret` and keeps it in secure device storage;
+   * the user can replace it with their own password later ("protect account").
+   */
+  app.post(
+    "/v1/auth/quick",
+    { config: { rateLimit: { max: config.REGISTRATION_RATE_LIMIT, timeWindow: "10 minutes" } } },
+    async (req, reply) => {
+      const body = z
+        .object({
+          deviceSecret: z.string().min(DEVICE_SECRET_MIN_LENGTH).max(512),
+          displayName: z.string().max(256).optional(),
+          locale: z.enum(["en", "ar"]).default("en"),
+        })
+        .parse(req.body);
+      for (let attempt = 0; attempt < 12; attempt++) {
+        const pin = generatePin();
+        const displayName = (body.displayName && normalizeDisplayName(body.displayName)) || pin;
+        try {
+          const { userId } = await app.deps.homeserver.registerUser(pin, body.deviceSecret, displayName);
+          await insertAccount(db, { userId, username: pin, displayName, kind: "adult", locale: body.locale, credential: "device" });
+          await audit(db, "account.registered", userId, null, { kind: "adult", method: "quick" });
+          return reply.status(201).send({ userId, pin, homeserverUrl: config.PUBLIC_HOMESERVER_URL, serverName: config.MATRIX_SERVER_NAME });
+        } catch (err) {
+          if (err instanceof HomeserverError && err.errcode === "M_USER_IN_USE") continue; // number taken: try another
+          throw err;
+        }
+      }
+      throw new HttpError(503, "no_number_available");
+    },
+  );
+
+  app.get("/v1/me", async (req) => meView(db, await app.requireAccount(req)));
+
+  /** The user replaced the device secret with their own password on the homeserver. */
+  app.post("/v1/me/protected", async (req) => {
     const me = await app.requireAccount(req);
-    return {
-      userId: me.user_id,
-      username: me.username,
-      displayName: me.display_name,
-      kind: me.kind,
-      locale: me.locale,
-      createdAt: me.created_at.toISOString(),
-      guardians: await guardiansOf(db, me.user_id),
-    };
+    const r = await db.query<AccountRow>("UPDATE accounts SET credential = 'password' WHERE user_id = $1 RETURNING *", [me.user_id]);
+    await audit(db, "account.protected", me.user_id, null);
+    return meView(db, r.rows[0]!);
   });
 
   app.patch("/v1/me", async (req) => {
@@ -86,11 +144,7 @@ export async function registerPublicRoutes(app: FastifyInstance) {
       "UPDATE accounts SET display_name = $2, locale = $3 WHERE user_id = $1 RETURNING *",
       [me.user_id, displayName, body.locale ?? me.locale],
     );
-    const row = r.rows[0];
-    return {
-      userId: row.user_id, username: row.username, displayName: row.display_name, kind: row.kind,
-      locale: row.locale, createdAt: row.created_at.toISOString(), guardians: await guardiansOf(db, me.user_id),
-    };
+    return meView(db, r.rows[0]);
   });
 
   /** Export everything iMello's policy service stores about the caller. */
@@ -105,6 +159,7 @@ export async function registerPublicRoutes(app: FastifyInstance) {
       guardianships: await q("SELECT * FROM guardianships WHERE guardian_id = $1 OR child_id = $1"),
       families: await q("SELECT f.*, m.role FROM families f JOIN family_members m ON m.family_id = f.id WHERE m.user_id = $1"),
       blocks: await q("SELECT blocked_id, created_at FROM blocks WHERE blocker_id = $1"),
+      contactRequests: await q("SELECT from_id, to_id, status, created_at FROM contact_requests WHERE from_id = $1 OR to_id = $1"),
       reportsFiled: await q("SELECT reported_id, reason, created_at FROM reports WHERE reporter_id = $1"),
       securityEvents: await q("SELECT event_type, created_at FROM audit_events WHERE actor_id = $1 ORDER BY id DESC LIMIT 500"),
     };
@@ -120,6 +175,7 @@ export async function registerPublicRoutes(app: FastifyInstance) {
     const me = await app.requireAccount(req);
     await withTransaction(db, async (tx) => {
       await tx.query("DELETE FROM contacts WHERE user_low = $1 OR user_high = $1", [me.user_id]);
+      await tx.query("DELETE FROM contact_requests WHERE from_id = $1 OR to_id = $1", [me.user_id]);
       await tx.query("DELETE FROM invites WHERE creator_id = $1", [me.user_id]);
       await tx.query("DELETE FROM family_members WHERE user_id = $1", [me.user_id]);
       await tx.query("DELETE FROM blocks WHERE blocker_id = $1", [me.user_id]);

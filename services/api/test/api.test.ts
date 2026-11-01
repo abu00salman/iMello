@@ -109,8 +109,9 @@ beforeEach(async () => {
 
 describe("migrations", () => {
   it("roll back and re-apply cleanly", async () => {
+    expect(await migrateDown(DATABASE_URL)).toBe("002_quick_accounts");
     expect(await migrateDown(DATABASE_URL)).toBe("001_init");
-    expect(await migrateUp(DATABASE_URL)).toEqual(["001_init"]);
+    expect(await migrateUp(DATABASE_URL)).toEqual(["001_init", "002_quick_accounts"]);
     expect(await migrateUp(DATABASE_URL)).toEqual([]);
   });
 });
@@ -280,6 +281,113 @@ describe("guardian controls", () => {
     const other = await register("otheradult");
     const fam = (await as(other).post("/v1/families", { name: "Not yours" })).json();
     expect((await as(other).post(`/v1/families/${fam.familyId}/children`, { childUserId: child.userId })).statusCode).toBe(403);
+  });
+});
+
+describe("Start now (iMello numbers) and contact requests", () => {
+  const SECRET = "d".repeat(43);
+  async function quick(name?: string): Promise<User & { pin: string }> {
+    const res = await app.inject({ method: "POST", url: "/v1/auth/quick", payload: { deviceSecret: SECRET, displayName: name } });
+    expect(res.statusCode, res.body).toBe(201);
+    const { userId, pin } = res.json();
+    return { userId, pin, username: pin, token: hs.issueToken(userId) };
+  }
+
+  it("creates an account with a mell-xxxxxx number and a device credential", async () => {
+    const u = await quick("Mona");
+    expect(u.pin).toMatch(/^mell-\d{6}$/);
+    expect((await as(u).get("/v1/me")).json()).toMatchObject({ pin: u.pin, credential: "device", displayName: "Mona", kind: "adult" });
+    // The homeserver received the device secret as the password.
+    expect(hs.users.get(u.pin)).toBe(SECRET);
+  });
+
+  it("uses the number as display name when none is given, and rejects weak device secrets", async () => {
+    const u = await quick();
+    expect((await as(u).get("/v1/me")).json().displayName).toBe(u.pin);
+    const weak = await app.inject({ method: "POST", url: "/v1/auth/quick", payload: { deviceSecret: "short" } });
+    expect(weak.statusCode).toBe(400);
+  });
+
+  it("retries when a generated number is taken", async () => {
+    let calls = 0;
+    const orig = hs.registerUser.bind(hs);
+    hs.registerUser = async (username: string, password: string) => {
+      calls++;
+      if (calls === 1) throw new HomeserverError(400, "M_USER_IN_USE");
+      return orig(username, password);
+    };
+    await quick();
+    expect(calls).toBe(2);
+  });
+
+  it("people cannot register a mell- username themselves", async () => {
+    const res = await app.inject({ method: "POST", url: "/v1/auth/register", payload: { username: "mell-123456", password: "a strong password", displayName: "x" } });
+    expect(res.json().error).toBe("username_reserved");
+  });
+
+  it("request by number → accept → contacts; homeserver policy follows", async () => {
+    const [a, b] = [await quick("A"), await quick("B")];
+    expect((await as(a).post("/v1/contact-requests", { pin: b.pin.toUpperCase().replace("-", " ") })).json()).toEqual({ status: "sent" });
+    const inbox = (await as(b).get("/v1/contact-requests")).json();
+    expect(inbox.incoming).toHaveLength(1);
+    expect(inbox.incoming[0]).toMatchObject({ userId: a.userId, pin: a.pin, displayName: "A" });
+    // The sender sees nothing that would confirm the number exists.
+    expect((await as(a).get("/v1/contact-requests")).json()).toEqual({ incoming: [] });
+    // Not yet allowed to talk.
+    expect((await policy("invite", { inviter: a.userId, invitee: b.userId, roomId: "!r", roomMembers: [] })).json().allow).toBe(false);
+    // Only the recipient can answer.
+    expect((await as(a).post(`/v1/contact-requests/${inbox.incoming[0].requestId}`, { accept: true })).statusCode).toBe(404);
+    expect((await as(b).post(`/v1/contact-requests/${inbox.incoming[0].requestId}`, { accept: true })).json().contactStatus).toBe("accepted");
+    expect((await policy("invite", { inviter: a.userId, invitee: b.userId, roomId: "!r", roomMembers: [] })).json().allow).toBe(true);
+    expect((await as(a).post("/v1/contact-requests", { pin: b.pin })).json().status).toBe("already_contact");
+  });
+
+  it("sending back to someone who asked you accepts their request", async () => {
+    const [a, b] = [await quick(), await quick()];
+    await as(a).post("/v1/contact-requests", { pin: b.pin });
+    await as(b).post("/v1/contact-requests", { pin: a.pin });
+    expect((await policy("invite", { inviter: a.userId, invitee: b.userId, roomId: "!r", roomMembers: [] })).json().allow).toBe(true);
+  });
+
+  it("declining leaves no contact", async () => {
+    const [a, b] = [await quick(), await quick()];
+    await as(a).post("/v1/contact-requests", { pin: b.pin });
+    const [r] = (await as(b).get("/v1/contact-requests")).json().incoming;
+    expect((await as(b).post(`/v1/contact-requests/${r.requestId}`, { accept: false })).json().contactStatus).toBeNull();
+    expect((await as(b).get("/v1/contacts")).json().contacts).toEqual([]);
+  });
+
+  it("unknown, blocked and existing numbers all get the same answer (no probing)", async () => {
+    const [a, b] = [await quick(), await quick()];
+    await as(b).post("/v1/blocks", { userId: a.userId });
+    const unknown = await as(a).post("/v1/contact-requests", { pin: "mell-000001" });
+    const blocked = await as(a).post("/v1/contact-requests", { pin: b.pin });
+    expect(unknown.statusCode).toBe(202);
+    expect(blocked.statusCode).toBe(202);
+    expect(unknown.body).toBe(blocked.body);
+    expect((await as(b).get("/v1/contact-requests")).json().incoming).toEqual([]);
+    expect((await as(a).post("/v1/contact-requests", { pin: "nope" })).json().error).toBe("invalid_number");
+    expect((await as(a).post("/v1/contact-requests", { pin: a.pin })).json().error).toBe("own_number");
+  });
+
+  it("a request to a child goes to the guardian, never to the child", async () => {
+    const parent = await register("guardian1");
+    const res = await as(parent).post("/v1/guardian/children", { username: "kid-req", password: "a strong password", displayName: "Kid" });
+    const child = { userId: res.json().userId, username: "kid-req", token: hs.issueToken(res.json().userId) };
+    // Children don't have mell- numbers, but simulate one being targeted via a renamed account.
+    await db.query("UPDATE accounts SET username = 'mell-555555' WHERE user_id = $1", [child.userId]);
+    const stranger = await quick("Stranger");
+    expect((await as(stranger).post("/v1/contact-requests", { pin: "mell-555555" })).json().status).toBe("sent");
+    expect((await as(child).get("/v1/contact-requests")).json().incoming).toEqual([]);
+    const approvals = (await as(parent).get("/v1/guardian/approvals")).json().approvals;
+    expect(approvals).toHaveLength(1);
+    expect(approvals[0].requesterUserId).toBe(stranger.userId);
+    expect((await policy("invite", { inviter: stranger.userId, invitee: child.userId, roomId: "!r", roomMembers: [] })).json().allow).toBe(false);
+  });
+
+  it("marking an account protected switches it to a password credential", async () => {
+    const u = await quick();
+    expect((await as(u).post("/v1/me/protected")).json().credential).toBe("password");
   });
 });
 

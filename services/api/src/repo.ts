@@ -19,6 +19,7 @@ export interface AccountRow {
   kind: AccountKind;
   status: "active" | "deactivated";
   locale: string;
+  credential: "password" | "device";
   created_at: Date;
 }
 
@@ -66,11 +67,11 @@ export function toPolicyAccount(row: AccountRow | null | undefined): PolicyAccou
 
 export async function insertAccount(
   db: Queryable,
-  a: { userId: string; username: string; displayName: string; kind: AccountKind; locale: string },
+  a: { userId: string; username: string; displayName: string; kind: AccountKind; locale: string; credential?: "password" | "device" },
 ): Promise<void> {
   await db.query(
-    "INSERT INTO accounts (user_id, username, display_name, kind, locale) VALUES ($1, $2, $3, $4, $5)",
-    [a.userId, a.username, a.displayName, a.kind, a.locale],
+    "INSERT INTO accounts (user_id, username, display_name, kind, locale, credential) VALUES ($1, $2, $3, $4, $5, $6)",
+    [a.userId, a.username, a.displayName, a.kind, a.locale, a.credential ?? "password"],
   );
 }
 

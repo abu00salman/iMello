@@ -7,10 +7,12 @@ import { usePrefs } from "../src/prefs";
 import { useSession } from "../src/session";
 import { Body, Button, Card, Input, Title } from "../src/ui";
 
+type Mode = "start" | "signIn" | "register";
+
 export default function SignIn() {
   const { t, locale, setLocale, colors, rtl } = usePrefs();
-  const { signIn, register } = useSession();
-  const [mode, setMode] = useState<"signIn" | "register">("signIn");
+  const { signIn, register, quickStart } = useSession();
+  const [mode, setMode] = useState<Mode>("start");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -22,16 +24,28 @@ export default function SignIn() {
     if (mode === "register" && validateUsername(username.trim().toLowerCase())) return setError(t("auth.usernameHint"));
     setBusy(true);
     try {
-      if (mode === "signIn") await signIn(username, password);
+      if (mode === "start") await quickStart(displayName, locale);
+      else if (mode === "signIn") await signIn(username, password);
       else await register({ username: username.trim().toLowerCase(), password, displayName: displayName || username, locale });
       router.replace("/(tabs)/chats");
     } catch (err) {
       const code = err instanceof ApiError ? err.code : (err as Error).message;
-      setError(code === "username_unavailable" ? t("auth.usernameTaken") : code === "M_FORBIDDEN" ? t("auth.invalidCredentials") : code === "rate_limited" || code === "M_LIMIT_EXCEEDED" ? t("auth.rateLimited") : t("common.error"));
+      setError(
+        code === "username_unavailable" ? t("auth.usernameTaken")
+        : code === "M_FORBIDDEN" ? t("auth.invalidCredentials")
+        : code === "rate_limited" || code === "M_LIMIT_EXCEEDED" ? t("auth.rateLimited")
+        : t("common.error"),
+      );
     } finally {
       setBusy(false);
     }
   }
+
+  const link = (label: string, to: Mode) => (
+    <Pressable accessibilityRole="button" onPress={() => { setMode(to); setError(null); }} style={{ padding: 8, alignSelf: "center" }}>
+      <Text style={{ color: colors.accent, fontWeight: "600", textAlign: "center" }}>{label}</Text>
+    </Pressable>
+  );
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -46,13 +60,33 @@ export default function SignIn() {
             <Body muted center>{t("app.tagline")}</Body>
           </View>
           <Card>
-            {mode === "register" && <Input label={t("auth.displayName")} value={displayName} onChangeText={setDisplayName} autoComplete="name" />}
-            <Input label={t("auth.username")} value={username} onChangeText={setUsername} autoCapitalize="none" autoCorrect={false} autoComplete="username" textContentType="username" />
-            <Input label={t("auth.password")} value={password} onChangeText={setPassword} secureTextEntry autoComplete={mode === "signIn" ? "current-password" : "new-password"} textContentType={mode === "signIn" ? "password" : "newPassword"} />
-            {error && <Text accessibilityRole="alert" style={{ color: colors.danger }}>{error}</Text>}
-            <Button title={mode === "signIn" ? t("auth.signIn") : t("auth.createAccount")} onPress={() => void submit()} busy={busy} />
-            <Button variant="secondary" title={mode === "signIn" ? t("auth.createAccount") : t("auth.signIn")} onPress={() => setMode(mode === "signIn" ? "register" : "signIn")} />
+            {mode === "start" ? (
+              <>
+                <Input label={t("auth.yourName")} value={displayName} onChangeText={setDisplayName} autoComplete="name" />
+                <Button title={t("auth.startNow")} onPress={() => void submit()} busy={busy} />
+                <Body muted center>{t("auth.startNowHint")}</Body>
+              </>
+            ) : (
+              <>
+                {mode === "register" && <Input label={t("auth.displayName")} value={displayName} onChangeText={setDisplayName} autoComplete="name" />}
+                <Input
+                  label={mode === "signIn" ? t("auth.usernameOrNumber") : t("auth.username")}
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoComplete="username"
+                  textContentType="username"
+                />
+                <Input label={t("auth.password")} value={password} onChangeText={setPassword} secureTextEntry autoComplete={mode === "signIn" ? "current-password" : "new-password"} textContentType={mode === "signIn" ? "password" : "newPassword"} />
+                <Button title={mode === "signIn" ? t("auth.signIn") : t("auth.createAccount")} onPress={() => void submit()} busy={busy} />
+              </>
+            )}
+            {error && <Text accessibilityRole="alert" style={{ color: colors.danger, textAlign: "center" }}>{error}</Text>}
           </Card>
+          {mode !== "start" && link(t("auth.startNow"), "start")}
+          {mode !== "signIn" && link(`${t("auth.haveNumber")} ${t("auth.signIn")}`, "signIn")}
+          {mode !== "register" && link(t("auth.createWithUsername"), "register")}
           <Body muted center>{t("app.signature")}</Body>
         </ScrollView>
       </KeyboardAvoidingView>

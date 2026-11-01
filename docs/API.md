@@ -18,14 +18,17 @@ against the homeserver; this API only manages relationships and policy.
 | `GET /v1/config` | – | `{ homeserverUrl, serverName }` |
 | `POST /v1/auth/register` | – | Body `{ username, password, displayName, locale? }`. Creates the homeserver account and iMello record. 201 `{ userId, homeserverUrl, serverName }`. Errors: `username_length`, `username_characters`, `username_reserved`, `username_unavailable` (409), `password_too_short`, `display_name_invalid`. Limit: `REGISTRATION_RATE_LIMIT` per IP / 10 min (default 5). |
 
-Sign-in is done directly against the homeserver (`POST /_matrix/client/v3/login`).
+| `POST /v1/auth/quick` | – | **Start now.** Body `{ deviceSecret (≥32 chars, random, generated and kept on the device), displayName?, locale? }` → 201 `{ userId, pin: "mell-NNNNNN", homeserverUrl, serverName }`. The number is the username; `credential` is `device` until protected. Same rate limit as registration. |
+
+Sign-in is done directly against the homeserver (`POST /_matrix/client/v3/login`) with a username or iMello number.
 
 ## Account
 
 | Method & path | Description |
 | --- | --- |
-| `GET /v1/me` | `{ userId, username, displayName, kind: "adult"\|"child", locale, createdAt, guardians[] }` |
+| `GET /v1/me` | `{ userId, username, pin, credential: "password"\|"device", displayName, kind: "adult"\|"child", locale, createdAt, guardians[] }` |
 | `PATCH /v1/me` | `{ displayName?, locale? }` |
+| `POST /v1/me/protected` | Marks the account `credential: "password"` after the client changed the homeserver password from the device secret to the user's own. |
 | `GET /v1/me/export` | Everything the policy service stores about the caller (5/hour). Messages are not included (they are E2EE on the homeserver). |
 | `DELETE /v1/me` | Deletes relationships, marks the account deactivated (homeserver immediately refuses new conversations). The client then deactivates the homeserver account with the user's password. |
 
@@ -40,6 +43,14 @@ Sign-in is done directly against the homeserver (`POST /_matrix/client/v3/login`
 | `DELETE /v1/contacts/:userId` | Remove a contact. |
 | `POST /v1/blocks` / `DELETE /v1/blocks/:userId` | Block / unblock. Blocking overrides contacts and guardianship for messaging. |
 | `POST /v1/reports` | `{ userId, reason: spam\|harassment\|impersonation\|inappropriate_content\|child_safety\|other, details? }` (10/hour). |
+
+## Contact requests by iMello number
+
+| Method & path | Description |
+| --- | --- |
+| `POST /v1/contact-requests` | `{ pin }` (loose spellings and Arabic digits accepted). Always 202 `{ status: "sent" }` for unknown, blocked or pending targets, so numbers cannot be probed; 200 `already_contact` for existing contacts. If the target already asked you, this accepts. Requests to a child go to the child's guardian as an approval. 20/hour. |
+| `GET /v1/contact-requests` | `{ incoming: [{ requestId, userId, displayName, pin, createdAt }] }`. Outgoing requests are deliberately not listed (would confirm a number exists). |
+| `POST /v1/contact-requests/:id` | `{ accept: boolean }` → `{ contactStatus }` (`accepted`, `pending_guardian` if a child is involved, or `null` when declined). Recipient only. |
 
 ## Guardian
 

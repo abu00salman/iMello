@@ -11,6 +11,10 @@ Honest list of what does **not** work yet or works with caveats. Kept in sync wi
 - **No encrypted key backup / recovery key.** Signing in on a new device does not give access to earlier messages,
   and losing all devices loses history. This is intentional until secure backup is designed.
 - **Account recovery** without the password is not implemented (no email/phone recovery by design so far).
+- **"Start now" accounts** are tied to the device until the user sets a password: losing the device or signing
+  out before protecting the account loses it (the app warns before sign-out). Numbers are 6 digits (1,000,000
+  possibilities); requests are rate-limited and answer identically for unknown numbers, but a determined attacker
+  could still spend time sending requests to random numbers — recipients must accept, and children never see them.
 - **Passkeys / 2FA** are not implemented.
 - The Policy API caches access-token validity for up to **30 seconds**, so a revoked device can still call the
   Policy API (not the homeserver) briefly.

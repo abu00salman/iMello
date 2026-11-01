@@ -61,12 +61,14 @@ jobs:
 
   ios:
     name: iOS unsigned IPA
-    runs-on: macos-15
+    # Expo SDK 58's expo-modules-jsi compiles from source and needs a newer Swift than Xcode 26.3.
+    runs-on: macos-26
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - name: Select newest Xcode
         run: |
+          ls -d /Applications/Xcode*.app
           XCODE=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
           echo "Using $XCODE"
           sudo xcode-select -s "$XCODE"
@@ -83,12 +85,9 @@ jobs:
         working-directory: apps/mobile/ios
         run: |
           set -o pipefail
-          # Xcode 26.3's Swift 6 mode rejects a data-race diagnostic in expo-modules-jsi (SDK 58);
-          # Swift 5 language mode reports it as a warning. Revisit when Expo ships a fix.
           xcodebuild -workspace iMello.xcworkspace -scheme iMello -configuration Release \
             -sdk iphoneos -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/iMello.xcarchive" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            SWIFT_VERSION=5 SWIFT_STRICT_CONCURRENCY=minimal \
             archive > "$RUNNER_TEMP/xcodebuild.log" 2>&1 || {
               echo "::group::xcodebuild errors"
               grep -nE "error:|fatal error|\*\* ARCHIVE FAILED|Command PhaseScriptExecution failed" "$RUNNER_TEMP/xcodebuild.log" | head -n 60

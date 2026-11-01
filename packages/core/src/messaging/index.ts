@@ -32,6 +32,7 @@ import { parseAttachment, type AttachmentInfo } from "./attachments";
 
 export * from "./attachments";
 export * from "./keyExport";
+export * from "./calls";
 
 export const MEGOLM_ALGORITHM = "m.megolm.v1.aes-sha2";
 

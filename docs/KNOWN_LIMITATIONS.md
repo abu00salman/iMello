@@ -42,7 +42,13 @@ Dangerous file types are never opened automatically and warn before download. No
 Edit, delete, reactions, forwarding, pinning, archive, mute, disappearing messages, read-receipt display (receipts
 are sent but not shown), message search beyond the conversation list filter, image compression/thumbnails, video
 recording, voice "hold to record / slide to cancel / lock" gestures (voice uses tap-to-record), location sharing, group-chat UI
-(group *rules* are enforced server-side), push notifications, voice/video calls.
+(group *rules* are enforced server-side), closed-app push notifications, video calls, group calls.
+
+**Voice calls (1:1)** work over WebRTC (DTLS-SRTP; signalling sent inside the encrypted room). Only a public STUN
+server is configured, no TURN relay, so calls may fail on strict networks (some mobile carriers / corporate NAT).
+In-app notifications work while iMello is open or recently backgrounded only.
+
+**Key backup** is an encrypted file saved on the user's own device only; iMello never uploads it.
 
 ## Product
 

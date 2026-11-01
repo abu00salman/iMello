@@ -16,6 +16,7 @@ import {
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { usePrefs } from "../lib/prefs";
 import { navigate } from "../lib/router";
+import { useCalls } from "../lib/calls";
 import { useClientVersion, useSession } from "../lib/session";
 import { AttachmentView, formatDuration, imageSize, useVoiceRecorder } from "../ui/attachments";
 import { Avatar, Button, EmptyState, LockBadge } from "../ui/components";
@@ -112,6 +113,7 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
   const endRef = useRef<HTMLDivElement>(null);
   const typingRef = useRef<number>(0);
   // All hooks must run before any early return below (invite / loading states).
+  const calls = useCalls();
   const recorder = useVoiceRecorder();
   const fileInput = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState<{ name: string; progress: number } | null>(null);
@@ -229,6 +231,11 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
           <strong>{otherName}</strong>
           {encrypted ? <LockBadge label={t("chat.encrypted")} /> : encrypted === false ? <span className="warn">{t("chat.notEncrypted")}</span> : null}
         </div>
+        {calls.supported && encrypted && (
+          <button className="icon-btn call-start" onClick={() => void calls.call(roomId)} disabled={!!calls.active} aria-label={t("call.start")}>
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11 11 0 0 0 3.6.6 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11 11 0 0 0 .6 3.6 1 1 0 0 1-.25 1Z" /></svg>
+          </button>
+        )}
       </header>
       <div className="messages" role="log" aria-live="polite" aria-relevant="additions">
         {messages.map((m) => {

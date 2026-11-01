@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react
 import { useId } from "react";
 
 export function Logo({ size = 40 }: { size?: number }) {
-  return <img src="/icon.svg" width={size} height={size} alt="" className="logo" />;
+  return <img src={`${import.meta.env.BASE_URL}icon.svg`} width={size} height={size} alt="" className="logo" />;
 }
 
 const AVATAR_COLORS = ["#3D7FE0", "#8E78E8", "#2FA36B", "#D9465B", "#D99A2B", "#2B9FB3", "#C25BA8"];

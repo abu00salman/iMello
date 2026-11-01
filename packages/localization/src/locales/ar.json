@@ -92,5 +92,6 @@
   "family.role.admin": "مسؤول",
   "family.role.guardian": "ولي أمر",
   "family.role.member": "عضو",
-  "family.role.child": "طفل"
+  "family.role.child": "طفل",
+  "auth.serverUnavailable": "خادم آي ميلو غير متصل بعد، لذلك لن يعمل تسجيل الدخول أو إنشاء الحسابات في موقع التجربة هذا."
 }

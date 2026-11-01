@@ -1,12 +1,16 @@
 import { ApiError, MIN_PASSWORD_LENGTH, validateUsername } from "@imello/core";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { usePrefs } from "../lib/prefs";
 import { useSession } from "../lib/session";
 import { Button, Field, Logo } from "../ui/components";
 
 export function AuthScreen() {
   const { t, locale, setLocale } = usePrefs();
-  const { signIn, register, notice } = useSession();
+  const { signIn, register, notice, api } = useSession();
+  const [serverDown, setServerDown] = useState(false);
+  useEffect(() => {
+    api.config().then(() => setServerDown(false), () => setServerDown(true));
+  }, [api]);
   const [mode, setMode] = useState<"signIn" | "register">("signIn");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -52,6 +56,7 @@ export function AuthScreen() {
           <h1>{t("app.name")}</h1>
           <p className="tagline">{t("app.tagline")}</p>
         </div>
+        {serverDown && <p className="notice" role="status">{t("auth.serverUnavailable")}</p>}
         {notice && <p className="notice" role="status">{notice}</p>}
         <form onSubmit={submit} noValidate>
           <h2>{mode === "signIn" ? t("auth.signIn") : t("auth.createAccount")}</h2>

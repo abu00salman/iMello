@@ -92,5 +92,6 @@
   "family.role.admin": "Admin",
   "family.role.guardian": "Guardian",
   "family.role.member": "Member",
-  "family.role.child": "Child"
+  "family.role.child": "Child",
+  "auth.serverUnavailable": "The iMello server is not connected yet, so signing in and creating accounts will not work on this test site."
 }

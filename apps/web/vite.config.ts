@@ -41,9 +41,23 @@ export const securityHeaders = (csp: string): Record<string, string> => ({
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
   const connect = [env.VITE_API_URL ?? "http://localhost:8787", env.VITE_HOMESERVER_URL ?? "http://localhost:8008"];
+  const metaCsp = env.VITE_CSP_META === "true";
   return {
+    // Sub-path hosting (e.g. GitHub Pages project sites: VITE_BASE=/iMello/).
+    base: env.VITE_BASE ?? "/",
     plugins: [
       react(),
+      {
+        // Static hosts that cannot send HTTP headers (GitHub Pages) get the CSP as a <meta> tag.
+        // frame-ancestors is not supported in <meta>, so clickjacking protection is weaker there.
+        name: "imello-meta-csp",
+        apply: "build",
+        transformIndexHtml(html) {
+          if (!metaCsp) return html;
+          const csp = contentSecurityPolicy(connect).replace(/; frame-ancestors 'none'/, "");
+          return html.replace("<head>", `<head>\n    <meta http-equiv="Content-Security-Policy" content="${csp}" />`);
+        },
+      },
       {
         // Emit Cloudflare Pages / Netlify-style _headers so production gets real CSP headers.
         name: "imello-security-headers",

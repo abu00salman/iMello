@@ -28,7 +28,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["scripts/**", "tests/**", "services/api/src/migrate.ts", "**/*.test.ts"],
+    files: ["scripts/**", "**/scripts/**", "tests/**", "services/api/src/migrate.ts", "**/*.test.ts"],
     rules: { "no-console": "off" },
   },
 );

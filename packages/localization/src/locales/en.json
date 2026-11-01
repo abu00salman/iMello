@@ -88,5 +88,9 @@
   "settings.about": "About",
   "kids.hello": "Hi {name}!",
   "kids.whoToTalk": "Who do you want to talk to?",
-  "mobile.messagingUnavailable": "Encrypted messaging on this device is not available yet. Use the iMello web app while native encryption support is being completed."
+  "mobile.messagingUnavailable": "Encrypted messaging on this device is not available yet. Use the iMello web app while native encryption support is being completed.",
+  "family.role.admin": "Admin",
+  "family.role.guardian": "Guardian",
+  "family.role.member": "Member",
+  "family.role.child": "Child"
 }

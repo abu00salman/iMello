@@ -88,5 +88,9 @@
   "settings.about": "حول التطبيق",
   "kids.hello": "مرحبًا {name}!",
   "kids.whoToTalk": "مع من تريد أن تتحدث؟",
-  "mobile.messagingUnavailable": "المراسلة المشفّرة على هذا الجهاز غير متاحة بعد. استخدم تطبيق آي ميلو على الويب ريثما يكتمل دعم التشفير الأصلي."
+  "mobile.messagingUnavailable": "المراسلة المشفّرة على هذا الجهاز غير متاحة بعد. استخدم تطبيق آي ميلو على الويب ريثما يكتمل دعم التشفير الأصلي.",
+  "family.role.admin": "مسؤول",
+  "family.role.guardian": "ولي أمر",
+  "family.role.member": "عضو",
+  "family.role.child": "طفل"
 }

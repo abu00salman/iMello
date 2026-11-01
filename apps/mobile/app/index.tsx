@@ -1,17 +1,121 @@
-import { Redirect } from "expo-router";
-import { ActivityIndicator, View } from "react-native";
-import { usePrefs } from "../src/prefs";
-import { useSession } from "../src/session";
+/**
+ * iMello app shell.
+ *
+ * Hosts the iMello web client — the same end-to-end-encrypted client (matrix-js-sdk + Rust crypto
+ * compiled to WebAssembly) that is covered by the automated tests — inside a native WebView, with
+ * native microphone/photo permissions, Android back navigation and external links opened in the
+ * system browser. Keys and session live in the WebView's persistent, app-private storage.
+ *
+ * A fully native crypto client (matrix-rust-sdk) is planned; see docs/ARCHITECTURE.md §6.
+ */
+import Constants from "expo-constants";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, BackHandler, Linking, PermissionsAndroid, Platform, Pressable, Text, useColorScheme, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { WebView as RNWebView, type WebViewNavigation, type WebViewProps } from "react-native-webview";
+import type { ComponentType, Ref } from "react";
 
-export default function Index() {
-  const { status } = useSession();
-  const { colors } = usePrefs();
-  if (status === "loading") {
+// react-native-webview's class typings resolve a different @types/react copy in this monorepo;
+// re-type the component once instead of casting every prop.
+const WebView = RNWebView as unknown as ComponentType<WebViewProps & { ref?: Ref<RNWebView> }>;
+
+const WEB_URL: string = (Constants.expoConfig?.extra?.webUrl as string | undefined) ?? "https://abu00salman.github.io/iMello/";
+const WEB_ORIGIN = new URL(WEB_URL).origin;
+
+export default function Shell() {
+  const dark = useColorScheme() === "dark";
+  const bg = dark ? "#0E1015" : "#F7F8FB";
+  const web = useRef<RNWebView>(null);
+  const canGoBack = useRef(false);
+  const [failed, setFailed] = useState(false);
+  const [key, setKey] = useState(0);
+
+  // Android: the WebView can only use the microphone if the app holds the runtime permission.
+  useEffect(() => {
+    if (Platform.OS === "android") void PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
+  }, []);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (canGoBack.current) {
+        web.current?.goBack();
+        return true;
+      }
+      return false;
+    });
+    return () => sub.remove();
+  }, []);
+
+  /** Stay inside iMello; anything else (http links in messages, GitHub, etc.) opens in the browser. */
+  function allow(req: WebViewNavigation): boolean {
+    const url = req.url;
+    if (url.startsWith("blob:") || url.startsWith("data:") || url === "about:blank") return false;
+    if (url.startsWith(WEB_ORIGIN)) return true;
+    void Linking.openURL(url);
+    return false;
+  }
+
+  if (failed) {
+    const ar = (Constants.expoConfig?.extra?.lang ?? "") === "ar" || /^ar/i.test(Intl.DateTimeFormat().resolvedOptions().locale);
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
-        <ActivityIndicator color={colors.accent} />
-      </View>
+      <SafeAreaView style={{ flex: 1, backgroundColor: bg, alignItems: "center", justifyContent: "center", padding: 24, gap: 16 }}>
+        <Text style={{ color: dark ? "#F2F4F8" : "#171A21", fontSize: 18, textAlign: "center" }}>
+          {ar ? "تعذّر الاتصال بآي ميلو. تحقق من الإنترنت." : "Can't reach iMello. Check your connection."}
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            setFailed(false);
+            setKey((k) => k + 1);
+          }}
+          style={{ backgroundColor: "#3D7FE0", borderRadius: 999, paddingHorizontal: 28, paddingVertical: 12 }}
+        >
+          <Text style={{ color: "#fff", fontWeight: "600", fontSize: 16 }}>{ar ? "إعادة المحاولة" : "Try again"}</Text>
+        </Pressable>
+      </SafeAreaView>
     );
   }
-  return <Redirect href={status === "ready" ? "/(tabs)/chats" : "/sign-in"} />;
+
+  return (
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: bg }}>
+      <WebView
+        key={key}
+        ref={web}
+        source={{ uri: WEB_URL }}
+        style={{ flex: 1, backgroundColor: bg }}
+        originWhitelist={[WEB_ORIGIN, "https://*"]}
+        onShouldStartLoadWithRequest={allow}
+        onNavigationStateChange={(s) => (canGoBack.current = s.canGoBack)}
+        onError={() => setFailed(true)}
+        onHttpError={(e) => e.nativeEvent.statusCode >= 500 && setFailed(true)}
+        startInLoadingState
+        renderLoading={() => (
+          <View style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center", backgroundColor: bg }}>
+            <ActivityIndicator size="large" color="#3D7FE0" />
+          </View>
+        )}
+        // Persistence & media
+        domStorageEnabled
+        javaScriptEnabled
+        sharedCookiesEnabled={false}
+        incognito={false}
+        cacheEnabled
+        allowsInlineMediaPlayback
+        mediaPlaybackRequiresUserAction={false}
+        mediaCapturePermissionGrantType="grant"
+        allowFileAccess={false}
+        allowsBackForwardNavigationGestures
+        setSupportMultipleWindows={false}
+        pullToRefreshEnabled={false}
+        bounces={false}
+        overScrollMode="never"
+        textZoom={100}
+        applicationNameForUserAgent="iMelloApp/1.0"
+        // Security: no mixed content, no third-party cookies, no geolocation.
+        mixedContentMode="never"
+        thirdPartyCookiesEnabled={false}
+        geolocationEnabled={false}
+      />
+    </SafeAreaView>
+  );
 }

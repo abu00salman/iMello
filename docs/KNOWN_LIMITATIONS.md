@@ -22,11 +22,12 @@ Honest list of what does **not** work yet or works with caveats. Kept in sync wi
 
 ## Platforms
 
-- **Mobile (iOS/Android): encrypted messaging is not available yet.** The Expo app supports sign-in/registration,
-  contacts, invites (share sheet), family view and guardian approvals. Chats show an explicit notice. Native E2EE
-  needs the matrix-rust-sdk binding (ARCHITECTURE §6).
-- **No native build has been produced.** iOS and Android JavaScript bundles compile (`expo export`); producing an
-  installable APK/IPA requires EAS Build with an Expo account (and an Apple Developer account for iOS).
+- **Mobile apps host the web client** (react-native-webview) with native microphone/photo permissions, Android back
+  navigation and external links opened in the system browser. Messaging, photos, files and voice messages work in the
+  app with the same tested crypto. Trade-offs: the app loads the web client from GitHub Pages, so it carries the same
+  web-delivery risk as the website (whoever controls the hosting could change the code); no push notifications yet;
+  file "Download" inside the iOS WebView may not save to Files. A fully native client (matrix-rust-sdk) remains planned.
+- Test builds: APK (debug-signed) and unsigned IPA from GitHub Actions; store distribution needs Expo/Apple/Google accounts.
 - Changing language on mobile requires an app restart for the RTL/LTR layout direction to flip (React Native limit).
 - Desktop: use the web client.
 

@@ -1,30 +1,14 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useColorScheme } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { PrefsProvider, usePrefs } from "../src/prefs";
-import { SessionProvider } from "../src/session";
-
-function Root() {
-  const { dark, colors } = usePrefs();
-  return (
-    <>
-      <StatusBar style={dark ? "light" : "dark"} />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} />
-    </>
-  );
-}
 
 export default function Layout() {
+  const dark = useColorScheme() === "dark";
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <PrefsProvider>
-          <SessionProvider>
-            <Root />
-          </SessionProvider>
-        </PrefsProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <SafeAreaProvider>
+      <StatusBar style={dark ? "light" : "dark"} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: dark ? "#0E1015" : "#F7F8FB" } }} />
+    </SafeAreaProvider>
   );
 }

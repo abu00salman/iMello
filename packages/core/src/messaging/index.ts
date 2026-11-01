@@ -85,6 +85,8 @@ export interface StartOptions {
   passwordForCrossSigningSetup?: string;
   clientOpts?: Partial<ICreateClientOpts>;
   initialSyncLimit?: number;
+  /** Open the app after this long even if the first sync hasn't finished (default 12 s). */
+  firstSyncTimeoutMs?: number;
 }
 
 const START_OPTS = {
@@ -125,7 +127,15 @@ export async function startSecureClient(opts: StartOptions): Promise<MatrixClien
 
   const prepared = waitForSync(client);
   await client.startClient({ ...START_OPTS, initialSyncLimit: opts.initialSyncLimit ?? START_OPTS.initialSyncLimit });
-  await prepared;
+  // Don't hold the app on a splash screen when the network is slow or the server is briefly
+  // unreachable: after a grace period the UI opens and sync keeps catching up in the background.
+  // An invalid token (401) still rejects so the caller can sign the device out.
+  void prepared.catch(() => undefined); // a late 401 is handled by the session layer, not unhandled
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  await Promise.race([
+    prepared,
+    new Promise<void>((resolve) => (timer = setTimeout(resolve, opts.firstSyncTimeoutMs ?? 12_000))),
+  ]).finally(() => clearTimeout(timer));
 
   if (opts.passwordForCrossSigningSetup) {
     await ensureCrossSigning(client, opts.passwordForCrossSigningSetup);

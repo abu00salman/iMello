@@ -166,5 +166,7 @@
   "call.decline": "رفض",
   "call.hangup": "إنهاء",
   "call.mute": "كتم",
-  "call.unmute": "إلغاء الكتم"
+  "call.unmute": "إلغاء الكتم",
+  "common.slowLoading": "الاتصال بطيء. تأكد من الإنترنت أو أعد المحاولة.",
+  "common.retry": "أعد المحاولة"
 }

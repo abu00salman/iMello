@@ -166,5 +166,7 @@
   "call.decline": "Decline",
   "call.hangup": "Hang up",
   "call.mute": "Mute",
-  "call.unmute": "Unmute"
+  "call.unmute": "Unmute",
+  "common.slowLoading": "This is taking longer than usual. Check your connection or try again.",
+  "common.retry": "Try again"
 }

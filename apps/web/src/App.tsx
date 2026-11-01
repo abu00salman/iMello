@@ -28,10 +28,7 @@ export function App() {
 
   if (status === "loading") {
     return (
-      <div className="splash" role="status">
-        <Logo size={88} />
-        <p>{t("common.loading")}</p>
-      </div>
+      <Splash />
     );
   }
   if (status === "signedOut") return <AuthScreen />;
@@ -143,6 +140,28 @@ function KidsHome() {
             </li>
           ))}
         </ul>
+      )}
+    </div>
+  );
+}
+
+/** Startup screen. If start-up takes unusually long (very slow network), offer a way out. */
+function Splash() {
+  const { t } = usePrefs();
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setSlow(true), 20_000);
+    return () => clearTimeout(id);
+  }, []);
+  return (
+    <div className="splash" role="status">
+      <Logo size={88} />
+      <p>{t("common.loading")}</p>
+      {slow && (
+        <>
+          <p className="muted small center">{t("common.slowLoading")}</p>
+          <button className="btn btn-secondary" onClick={() => location.reload()}>{t("common.retry")}</button>
+        </>
       )}
     </div>
   );

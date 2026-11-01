@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.expo/
+web-build/
+apps/mobile/android/
+apps/mobile/ios/
+*.tsbuildinfo
+coverage/
+playwright-report/
+test-results/
+
+# Environment & secrets — NEVER commit these
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p8
+*.p12
+*.mobileprovision
+*.jks
+*.keystore
+google-services.json
+GoogleService-Info.plist
+credentials.json
+*.signing.key
+infrastructure/synapse/data/
+infrastructure/synapse/homeserver.generated.yaml
+
+# Local runtime state
+.dev-stack/
+*.log
+*.db
+*.sqlite
+pgdata/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+
+# Python
+__pycache__/
+*.pyc
+.venv/

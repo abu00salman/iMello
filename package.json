@@ -1,0 +1,33 @@
+{
+  "name": "imello",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "iMello — Stay Close. Feel Connected. A private, ad-free, end-to-end encrypted family messenger.",
+  "author": "abu00salman",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm -r --filter=!@imello/mobile run build",
+    "typecheck": "pnpm -r run typecheck",
+    "lint": "eslint .",
+    "test": "pnpm -r --filter=!@imello/e2e run test",
+    "test:e2e": "pnpm --filter @imello/e2e run test",
+    "test:browser": "pnpm --filter @imello/e2e run test:browser",
+    "dev:stack": "bash scripts/dev-stack.sh start",
+    "dev:stack:stop": "bash scripts/dev-stack.sh stop",
+    "dev:api": "pnpm --filter @imello/api run dev",
+    "dev:web": "pnpm --filter @imello/web run dev",
+    "db:migrate": "pnpm --filter @imello/api run migrate"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "eslint": "^9.39.0",
+    "globals": "^16.5.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.72.1"
+  }
+}

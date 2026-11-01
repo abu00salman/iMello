@@ -1,0 +1,11 @@
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  test: {
+    include: ["src/**/*.e2e.test.ts"],
+    testTimeout: 120_000,
+    hookTimeout: 120_000,
+    // Suites share one homeserver; run files sequentially for deterministic rate limits.
+    fileParallelism: false,
+  },
+});

@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS audit_events;
+DROP TABLE IF EXISTS reports;
+DROP TABLE IF EXISTS blocks;
+DROP TABLE IF EXISTS invites;
+DROP TABLE IF EXISTS family_members;
+DROP TABLE IF EXISTS families;
+DROP TABLE IF EXISTS contact_approvals;
+DROP TABLE IF EXISTS contacts;
+DROP TABLE IF EXISTS guardianships;
+DROP TABLE IF EXISTS accounts;

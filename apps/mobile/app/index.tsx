@@ -15,6 +15,7 @@ import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, BackHandler, Linking, PermissionsAndroid, Platform, Pressable, Text, useColorScheme, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import { WebView as RNWebView, type WebViewNavigation, type WebViewProps } from "react-native-webview";
 import type { ComponentType, Ref } from "react";
 
@@ -32,17 +33,20 @@ Notifications.setNotificationHandler({
 });
 
 interface BridgeMessage {
-  type: "notify" | "requestNotificationPermission" | "badge" | "saveFile";
+  type: "notify" | "requestNotificationPermission" | "badge" | "saveFile" | "theme";
   name?: string;
   content?: string;
   title?: string;
   body?: string;
   roomId?: string;
   count?: number;
+  dark?: boolean;
 }
 
 export default function Shell() {
-  const dark = useColorScheme() === "dark";
+  const systemDark = useColorScheme() === "dark";
+  const [webTheme, setWebTheme] = useState<"dark" | "light" | null>(null);
+  const dark = webTheme ? webTheme === "dark" : systemDark;
   const bg = dark ? "#0E1015" : "#F7F8FB";
   const web = useRef<RNWebView>(null);
   const canGoBack = useRef(false);
@@ -91,6 +95,8 @@ export default function Shell() {
       file.create();
       file.write(msg.content);
       if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(file.uri, { mimeType: "text/plain", dialogTitle: safeName });
+    } else if (msg.type === "theme") {
+      setWebTheme(msg.dark ? "dark" : "light");
     } else if (msg.type === "badge" && typeof msg.count === "number") {
       await Notifications.setBadgeCountAsync(msg.count).catch(() => undefined);
     }
@@ -138,8 +144,12 @@ export default function Shell() {
   }
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: bg }}>
+    // iOS: edge-to-edge — the web client draws under the status bar (env(safe-area-inset-top)).
+    <SafeAreaView edges={Platform.OS === "ios" ? [] : ["top"]} style={{ flex: 1, backgroundColor: bg }}>
+      <StatusBar style={dark ? "light" : "dark"} />
       <WebView
+        contentInsetAdjustmentBehavior="never"
+        automaticallyAdjustContentInsets={false}
         key={key}
         ref={web}
         source={{ uri: WEB_URL }}

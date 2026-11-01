@@ -51,6 +51,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
     root.lang = locale;
     root.dir = dir;
     root.dataset.theme = resolvedTheme;
+    window.ReactNativeWebView?.postMessage(JSON.stringify({ type: "theme", dark: resolvedTheme === "dark" }));
     // CSSOM assignments are permitted under our CSP (no inline <style> needed).
     for (const [k, v] of Object.entries(schemeToCssVariables(resolvedTheme === "dark" ? darkScheme : lightScheme))) {
       root.style.setProperty(k, v);

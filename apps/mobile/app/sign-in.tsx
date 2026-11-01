@@ -1,6 +1,6 @@
 import { ApiError, validateUsername } from "@imello/core";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { usePrefs } from "../src/prefs";
@@ -11,7 +11,11 @@ type Mode = "start" | "signIn" | "register";
 
 export default function SignIn() {
   const { t, locale, setLocale, colors, rtl } = usePrefs();
-  const { signIn, register, quickStart } = useSession();
+  const { signIn, register, quickStart, api } = useSession();
+  const [serverDown, setServerDown] = useState(false);
+  useEffect(() => {
+    api.config().then(() => setServerDown(false), () => setServerDown(true));
+  }, [api]);
   const [mode, setMode] = useState<Mode>("start");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -30,6 +34,11 @@ export default function SignIn() {
       router.replace("/(tabs)/chats");
     } catch (err) {
       const code = err instanceof ApiError ? err.code : (err as Error).message;
+      // fetch() rejects with a TypeError when the server cannot be reached at all.
+      if (!(err instanceof ApiError) && err instanceof TypeError) {
+        setServerDown(true);
+        return setError(t("auth.serverUnavailable"));
+      }
       setError(
         code === "username_unavailable" ? t("auth.usernameTaken")
         : code === "M_FORBIDDEN" ? t("auth.invalidCredentials")
@@ -59,6 +68,11 @@ export default function SignIn() {
             <Title center>{t("app.name")}</Title>
             <Body muted center>{t("app.tagline")}</Body>
           </View>
+          {serverDown && (
+            <View style={{ backgroundColor: colors.lavender, borderRadius: 14, padding: 14 }}>
+              <Body center>{t("auth.serverUnavailable")}</Body>
+            </View>
+          )}
           <Card>
             {mode === "start" ? (
               <>

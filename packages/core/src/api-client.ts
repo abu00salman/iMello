@@ -73,6 +73,25 @@ export class ImelloApiClient {
   respondToContactRequest(requestId: string, accept: boolean) {
     return this.request<{ contactStatus: string | null }>("POST", `/v1/contact-requests/${requestId}`, { accept });
   }
+
+  /** Web Push: server VAPID key and the push-gateway URL for this device's homeserver pusher. */
+  pushKey() {
+    return this.request<{ publicKey: string; gatewayUrl: string | null }>("GET", "/v1/push/key");
+  }
+
+  registerPush(subscription: { endpoint: string; keys: { p256dh: string; auth: string } }) {
+    return this.request<{ pushkey: string }>("POST", "/v1/push/subscriptions", subscription);
+  }
+
+  unregisterPush(pushkey: string) {
+    return this.request<void>("DELETE", `/v1/push/subscriptions/${encodeURIComponent(pushkey)}`);
+  }
+
+  /** Ask the server to ring a contact's devices (call setup itself is end-to-end encrypted). */
+  ring(userId: string, roomId: string, video: boolean) {
+    return this.request<{ status: "sent" }>("POST", "/v1/push/ring", { userId, roomId, video });
+  }
+
   config() {
     return this.request<{ homeserverUrl: string; serverName: string }>("GET", "/v1/config");
   }

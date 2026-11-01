@@ -53,6 +53,9 @@ source "$STATE/secrets.env"
 : "${RATE_LIMIT_ENABLED:=true}"
 # Automated suites register many accounts from one IP. Production default is 5.
 : "${REGISTRATION_RATE_LIMIT:=500}"
+# Background push: Synapse's pusher calls the API's push gateway. In production this is the
+# public API URL; locally it's loopback, which Synapse blocks unless whitelisted (below).
+: "${PUSH_GATEWAY_URL:=http://127.0.0.1:${API_PORT}/_matrix/push/v1/notify}"
 SYNAPSE_DATA_DIR="$STATE/synapse"
 set +a
 
@@ -69,6 +72,8 @@ wait_for() {
 start() {
   mkdir -p "$SYNAPSE_DATA_DIR"
   python3 "$ROOT/scripts/render-synapse-config.py" "$SYNAPSE_DATA_DIR"
+  # Development only: let the pusher reach the local push gateway on loopback.
+  printf '\nip_range_whitelist: ["127.0.0.1/32"]\n' >> "$SYNAPSE_DATA_DIR/homeserver.yaml"
   if [[ ! -f "$SYNAPSE_DATA_DIR/signing.key" ]]; then
     "$SYNAPSE_PYTHON" -m synapse.app.homeserver -c "$SYNAPSE_DATA_DIR/homeserver.yaml" --generate-keys >/dev/null
   fi

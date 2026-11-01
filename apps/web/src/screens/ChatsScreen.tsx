@@ -233,9 +233,14 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
           {encrypted ? <LockBadge label={t("chat.encrypted")} /> : encrypted === false ? <span className="warn">{t("chat.notEncrypted")}</span> : null}
         </div>
         {calls.supported && encrypted && (
-          <button className="icon-btn call-start" onClick={() => void calls.call(roomId)} disabled={!!calls.active} aria-label={t("call.start")}>
-            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11 11 0 0 0 3.6.6 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11 11 0 0 0 .6 3.6 1 1 0 0 1-.25 1Z" /></svg>
-          </button>
+          <div className="call-buttons">
+            <button className="icon-btn call-start" onClick={() => void calls.call(roomId, true)} disabled={!!calls.active} aria-label={t("call.startVideo")}>
+              <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4Z" /></svg>
+            </button>
+            <button className="icon-btn call-start" onClick={() => void calls.call(roomId)} disabled={!!calls.active} aria-label={t("call.start")}>
+              <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11 11 0 0 0 3.6.6 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11 11 0 0 0 .6 3.6 1 1 0 0 1-.25 1Z" /></svg>
+            </button>
+          </div>
         )}
       </header>
       <div className="messages" role="log" aria-live="polite" aria-relevant="additions">

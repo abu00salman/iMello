@@ -55,7 +55,7 @@ export default function Shell() {
 
   // Android: the WebView can only use the microphone if the app holds the runtime permission.
   useEffect(() => {
-    if (Platform.OS === "android") void PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
+    if (Platform.OS === "android") void PermissionsAndroid.requestMultiple([PermissionsAndroid.PERMISSIONS.RECORD_AUDIO, PermissionsAndroid.PERMISSIONS.CAMERA]);
   }, []);
 
   // Tapping a notification opens that conversation.

@@ -57,8 +57,8 @@ has no plaintext ✅.
 
 ## Phase 5 — Enhanced communication
 
-Voice messages ✅ web (tap to record, playback speed) · encrypted photos & files ✅ web · private group UI ⬜ · in-app notifications ✅ (closed-app push ⬜) · on-device key backup file ✅ ·
-1:1 voice calls ✅ (STUN only, TURN ⬜) · video/group calls ⬜
+Voice messages ✅ web (tap to record, playback speed) · encrypted photos & files ✅ web · private group UI ⬜ · notifications ✅ (closed-app Web Push for Home Screen web app & browsers; native-app push ⬜) · on-device key backup file ✅ ·
+1:1 voice & video calls ✅ (STUN only, TURN ⬜) · group calls ⬜
 
 ## Phase 6 — Fun & premium experience
 

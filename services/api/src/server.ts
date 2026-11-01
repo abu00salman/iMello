@@ -3,6 +3,7 @@ import { loadConfig } from "./config";
 import { createPool } from "./db";
 import { synapseHomeserver } from "./homeserver";
 import { migrateUp } from "./migrate";
+import { webPushSender } from "./push";
 
 const config = loadConfig();
 await migrateUp(config.DATABASE_URL);
@@ -11,6 +12,7 @@ const app = await buildApp({
   config,
   db,
   homeserver: synapseHomeserver(config.HOMESERVER_URL, config.SYNAPSE_REGISTRATION_SHARED_SECRET),
+  push: webPushSender(db, config.PUSH_CONTACT),
 });
 
 const shutdown = async () => {

@@ -5,8 +5,9 @@ import { kids } from "@imello/ui";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { usePrefs } from "./lib/prefs";
 import { navigate, useRoute, type Route } from "./lib/router";
-import { watchMessages } from "./lib/notifications";
-import { useClientVersion, useSession } from "./lib/session";
+import { inApp, notificationsEnabled, watchMessages } from "./lib/notifications";
+import { ensureBackgroundPush } from "./lib/push";
+import { deviceName, useClientVersion, useSession } from "./lib/session";
 import { AuthScreen } from "./screens/AuthScreen";
 import { ChatsScreen } from "./screens/ChatsScreen";
 import { ContactsScreen } from "./screens/ContactsScreen";
@@ -44,8 +45,8 @@ const NAV: { name: Route["name"]; label: MessageKey; icon: ReactNode }[] = [
 ];
 
 function Shell({ route }: { route: Route }) {
-  const { t } = usePrefs();
-  const { me, temporary, client } = useSession();
+  const { t, locale } = usePrefs();
+  const { me, temporary, client, api } = useSession();
   const isChild = me?.kind === "child";
   useEffect(() => {
     if (!client) return;
@@ -56,6 +57,11 @@ function Shell({ route }: { route: Route }) {
       file: "📄",
     });
   }, [client, t]);
+  // Keep this device registered for background notifications (closed-app pushes).
+  useEffect(() => {
+    if (!client || inApp() || !notificationsEnabled()) return;
+    void ensureBackgroundPush(client, api, { locale, deviceName: deviceName() });
+  }, [client, api, locale]);
   const pending = sessionStorage.getItem(PENDING_INVITE);
   const nav = isChild ? NAV.filter((n) => n.name !== "contacts" && n.name !== "calls") : NAV;
 

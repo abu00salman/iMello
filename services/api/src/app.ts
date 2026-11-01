@@ -13,11 +13,14 @@ import { registerInternalRoutes } from "./routes/internal";
 import { registerPublicRoutes } from "./routes/public";
 import { registerRequestRoutes } from "./routes/requests";
 import { registerSocialRoutes } from "./routes/social";
+import { registerPushRoutes } from "./routes/push";
+import type { PushSender } from "./push";
 
 export interface AppDeps {
   config: Config;
   db: Db;
   homeserver: Homeserver;
+  push: PushSender;
 }
 
 declare module "fastify" {
@@ -132,6 +135,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await registerRequestRoutes(app);
   await registerFamilyRoutes(app);
   await registerInternalRoutes(app);
+  await registerPushRoutes(app);
 
   return app;
 }

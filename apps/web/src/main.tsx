@@ -6,6 +6,9 @@ import { PrefsProvider } from "./lib/prefs";
 import { SessionProvider } from "./lib/session";
 import "./styles.css";
 import "./theme.css";
+import { registerServiceWorker } from "./lib/push";
+
+registerServiceWorker(localStorage.getItem("imello.locale") === "en" ? "en" : "ar");
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

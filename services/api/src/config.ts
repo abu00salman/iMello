@@ -28,6 +28,11 @@ const schema = z.object({
     .enum(["true", "false"])
     .default("false")
     .transform((v) => v === "true"),
+  /** Public URL of this service's Matrix push gateway endpoint, given to clients for their pushers
+   *  (must end in /_matrix/push/v1/notify and be reachable from the homeserver). Unset: no background push. */
+  PUSH_GATEWAY_URL: z.string().url().refine((u) => u.endsWith("/_matrix/push/v1/notify")).optional(),
+  /** VAPID contact (mailto: or https:) sent to push services. */
+  PUSH_CONTACT: z.string().default("https://github.com/abu00salman/iMello"),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "silent"]).default("info"),
 });
 

@@ -32,6 +32,8 @@ services:
     environment:
       HOMESERVER_URL: http://synapse:8008
       PUBLIC_HOMESERVER_URL: https://${IMELLO_MATRIX_DOMAIN}
+      # Synapse's pushers call this (over the public URL, so its private-IP blocklist stays on).
+      PUSH_GATEWAY_URL: https://${IMELLO_API_DOMAIN}/_matrix/push/v1/notify
     depends_on: { postgres: { condition: service_healthy } }
     networks: [backend, edge]
 

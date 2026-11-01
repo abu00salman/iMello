@@ -1,6 +1,8 @@
 import { MIN_PASSWORD_LENGTH } from "@imello/core";
 import { exportKeysToFile, importKeysFromFile, listDevices, revokeDevice, WrongPassphraseError, type DeviceInfo } from "@imello/core/messaging";
 import { inApp } from "../lib/notifications";
+import { backgroundPushSupported, disableBackgroundPush, ensureBackgroundPush, needsHomeScreen, type BackgroundPushStatus } from "../lib/push";
+import { deviceName } from "../lib/session";
 import { formatDay } from "@imello/localization";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -26,6 +28,11 @@ export function SettingsScreen() {
   const [protectMsg, setProtectMsg] = useState<string | null>(null);
   const [copiedPin, setCopiedPin] = useState(false);
   const [notifyOn, setNotifyOn] = useState(notificationsEnabled);
+  const [pushStatus, setPushStatus] = useState<BackgroundPushStatus | null>(null);
+  useEffect(() => {
+    if (!client || inApp() || !notifyOn) return setPushStatus(null);
+    void ensureBackgroundPush(client, api, { locale, deviceName: deviceName() }).then(setPushStatus);
+  }, [client, api, locale, notifyOn]);
   const [bkPass, setBkPass] = useState("");
   const [bkPass2, setBkPass2] = useState("");
   const [bkMsg, setBkMsg] = useState<string | null>(null);
@@ -217,7 +224,7 @@ export function SettingsScreen() {
           <>
             <div className="segmented" role="radiogroup" aria-label={t("notify.title")}>
               <button role="radio" aria-checked={notifyOn} onClick={() => void enableNotifications().then(setNotifyOn)}>{t("notify.on")}</button>
-              <button role="radio" aria-checked={!notifyOn} onClick={() => { disableNotifications(); setNotifyOn(false); }}>{t("notify.off")}</button>
+              <button role="radio" aria-checked={!notifyOn} onClick={() => { disableNotifications(); setNotifyOn(false); void disableBackgroundPush(client, api); }}>{t("notify.off")}</button>
             </div>
             <label className="check">
               <input type="checkbox" checked={preview} onChange={(e) => { setPreviewEnabled(e.target.checked); setPreview(e.target.checked); }} />
@@ -226,10 +233,22 @@ export function SettingsScreen() {
                 <small>{t("notify.previewHint")}</small>
               </span>
             </label>
-            <p className="muted small">{t("notify.limit")}</p>
+            {inApp() ? (
+              <p className="muted small">{t("notify.limitApp")}</p>
+            ) : pushStatus === "on" ? (
+              <p className="notice small" data-testid="push-status">✅ {t("notify.background.on")}</p>
+            ) : pushStatus === "serverOff" ? (
+              <p className="muted small">{t("notify.background.serverOff")}</p>
+            ) : pushStatus === "denied" ? (
+              <p className="warn">{t("notify.background.denied")}</p>
+            ) : pushStatus === "error" ? (
+              <p className="warn">{t("notify.background.error")}</p>
+            ) : !backgroundPushSupported() ? (
+              <p className="muted small">{t("notify.limit")}</p>
+            ) : null}
           </>
         ) : (
-          <p className="muted">{t("notify.unsupported")}</p>
+          <p className="muted">{needsHomeScreen() ? t("notify.homeScreen") : t("notify.unsupported")}</p>
         )}
       </Card>
 

@@ -11,6 +11,7 @@ import { loadConfig } from "../src/config";
 import { createPool, type Db } from "../src/db";
 import { HomeserverError, type Homeserver } from "../src/homeserver";
 import { migrateDown, migrateUp } from "../src/migrate";
+import type { PushPayload, PushSender, PushTarget } from "../src/push";
 
 const DATABASE_URL = process.env.TEST_DATABASE_URL ?? "postgres://imello:imello@127.0.0.1:5432/imello_test";
 const POLICY_SECRET = "p".repeat(40);
@@ -34,7 +35,21 @@ class FakeHomeserver implements Homeserver {
   }
 }
 
+class FakePush implements PushSender {
+  sent: { endpoint: string; payload: PushPayload; urgency: string }[] = [];
+  goneEndpoints = new Set<string>();
+  async publicKey() {
+    return "BPUBLICKEY";
+  }
+  async send(target: PushTarget, payload: PushPayload, opts: { urgency: "high" | "normal" }) {
+    if (this.goneEndpoints.has(target.endpoint)) return "gone" as const;
+    this.sent.push({ endpoint: target.endpoint, payload, urgency: opts.urgency });
+    return "ok" as const;
+  }
+}
+
 let app: FastifyInstance;
+let push: FakePush;
 let db: Db;
 let hs: FakeHomeserver;
 
@@ -58,7 +73,7 @@ async function build(overrides: Record<string, string> = {}) {
     REGISTRATION_RATE_LIMIT: "1000",
     ...overrides,
   });
-  return buildApp({ config, db, homeserver: hs });
+  return buildApp({ config, db, homeserver: hs, push });
 }
 
 interface User { userId: string; token: string; username: string }
@@ -104,14 +119,16 @@ beforeEach(async () => {
   await app?.close();
   await resetDb();
   hs = new FakeHomeserver();
+  push = new FakePush();
   app = await build();
 });
 
 describe("migrations", () => {
   it("roll back and re-apply cleanly", async () => {
+    expect(await migrateDown(DATABASE_URL)).toBe("003_push");
     expect(await migrateDown(DATABASE_URL)).toBe("002_quick_accounts");
     expect(await migrateDown(DATABASE_URL)).toBe("001_init");
-    expect(await migrateUp(DATABASE_URL)).toEqual(["001_init", "002_quick_accounts"]);
+    expect(await migrateUp(DATABASE_URL)).toEqual(["001_init", "002_quick_accounts", "003_push"]);
     expect(await migrateUp(DATABASE_URL)).toEqual([]);
   });
 });
@@ -433,5 +450,59 @@ describe("account lifecycle", () => {
     const all = JSON.stringify((await db.query("SELECT * FROM audit_events")).rows);
     expect(all).not.toContain("a strong password");
     expect(all).not.toContain(a.token);
+  });
+});
+
+describe("background push", () => {
+  const sub = (n: string) => ({ endpoint: `https://push.example/${n}`, keys: { p256dh: "p".repeat(40), auth: "a".repeat(16) } });
+  const notify = (pushkey: string, extra: Record<string, unknown> = {}) =>
+    app.inject({
+      method: "POST",
+      url: "/_matrix/push/v1/notify",
+      payload: { notification: { event_id: "$e", room_id: "!r:test.local", counts: { unread: 2 }, devices: [{ app_id: "com.imello.web", pushkey, ...extra }] } },
+    });
+
+  it("registers a subscription and delivers content-free alerts from the homeserver pusher", async () => {
+    const a = await register("push1");
+    expect((await as(a).post("/v1/push/subscriptions", { endpoint: "http://insecure", keys: sub("x").keys })).statusCode).toBe(400);
+    const { pushkey } = (await as(a).post("/v1/push/subscriptions", sub("a"))).json();
+    expect(pushkey).toMatch(/^[\w-]{43}$/);
+    const res = await notify(pushkey);
+    expect(res.json()).toEqual({ rejected: [] });
+    expect(push.sent).toEqual([{ endpoint: "https://push.example/a", payload: { t: "msg", r: "!r:test.local", u: 2 }, urgency: "normal" }]);
+    // No message text, sender or event id ever goes into a push payload.
+    expect(JSON.stringify(push.sent)).not.toContain("$e");
+  });
+
+  it("rejects unknown pushkeys and removes subscriptions the push service says are gone", async () => {
+    const a = await register("push2");
+    const { pushkey } = (await as(a).post("/v1/push/subscriptions", sub("b"))).json();
+    expect((await notify("nope")).json()).toEqual({ rejected: ["nope"] });
+    push.goneEndpoints.add("https://push.example/b");
+    expect((await notify(pushkey)).json()).toEqual({ rejected: [pushkey] });
+    expect((await db.query("SELECT 1 FROM push_subscriptions")).rowCount).toBe(0);
+  });
+
+  it("re-subscribing the same browser issues a new pushkey (old one stops working)", async () => {
+    const a = await register("push3");
+    const b = await register("push4");
+    const first = (await as(a).post("/v1/push/subscriptions", sub("same"))).json().pushkey;
+    const second = (await as(b).post("/v1/push/subscriptions", sub("same"))).json().pushkey;
+    expect(second).not.toBe(first);
+    expect((await notify(first)).json()).toEqual({ rejected: [first] });
+  });
+
+  it("rings only contacts the policy allows, with the same answer otherwise", async () => {
+    const [a, b, c] = [await register("ring1"), await register("ring2"), await register("ring3")];
+    await as(b).post("/v1/push/subscriptions", sub("ringb"));
+    await as(c).post("/v1/push/subscriptions", sub("ringc"));
+    const token = await contactInvite(a);
+    await as(b).post("/v1/invites/redeem", { token });
+    const ok = await as(a).post("/v1/push/ring", { userId: b.userId, roomId: "!room:test.local", video: true });
+    expect(ok.statusCode).toBe(202);
+    const stranger = await as(a).post("/v1/push/ring", { userId: c.userId, roomId: "!room:test.local" });
+    expect(stranger.statusCode).toBe(202);
+    expect(stranger.json()).toEqual(ok.json());
+    expect(push.sent).toEqual([{ endpoint: "https://push.example/ringb", payload: { t: "call", r: "!room:test.local", v: true, n: "ring1" }, urgency: "high" }]);
   });
 });

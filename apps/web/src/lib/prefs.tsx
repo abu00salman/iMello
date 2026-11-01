@@ -1,3 +1,4 @@
+import { sendPrefsToServiceWorker } from "./push";
 import { createTranslator, direction, negotiateLocale, type Locale, type MessageKey } from "@imello/localization";
 import { darkScheme, lightScheme, schemeToCssVariables, typography } from "@imello/ui";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -49,6 +50,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const root = document.documentElement;
     root.lang = locale;
+    sendPrefsToServiceWorker(locale);
     root.dir = dir;
     root.dataset.theme = resolvedTheme;
     window.ReactNativeWebView?.postMessage(JSON.stringify({ type: "theme", dark: resolvedTheme === "dark" }));

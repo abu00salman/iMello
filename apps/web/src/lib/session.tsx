@@ -1,4 +1,5 @@
 import { ApiError, ImelloApiClient, normalizePin, type Me } from "@imello/core";
+import { disableBackgroundPush } from "./push";
 import {
   configureSdkLogging,
   loginWithPassword,
@@ -56,7 +57,7 @@ interface SessionState {
 
 const SessionContext = createContext<SessionState | null>(null);
 
-function deviceName(): string {
+export function deviceName(): string {
   const ua = navigator.userAgent;
   const browser = /Edg\//.test(ua) ? "Edge" : /Firefox\//.test(ua) ? "Firefox" : /Chrome\//.test(ua) ? "Chrome" : /Safari\//.test(ua) ? "Safari" : "Browser";
   const os = /iPhone|iPad/.test(ua) ? "iOS" : /Android/.test(ua) ? "Android" : /Mac OS X/.test(ua) ? "macOS" : /Windows/.test(ua) ? "Windows" : /Linux/.test(ua) ? "Linux" : "";
@@ -205,6 +206,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     const c = clientRef.current;
+    await disableBackgroundPush(c, apiRef.current).catch(() => undefined);
     if (c) await matrixSignOut(c).catch(() => undefined);
     await forget();
   }, [forget]);

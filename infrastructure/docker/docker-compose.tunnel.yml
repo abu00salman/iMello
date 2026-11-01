@@ -1,0 +1,18 @@
+# Overlay for running iMello at home (e.g. a Mac mini) behind a free Cloudflare Tunnel.
+# No open ports on the router: cloudflared makes an outbound connection to Cloudflare.
+#   docker compose -f docker-compose.yml -f docker-compose.tunnel.yml --env-file ../../.env up -d
+services:
+  caddy:
+    ports: !reset []
+    volumes: !override
+      - ./Caddyfile.tunnel:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in .env}
+    depends_on: [caddy]
+    networks: [edge]

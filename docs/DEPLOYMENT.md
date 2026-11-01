@@ -26,6 +26,22 @@ bash scripts/dev-stack.sh stop
 
 On a Mac mini M2: `brew install postgresql@16 python@3.12 pnpm` then the same commands. No Xcode needed.
 
+## Free option: Mac mini at home + Cloudflare Tunnel (no VPS)
+
+No monthly cost. The Mac must stay on and awake; uptime depends on home power/internet.
+
+1. Install **Docker Desktop** on the Mac and open it (enable "Start when you sign in").
+2. Cloudflare dashboard → **Zero Trust → Networks → Tunnels → Create a tunnel → Cloudflared**, name it `imello`,
+   copy the **token** (skip the connector install step — Docker runs it).
+3. In the tunnel, add **Public hostnames** (both pointing to service `HTTP` → `caddy:80`):
+   `imello-api.abu00salman.com` and `imello-matrix.abu00salman.com`. Cloudflare creates the DNS records.
+4. On the Mac:
+   ```bash
+   git clone -b claude/imello-messenger-dev-12zxqe https://github.com/abu00salman/iMello.git && cd iMello
+   bash scripts/install-mac.sh --domain abu00salman.com --tunnel-token <TOKEN>
+   ```
+5. Continue with steps 3–5 of the quick path below (GitHub variables, Pages domain, app rebuild).
+
 ## Quick path for abu00salman.com (one VPS + Cloudflare DNS + GitHub Pages)
 
 | Host | DNS record (Cloudflare, **DNS only / grey cloud**) | Serves |

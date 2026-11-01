@@ -31,6 +31,7 @@ import { logger as sdkLogger } from "matrix-js-sdk/lib/logger.js";
 import { parseAttachment, type AttachmentInfo } from "./attachments";
 
 export * from "./attachments";
+export * from "./keyExport";
 
 export const MEGOLM_ALGORITHM = "m.megolm.v1.aes-sha2";
 
@@ -453,3 +454,21 @@ export async function signOut(client: MatrixClient): Promise<void> {
 }
 
 export type { MatrixClient } from "matrix-js-sdk";
+
+/** Export this device's message keys as an encrypted file (standard Matrix key-export format). */
+export async function exportKeysToFile(client: MatrixClient, passphrase: string): Promise<string> {
+  const crypto = client.getCrypto();
+  if (!crypto) throw new Error("Crypto not initialised");
+  const { encryptKeyExport } = await import("./keyExport");
+  return encryptKeyExport(await crypto.exportRoomKeysAsJson(), passphrase);
+}
+
+/** Import message keys from a backup file; earlier messages become readable on this device. */
+export async function importKeysFromFile(client: MatrixClient, file: string, passphrase: string): Promise<number> {
+  const crypto = client.getCrypto();
+  if (!crypto) throw new Error("Crypto not initialised");
+  const { decryptKeyExport } = await import("./keyExport");
+  const json = await decryptKeyExport(file, passphrase);
+  await crypto.importRoomKeysAsJson(json);
+  return (JSON.parse(json) as unknown[]).length;
+}

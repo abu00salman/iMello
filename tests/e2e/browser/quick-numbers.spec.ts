@@ -57,8 +57,9 @@ test("Start now → add by number → accept → encrypted chat → protect acco
   // Fahad protects his account, signs out, and signs back in with number + password.
   const password = "fahad-pass-" + randomBytes(3).toString("hex");
   await fahad.page.getByRole("link", { name: "Settings" }).click();
-  await fahad.page.getByLabel("New password").fill(password);
-  await fahad.page.getByLabel("Confirm password").fill(password);
+  const protectForm = fahad.page.locator(".protect-card");
+  await protectForm.getByLabel("New password").fill(password);
+  await protectForm.getByLabel("Confirm password").fill(password);
   await fahad.page.getByRole("button", { name: "Protect your account" }).click();
   await expect(fahad.page.getByText("Your account is protected.")).toBeVisible();
   await fahad.page.getByRole("button", { name: "Sign out", exact: true }).click();

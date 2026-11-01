@@ -1,7 +1,16 @@
 import { MIN_PASSWORD_LENGTH } from "@imello/core";
-import { listDevices, revokeDevice, type DeviceInfo } from "@imello/core/messaging";
+import { exportKeysToFile, importKeysFromFile, listDevices, revokeDevice, WrongPassphraseError, type DeviceInfo } from "@imello/core/messaging";
+import { inApp } from "../lib/notifications";
 import { formatDay } from "@imello/localization";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  disableNotifications,
+  enableNotifications,
+  notificationsEnabled,
+  notificationsSupported,
+  previewEnabled,
+  setPreviewEnabled,
+} from "../lib/notifications";
 import { usePrefs, type ThemePref } from "../lib/prefs";
 import { useSession } from "../lib/session";
 import { Button, Card, Field, LockBadge } from "../ui/components";
@@ -16,6 +25,61 @@ export function SettingsScreen() {
   const [pw2, setPw2] = useState("");
   const [protectMsg, setProtectMsg] = useState<string | null>(null);
   const [copiedPin, setCopiedPin] = useState(false);
+  const [notifyOn, setNotifyOn] = useState(notificationsEnabled);
+  const [bkPass, setBkPass] = useState("");
+  const [bkPass2, setBkPass2] = useState("");
+  const [bkMsg, setBkMsg] = useState<string | null>(null);
+  const [bkBusy, setBkBusy] = useState(false);
+  const restoreInput = useRef<HTMLInputElement>(null);
+
+  function saveText(name: string, text: string) {
+    if (inApp()) {
+      window.ReactNativeWebView!.postMessage(JSON.stringify({ type: "saveFile", name, content: text }));
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+
+  async function makeBackup() {
+    if (!client) return;
+    setBkMsg(null);
+    if (bkPass.length < MIN_PASSWORD_LENGTH) return setBkMsg(t("auth.passwordHint"));
+    if (bkPass !== bkPass2) return setBkMsg(t("protect.mismatch"));
+    setBkBusy(true);
+    try {
+      const file = await exportKeysToFile(client, bkPass);
+      saveText(`imello-backup-${new Date().toISOString().slice(0, 10)}.txt`, file);
+      setBkPass("");
+      setBkPass2("");
+      setBkMsg(t("backup.saved"));
+    } catch {
+      setBkMsg(t("common.error"));
+    } finally {
+      setBkBusy(false);
+    }
+  }
+
+  async function restore(file: File) {
+    if (!client) return;
+    const pass = prompt(t("backup.enterPass"));
+    if (!pass) return;
+    setBkBusy(true);
+    setBkMsg(null);
+    try {
+      const n = await importKeysFromFile(client, await file.text(), pass);
+      setBkMsg(t("backup.restored", { n }));
+    } catch (err) {
+      setBkMsg(err instanceof WrongPassphraseError ? t("backup.wrongPass") : t("common.error"));
+    } finally {
+      setBkBusy(false);
+    }
+  }
+  const [preview, setPreview] = useState(previewEnabled);
 
   /** Password for user-interactive auth: the device secret for unprotected accounts, otherwise ask. */
   async function accountPassword(question: string): Promise<string | null> {
@@ -148,6 +212,28 @@ export function SettingsScreen() {
       </Card>
 
       <Card>
+        <h2>🔔 {t("notify.title")}</h2>
+        {notificationsSupported() ? (
+          <>
+            <div className="segmented" role="radiogroup" aria-label={t("notify.title")}>
+              <button role="radio" aria-checked={notifyOn} onClick={() => void enableNotifications().then(setNotifyOn)}>{t("notify.on")}</button>
+              <button role="radio" aria-checked={!notifyOn} onClick={() => { disableNotifications(); setNotifyOn(false); }}>{t("notify.off")}</button>
+            </div>
+            <label className="check">
+              <input type="checkbox" checked={preview} onChange={(e) => { setPreviewEnabled(e.target.checked); setPreview(e.target.checked); }} />
+              <span>
+                {t("notify.preview")}
+                <small>{t("notify.previewHint")}</small>
+              </span>
+            </label>
+            <p className="muted small">{t("notify.limit")}</p>
+          </>
+        ) : (
+          <p className="muted">{t("notify.unsupported")}</p>
+        )}
+      </Card>
+
+      <Card>
         <h2>{t("settings.devices")}</h2>
         <ul className="contact-list" role="list">
           {devices.map((d) => (
@@ -164,6 +250,21 @@ export function SettingsScreen() {
             </li>
           ))}
         </ul>
+      </Card>
+
+      <Card>
+        <h2>💾 {t("backup.title")}</h2>
+        <p className="muted">{t("backup.body")}</p>
+        <form className="stack" onSubmit={(e) => { e.preventDefault(); void makeBackup(); }}>
+          <Field label={t("backup.pass")} type="password" value={bkPass} onChange={(e) => setBkPass(e.target.value)} autoComplete="new-password" dir="ltr" hint={t("backup.passHint")} />
+          <Field label={t("protect.confirm")} type="password" value={bkPass2} onChange={(e) => setBkPass2(e.target.value)} autoComplete="new-password" dir="ltr" />
+          <div className="row wrap">
+            <Button type="submit" busy={bkBusy}>{t("backup.save")}</Button>
+            <Button type="button" variant="secondary" onClick={() => restoreInput.current?.click()} disabled={bkBusy}>{t("backup.restore")}</Button>
+          </div>
+        </form>
+        <input ref={restoreInput} type="file" accept=".txt,text/plain" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void restore(f); }} />
+        {bkMsg && <p className="notice" role="status">{bkMsg}</p>}
       </Card>
 
       <Card>

@@ -9,6 +9,9 @@
  * A fully native crypto client (matrix-rust-sdk) is planned; see docs/ARCHITECTURE.md §6.
  */
 import Constants from "expo-constants";
+import * as Notifications from "expo-notifications";
+import { File, Paths } from "expo-file-system";
+import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, BackHandler, Linking, PermissionsAndroid, Platform, Pressable, Text, useColorScheme, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,6 +25,22 @@ const WebView = RNWebView as unknown as ComponentType<WebViewProps & { ref?: Ref
 const WEB_URL: string = (Constants.expoConfig?.extra?.webUrl as string | undefined) ?? "https://abu00salman.github.io/iMello/";
 const WEB_ORIGIN = new URL(WEB_URL).origin;
 
+// Show message banners even while the app is in the foreground (the web client only asks when the
+// user is not already looking at that conversation).
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: true }),
+});
+
+interface BridgeMessage {
+  type: "notify" | "requestNotificationPermission" | "badge" | "saveFile";
+  name?: string;
+  content?: string;
+  title?: string;
+  body?: string;
+  roomId?: string;
+  count?: number;
+}
+
 export default function Shell() {
   const dark = useColorScheme() === "dark";
   const bg = dark ? "#0E1015" : "#F7F8FB";
@@ -34,6 +53,48 @@ export default function Shell() {
   useEffect(() => {
     if (Platform.OS === "android") void PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
   }, []);
+
+  // Tapping a notification opens that conversation.
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener((res) => {
+      const roomId = res.notification.request.content.data?.roomId;
+      if (typeof roomId === "string") {
+        web.current?.injectJavaScript(`location.hash = ${JSON.stringify(`#/chats/${encodeURIComponent(roomId)}`)}; true;`);
+      }
+    });
+    return () => sub.remove();
+  }, []);
+
+  async function onBridge(raw: string) {
+    let msg: BridgeMessage;
+    try {
+      msg = JSON.parse(raw) as BridgeMessage;
+    } catch {
+      return;
+    }
+    if (msg.type === "requestNotificationPermission") {
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("messages", { name: "Messages", importance: Notifications.AndroidImportance.HIGH });
+      }
+      await Notifications.requestPermissionsAsync();
+    } else if (msg.type === "notify" && msg.title) {
+      await Notifications.scheduleNotificationAsync({
+        content: { title: msg.title, body: msg.body ?? "", data: { roomId: msg.roomId }, sound: true },
+        trigger: Platform.OS === "android" ? { channelId: "messages" } : null,
+      });
+    } else if (msg.type === "saveFile" && msg.name && msg.content) {
+      // Written to the app's private cache, then handed to the share sheet so the user saves it
+      // where they choose (Files, iCloud Drive, a USB drive…). Nothing is uploaded by iMello.
+      const safeName = msg.name.replace(/[^\w.-]/g, "_");
+      const file = new File(Paths.cache, safeName);
+      if (file.exists) file.delete();
+      file.create();
+      file.write(msg.content);
+      if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(file.uri, { mimeType: "text/plain", dialogTitle: safeName });
+    } else if (msg.type === "badge" && typeof msg.count === "number") {
+      await Notifications.setBadgeCountAsync(msg.count).catch(() => undefined);
+    }
+  }
 
   useEffect(() => {
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -85,6 +146,7 @@ export default function Shell() {
         style={{ flex: 1, backgroundColor: bg }}
         originWhitelist={[WEB_ORIGIN, "https://*"]}
         onShouldStartLoadWithRequest={allow}
+        onMessage={(e) => void onBridge(e.nativeEvent.data)}
         onNavigationStateChange={(s) => (canGoBack.current = s.canGoBack)}
         onError={() => setFailed(true)}
         onHttpError={(e) => e.nativeEvent.statusCode >= 500 && setFailed(true)}

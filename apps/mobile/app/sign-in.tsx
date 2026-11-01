@@ -8,7 +8,7 @@ import { useSession } from "../src/session";
 import { Body, Button, Card, Input, Title } from "../src/ui";
 
 export default function SignIn() {
-  const { t, locale, setLocale, colors } = usePrefs();
+  const { t, locale, setLocale, colors, rtl } = usePrefs();
   const { signIn, register } = useSession();
   const [mode, setMode] = useState<"signIn" | "register">("signIn");
   const [username, setUsername] = useState("");
@@ -37,13 +37,13 @@ export default function SignIn() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }} keyboardShouldPersistTaps="handled">
-          <Pressable accessibilityRole="button" onPress={() => setLocale(locale === "ar" ? "en" : "ar")} style={{ alignSelf: "flex-end", padding: 8 }}>
+          <Pressable accessibilityRole="button" onPress={() => setLocale(locale === "ar" ? "en" : "ar")} style={{ alignSelf: rtl ? "flex-start" : "flex-end", padding: 8 }}>
             <Text style={{ color: colors.accent, fontWeight: "600" }}>{locale === "ar" ? "English" : "العربية"}</Text>
           </Pressable>
           <View style={{ alignItems: "center", gap: 8 }}>
             <Image source={require("../assets/icon.png")} style={{ width: 88, height: 88, borderRadius: 20 }} accessibilityIgnoresInvertColors />
-            <Title>{t("app.name")}</Title>
-            <Body muted>{t("app.tagline")}</Body>
+            <Title center>{t("app.name")}</Title>
+            <Body muted center>{t("app.tagline")}</Body>
           </View>
           <Card>
             {mode === "register" && <Input label={t("auth.displayName")} value={displayName} onChangeText={setDisplayName} autoComplete="name" />}
@@ -53,7 +53,7 @@ export default function SignIn() {
             <Button title={mode === "signIn" ? t("auth.signIn") : t("auth.createAccount")} onPress={() => void submit()} busy={busy} />
             <Button variant="secondary" title={mode === "signIn" ? t("auth.createAccount") : t("auth.signIn")} onPress={() => setMode(mode === "signIn" ? "register" : "signIn")} />
           </Card>
-          <Body muted>{t("app.signature")}</Body>
+          <Body muted center>{t("app.signature")}</Body>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

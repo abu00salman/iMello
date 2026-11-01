@@ -54,8 +54,9 @@
       "expo-localization"
     ],
     "extra": {
-      "supportsRTL": true,
-      "apiUrl": "http://localhost:8787"
+      "supportsRTL": false,
+      "apiUrl": "http://localhost:8787",
+      "forcesRTL": false
     }
   }
 }

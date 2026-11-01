@@ -9,15 +9,23 @@ export function Screen({ children }: { children: ReactNode }) {
   return <View style={[styles.screen, { backgroundColor: colors.background }]}>{children}</View>;
 }
 
-export function Title({ children }: { children: ReactNode }) {
-  const { colors, rtl } = usePrefs();
-  return <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary, writingDirection: rtl ? "rtl" : "ltr" }]}>{children}</Text>;
-}
-
-export function Body({ children, muted }: { children: ReactNode; muted?: boolean }) {
+export function Title({ children, center }: { children: ReactNode; center?: boolean }) {
   const { colors, rtl } = usePrefs();
   return (
-    <Text style={[styles.body, { color: muted ? colors.textSecondary : colors.textPrimary, textAlign: rtl ? "right" : "left", writingDirection: rtl ? "rtl" : "ltr" }]}>
+    <Text
+      accessibilityRole="header"
+      // Full width avoids Android clipping bold Arabic text in centred containers.
+      style={[styles.title, { color: colors.textPrimary, alignSelf: "stretch", textAlign: center ? "center" : rtl ? "right" : "left" }]}
+    >
+      {children}
+    </Text>
+  );
+}
+
+export function Body({ children, muted, center }: { children: ReactNode; muted?: boolean; center?: boolean }) {
+  const { colors, rtl } = usePrefs();
+  return (
+    <Text style={[styles.body, { color: muted ? colors.textSecondary : colors.textPrimary, alignSelf: "stretch", textAlign: center ? "center" : rtl ? "right" : "left" }]}>
       {children}
     </Text>
   );
@@ -57,7 +65,7 @@ export function Input(props: TextInputProps & { label: string }) {
         accessibilityLabel={props.label}
         placeholderTextColor={colors.textSecondary}
         {...props}
-        style={[styles.input, { borderColor: colors.border, color: colors.textPrimary, backgroundColor: colors.surface }]}
+        style={[styles.input, { borderColor: colors.border, color: colors.textPrimary, backgroundColor: colors.surface, textAlign: rtl ? "right" : "left" }]}
       />
     </View>
   );

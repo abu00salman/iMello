@@ -11,8 +11,6 @@ interface Prefs {
   colors: ColorScheme;
   dark: boolean;
   rtl: boolean;
-  /** True when the chosen language's direction differs from the native layout direction until restart. */
-  directionPendingRestart: boolean;
   t: (key: MessageKey, vars?: Record<string, string | number>) => string;
 }
 
@@ -29,10 +27,12 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
 
   const rtl = direction(locale) === "rtl";
   useEffect(() => {
-    // React Native applies layout direction at startup; forceRTL takes effect on next launch.
-    I18nManager.allowRTL(true);
-    if (I18nManager.isRTL !== rtl) I18nManager.forceRTL(rtl);
-  }, [rtl]);
+    // Direction is handled in JS (textAlign / writingDirection / row order) so switching language is
+    // instant. Native RTL mirroring is disabled: when a device is set to Arabic, Android would otherwise
+    // flip left/right a second time and invert every alignment.
+    I18nManager.allowRTL(false);
+    I18nManager.forceRTL(false);
+  }, []);
 
   const value = useMemo<Prefs>(() => {
     const dark = scheme === "dark";
@@ -45,7 +45,6 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
       colors: dark ? darkScheme : lightScheme,
       dark,
       rtl,
-      directionPendingRestart: I18nManager.isRTL !== rtl,
       t: createTranslator(locale),
     };
   }, [locale, scheme, rtl]);

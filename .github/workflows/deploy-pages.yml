@@ -27,7 +27,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Build
         env:
-          VITE_BASE: /${{ github.event.repository.name }}/
+          # "/" when a custom domain (e.g. imello.abu00salman.com) is set; otherwise /<repo>/.
+          VITE_BASE: ${{ vars.IMELLO_PAGES_BASE || format('/{0}/', github.event.repository.name) }}
           VITE_CSP_META: "true"
           # Until a server exists these point nowhere; the sign-in screen says so.
           VITE_API_URL: ${{ vars.IMELLO_API_URL || 'http://localhost:8787' }}

@@ -26,6 +26,28 @@ bash scripts/dev-stack.sh stop
 
 On a Mac mini M2: `brew install postgresql@16 python@3.12 pnpm` then the same commands. No Xcode needed.
 
+## Quick path for abu00salman.com (one VPS + Cloudflare DNS + GitHub Pages)
+
+| Host | DNS record (Cloudflare, **DNS only / grey cloud**) | Serves |
+| --- | --- | --- |
+| `imello.abu00salman.com` | CNAME → `abu00salman.github.io` | Web app (GitHub Pages, custom domain) |
+| `imello-api.abu00salman.com` | A → VPS IP | Policy API |
+| `imello-matrix.abu00salman.com` | A → VPS IP | Synapse homeserver |
+
+1. Create an Ubuntu 24.04 VPS (2–4 vCPU, 4–8 GB RAM). Add the two A records.
+2. On the VPS as root:
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/abu00salman/iMello/claude/imello-messenger-dev-12zxqe/scripts/install-server.sh | bash -s -- --domain abu00salman.com
+   ```
+3. GitHub → Settings → Secrets and variables → Actions → **Variables**: `IMELLO_API_URL=https://imello-api.abu00salman.com`,
+   `IMELLO_HOMESERVER_URL=https://imello-matrix.abu00salman.com`, and (if using the custom domain) `IMELLO_PAGES_BASE=/`.
+4. GitHub → Settings → Pages → Custom domain: `imello.abu00salman.com`, enforce HTTPS. Re-run "Deploy web to GitHub Pages".
+5. Re-run "Native test builds" with `api_url=https://imello-api.abu00salman.com` for apps that can sign in.
+
+User IDs will look like `@name:imello.abu00salman.com` (permanent once accounts exist).
+Note: GitHub Pages cannot send HTTP security headers; the CSP is delivered as a `<meta>` tag there
+(`frame-ancestors` unavailable). Cloudflare Pages or Caddy is preferable for production.
+
 ## Single-host production (template — **not yet validated**)
 
 1. DNS: `imello.example.com` (web), `api.imello.example.com`, `matrix.imello.example.com` → server IP.

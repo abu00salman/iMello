@@ -167,6 +167,25 @@ describe("registration & authentication", () => {
     expect(third.statusCode).toBe(429);
   });
 
+  it("behind Cloudflare, limits by CF-Connecting-IP and ignores spoofed X-Forwarded-For", async () => {
+    await app.close();
+    app = await build({ REGISTRATION_RATE_LIMIT: "1", TRUST_PROXY: "true" });
+    const reg = (username: string, headers: Record<string, string>) =>
+      app.inject({ method: "POST", url: "/v1/auth/register", headers, payload: { username, password: "a strong password", displayName: "x" } });
+    expect((await reg("cfone", { "cf-connecting-ip": "203.0.113.1" })).statusCode).toBe(201);
+    // Same real client, different spoofed X-Forwarded-For: still limited.
+    expect((await reg("cftwo", { "cf-connecting-ip": "203.0.113.1", "x-forwarded-for": "198.51.100.9" })).statusCode).toBe(429);
+    // A different real client is not affected (family members on other networks).
+    expect((await reg("cfthree", { "cf-connecting-ip": "203.0.113.2" })).statusCode).toBe(201);
+  });
+
+  it("deep health reports dependency status without user data", async () => {
+    const res = await app.inject({ method: "GET", url: "/health/deep" });
+    // Database is up; the fake homeserver URL is unreachable → degraded (503).
+    expect(res.statusCode).toBe(503);
+    expect(res.json()).toMatchObject({ status: "degraded", database: { ok: true }, homeserver: { ok: false } });
+  });
+
   it("sends security headers", async () => {
     const res = await app.inject({ method: "GET", url: "/health" });
     expect(res.headers["content-security-policy"]).toContain("default-src 'none'");

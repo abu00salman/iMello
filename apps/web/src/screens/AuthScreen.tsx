@@ -29,10 +29,17 @@ export function AuthScreen() {
     if (code?.startsWith("username_")) return t("auth.usernameHint");
     if (code === "M_FORBIDDEN" || status === 403) return t("auth.invalidCredentials");
     if (status === 429 || code === "rate_limited" || code === "M_LIMIT_EXCEEDED") return t("auth.rateLimited");
+    if (code?.startsWith("password_")) return t("auth.passwordHint");
+    if (code === "display_name_invalid") return t("auth.displayNameInvalid");
+    if (code === "M_USER_IN_USE") return t("auth.usernameTaken");
+    // fetch() rejects with a TypeError when the server can't be reached at all.
+    if (err instanceof TypeError || (status === undefined && !code)) return t("auth.networkError");
+    if (status !== undefined && status >= 500) return t("auth.serverError");
     return t("common.error");
   }
 
   async function run(action: () => Promise<void>) {
+    if (busy) return; // no double submissions
     setError(null);
     setBusy(true);
     try {

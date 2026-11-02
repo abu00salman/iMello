@@ -89,7 +89,11 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     // share one home IP behind NAT); anonymous requests per client IP.
     keyGenerator: (req) => {
       const auth = req.headers.authorization;
-      return auth?.startsWith("Bearer ") ? `tok:${tokenFingerprint(auth.slice(7).trim())}` : `ip:${req.ip}`;
+      if (auth?.startsWith("Bearer ")) return `tok:${tokenFingerprint(auth.slice(7).trim())}`;
+      // Behind Cloudflare Tunnel the client address is in CF-Connecting-IP, which Cloudflare sets
+      // itself; the left-most X-Forwarded-For entry can be supplied by the client and spoofed.
+      const cf = config.TRUST_PROXY ? req.headers["cf-connecting-ip"] : undefined;
+      return `ip:${typeof cf === "string" && cf.length <= 64 ? cf : req.ip}`;
     },
     errorResponseBuilder: (_req, ctx) => ({ statusCode: ctx.statusCode, error: "rate_limited", message: "Too many requests" }),
   });
@@ -129,6 +133,31 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   });
 
   app.get("/health", async () => ({ status: "ok" }));
+
+  /**
+   * Deeper check for monitoring: database and homeserver reachability with latencies.
+   * Returns no user data. 503 when a dependency is down, so a monitor can alert.
+   */
+  app.get("/health/deep", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (_req, reply) => {
+    const timed = async (f: () => Promise<unknown>) => {
+      const t0 = performance.now();
+      try {
+        await f();
+        return { ok: true, ms: Math.round(performance.now() - t0) };
+      } catch {
+        return { ok: false, ms: Math.round(performance.now() - t0) };
+      }
+    };
+    const [database, homeserver] = await Promise.all([
+      timed(() => deps.db.query("SELECT 1")),
+      timed(async () => {
+        const res = await fetch(`${config.HOMESERVER_URL}/health`, { signal: AbortSignal.timeout(5000) });
+        if (!res.ok) throw new Error(String(res.status));
+      }),
+    ]);
+    const ok = database.ok && homeserver.ok;
+    return reply.status(ok ? 200 : 503).send({ status: ok ? "ok" : "degraded", database, homeserver, uptimeSeconds: Math.round(process.uptime()) });
+  });
 
   await registerPublicRoutes(app);
   await registerSocialRoutes(app);

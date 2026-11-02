@@ -48,6 +48,17 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       {
+        // Start downloading the encryption engine (Rust → WebAssembly, the largest file) as soon as
+        // the page loads, in parallel with everything else — not only after "Start now"/"Sign in".
+        name: "imello-preload-crypto",
+        apply: "build",
+        transformIndexHtml(html, ctx) {
+          const wasm = Object.keys(ctx.bundle ?? {}).find((f) => f.endsWith(".wasm"));
+          if (!wasm) return html;
+          return html.replace("</head>", `  <link rel="preload" href="${env.VITE_BASE ?? "/"}${wasm}" as="fetch" type="application/wasm" crossorigin>\n  </head>`);
+        },
+      },
+      {
         // Static hosts that cannot send HTTP headers (GitHub Pages) get the CSP as a <meta> tag.
         // frame-ancestors is not supported in <meta>, so clickjacking protection is weaker there.
         name: "imello-meta-csp",

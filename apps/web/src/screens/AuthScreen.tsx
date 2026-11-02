@@ -15,6 +15,12 @@ export function AuthScreen() {
   const [displayName, setDisplayName] = useState("");
   const [temporary, setTemporary] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    if (!busy) return setSlow(false);
+    const id = setTimeout(() => setSlow(true), 6000);
+    return () => clearTimeout(id);
+  }, [busy]);
   const [error, setError] = useState<string | null>(null);
   const [serverDown, setServerDown] = useState(false);
 
@@ -92,6 +98,7 @@ export function AuthScreen() {
               <Button type="submit" busy={busy} className="wide big">
                 {busy ? t("common.loading") : t("auth.startNow")}
               </Button>
+              {slow && <p className="muted small center" role="status">{t("auth.firstLoad")}</p>}
               <p className="muted center small">{t("auth.startNowHint")}</p>
             </>
           ) : (
@@ -133,6 +140,7 @@ export function AuthScreen() {
               <Button type="submit" busy={busy} className="wide">
                 {busy ? t("common.loading") : mode === "signIn" ? t("auth.signIn") : t("auth.createAccount")}
               </Button>
+              {slow && <p className="muted small center" role="status">{t("auth.firstLoad")}</p>}
             </>
           )}
           {error && <p className="error" role="alert">{error}</p>}

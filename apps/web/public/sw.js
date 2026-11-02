@@ -14,7 +14,7 @@ async function getLocale() {
     const cache = await caches.open("imello-prefs");
     const res = await cache.match("prefs");
     if (res) locale = (await res.json()).locale;
-  } catch {}
+  } catch { /* best effort */ }
   return locale === "en" || locale === "ar" ? locale : (self.navigator.language || "ar").startsWith("en") ? "en" : "ar";
 }
 
@@ -32,7 +32,7 @@ self.addEventListener("push", (event) => {
   let d = {};
   try {
     d = event.data ? event.data.json() : {};
-  } catch {}
+  } catch { /* best effort */ }
   event.waitUntil(
     (async () => {
       if (typeof d.u === "number" && self.navigator.setAppBadge) self.navigator.setAppBadge(d.u).catch(() => {});
@@ -81,6 +81,48 @@ self.addEventListener("notificationclick", (event) => {
         }
       }
       return self.clients.openWindow(`${self.registration.scope}${hash}`);
+    })(),
+  );
+});
+
+/* App-shell speed-up: cache the build's content-hashed files (/assets/*-<hash>.js|css|wasm|woff2).
+ * Their names change whenever their content changes, so a cached copy can never be stale or serve
+ * outdated security code. index.html and API/homeserver traffic are never cached, and no message
+ * content ever passes through here. */
+const ASSET_CACHE = "imello-assets-v1";
+const HASHED = /\/assets\/[^/]+-[A-Za-z0-9_-]{8,}\.(?:js|css|wasm|woff2?|svg|png)$/;
+
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  if (req.method !== "GET") return;
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin || !HASHED.test(url.pathname)) return;
+  event.respondWith(
+    (async () => {
+      const cache = await caches.open(ASSET_CACHE);
+      const hit = await cache.match(req.url);
+      if (hit) return hit;
+      const res = await fetch(req);
+      if (res.ok && res.type === "basic") cache.put(req.url, res.clone()).catch(() => {});
+      return res;
+    })(),
+  );
+});
+
+// Drop cached files that the current build no longer references (keeps storage small).
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    (async () => {
+      try {
+        const res = await fetch(self.registration.scope, { cache: "no-store" });
+        const html = await res.text();
+        const cache = await caches.open(ASSET_CACHE);
+        for (const req of await cache.keys()) {
+          const name = new URL(req.url).pathname.split("/").pop();
+          // Keep what the current index.html references (scripts, styles, the preloaded crypto engine).
+          if (name && !html.includes(name) && !/\.woff2?$/.test(name)) await cache.delete(req);
+        }
+      } catch { /* best effort */ }
     })(),
   );
 });

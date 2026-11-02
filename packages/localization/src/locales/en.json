@@ -187,5 +187,6 @@
   "auth.networkError": "Can't reach the iMello server. Check your internet connection and try again. If it keeps happening, the server may be down for a moment.",
   "auth.serverError": "The server had a temporary problem. Try again in a minute.",
   "auth.displayNameInvalid": "That name can't be used. Try a shorter name without special symbols.",
-  "security.verifyNote": "Messages and calls are encrypted between devices. Manually verifying your contacts' devices (comparing codes) isn't available yet, so devices are not shown as “verified”."
+  "security.verifyNote": "Messages and calls are encrypted between devices. Manually verifying your contacts' devices (comparing codes) isn't available yet, so devices are not shown as “verified”.",
+  "auth.firstLoad": "First time only: setting up encryption on this device (about 8 MB). On mobile data this can take a minute; next time is faster."
 }

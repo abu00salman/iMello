@@ -19,7 +19,6 @@ const PENDING_INVITE = "imello.pendingInvite";
 
 export function App() {
   const { status } = useSession();
-  const { t } = usePrefs();
   const route = useRoute();
 
   // Keep an invite link across sign-in. The token is single-use and short-lived; sessionStorage clears with the tab.

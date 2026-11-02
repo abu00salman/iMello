@@ -186,7 +186,22 @@ export async function ensureCrossSigning(client: MatrixClient, password: string)
 /** Create a private, encrypted one-to-one conversation and invite `otherUserId`. */
 export async function startDirectChat(client: MatrixClient, otherUserId: string): Promise<string> {
   const existing = findDirectRoom(client, otherUserId);
-  if (existing) return existing;
+  if (existing) {
+    const room = client.getRoom(existing);
+    if (room?.getMyMembership() === "invite") await acceptInvite(client, existing);
+    else void markDirect(client, otherUserId, existing).catch(() => undefined);
+    return existing;
+  }
+  let pending = creating.get(client);
+  if (!pending) creating.set(client, (pending = new Map()));
+  const inFlight = pending.get(otherUserId);
+  if (inFlight) return inFlight;
+  const p = createDirectRoom(client, otherUserId).finally(() => pending!.delete(otherUserId));
+  pending.set(otherUserId, p);
+  return p;
+}
+
+async function createDirectRoom(client: MatrixClient, otherUserId: string): Promise<string> {
   const { room_id: roomId } = await client.createRoom({
     preset: Preset.TrustedPrivateChat,
     is_direct: true,
@@ -201,22 +216,57 @@ export async function startDirectChat(client: MatrixClient, otherUserId: string)
   return roomId;
 }
 
+// m.direct is a read-modify-write of one account-data blob: serialise updates per client so two
+// quick calls can't overwrite each other (that lost entries and led to duplicate chats).
+const directQueue = new WeakMap<MatrixClient, Promise<unknown>>();
+
 async function markDirect(client: MatrixClient, otherUserId: string, roomId: string) {
-  const current = (client.getAccountData(EventType.Direct)?.getContent() ?? {}) as Record<string, string[]>;
-  const rooms = new Set(current[otherUserId] ?? []);
-  rooms.add(roomId);
-  await client.setAccountData(EventType.Direct, { ...current, [otherUserId]: [...rooms] });
+  const run = async () => {
+    const current = (client.getAccountData(EventType.Direct)?.getContent() ?? {}) as Record<string, string[]>;
+    if (current[otherUserId]?.includes(roomId)) return;
+    const rooms = new Set(current[otherUserId] ?? []);
+    rooms.add(roomId);
+    await client.setAccountData(EventType.Direct, { ...current, [otherUserId]: [...rooms] });
+  };
+  const next = (directQueue.get(client) ?? Promise.resolve()).then(run, run);
+  directQueue.set(client, next.catch(() => undefined));
+  return next;
 }
 
+/** Is this a one-to-one conversation between me and `otherUserId` (joined or pending invite)? */
+function isOneToOneWith(client: MatrixClient, room: Room, otherUserId: string): boolean {
+  const mine = room.getMyMembership();
+  if (mine !== "join" && mine !== "invite") return false;
+  if (mine === "invite") return room.getDMInviter() === otherUserId || room.getMember(client.getSafeUserId())?.events.member?.getSender() === otherUserId;
+  const people = room.getMembers().filter((m) => m.membership === "join" || m.membership === "invite");
+  return people.length <= 2 && people.some((m) => m.userId === otherUserId);
+}
+
+/**
+ * The existing conversation with this person, if any. Checks m.direct first, then every room —
+ * including an invite they sent that hasn't been accepted yet — so pressing "Message" on both
+ * sides doesn't create two rooms. Prefers a joined room, then the most recently active.
+ */
 export function findDirectRoom(client: MatrixClient, otherUserId: string): string | null {
   const direct = (client.getAccountData(EventType.Direct)?.getContent() ?? {}) as Record<string, string[]>;
+  const candidates = new Map<string, Room>();
   for (const roomId of direct[otherUserId] ?? []) {
     const room = client.getRoom(roomId);
-    const membership = room?.getMyMembership();
-    if (membership === "join" || membership === "invite") return roomId;
+    if (room && isOneToOneWith(client, room, otherUserId)) candidates.set(roomId, room);
   }
-  return null;
+  for (const room of client.getRooms()) {
+    if (!candidates.has(room.roomId) && isOneToOneWith(client, room, otherUserId)) candidates.set(room.roomId, room);
+  }
+  const ranked = [...candidates.values()].sort(
+    (a, b) =>
+      Number(b.getMyMembership() === "join") - Number(a.getMyMembership() === "join") ||
+      b.getLastActiveTimestamp() - a.getLastActiveTimestamp(),
+  );
+  return ranked[0]?.roomId ?? null;
 }
+
+/** Creating a chat with the same person twice at once returns the same room (per client). */
+const creating = new WeakMap<MatrixClient, Map<string, Promise<string>>>();
 
 /** Accept an invitation to a conversation. */
 export async function acceptInvite(client: MatrixClient, roomId: string): Promise<void> {
@@ -335,8 +385,7 @@ export function conversations(client: MatrixClient): ConversationSummary[] {
     .getRooms()
     .filter((r) => ["join", "invite"].includes(r.getMyMembership()))
     .map((room: Room) => {
-      const msgs = roomMessages(client, room.roomId);
-      const last = msgs.at(-1) ?? null;
+      const last = lastMessage(client, room);
       const otherUserId =
         roomToUser.get(room.roomId) ??
         room.getDMInviter() ??
@@ -352,7 +401,47 @@ export function conversations(client: MatrixClient): ConversationSummary[] {
         unread: room.getUnreadNotificationCount() ?? 0,
       };
     })
-    .sort((a, b) => b.lastActivity - a.lastActivity);
+    .sort((a, b) => b.lastActivity - a.lastActivity)
+    .filter(dedupeByPerson(client));
+}
+
+/**
+ * One row per person. If several one-to-one rooms exist with the same person (from earlier
+ * duplicate creation), keep the joined, most recently active one; a pending invite from someone
+ * you already have a conversation with is hidden (accepting "Message" later reuses the room).
+ * Rooms are never deleted — history stays on the server.
+ */
+function dedupeByPerson(client: MatrixClient) {
+  const seen = new Set<string>();
+  return (c: ConversationSummary, _i: number, all: ConversationSummary[]) => {
+    const room = client.getRoom(c.roomId);
+    const people = room?.getMembers().filter((m) => m.membership === "join" || m.membership === "invite").length ?? 0;
+    if (!c.otherUserId || people > 2) return true;
+    if (c.membership === "invite" && all.some((x) => x !== c && x.otherUserId === c.otherUserId && x.membership === "join")) return false;
+    if (seen.has(c.otherUserId)) return false;
+    // Prefer a joined room over an invite that sorted earlier.
+    if (c.membership === "invite") {
+      const joined = all.find((x) => x.otherUserId === c.otherUserId && x.membership === "join");
+      if (joined) return false;
+    }
+    seen.add(c.otherUserId);
+    return true;
+  };
+}
+
+/** Newest displayable message without converting the whole timeline (cheap for the chat list). */
+function lastMessage(client: MatrixClient, room: Room): ChatMessage | null {
+  const pending = room.getPendingEvents();
+  for (let i = pending.length - 1; i >= 0; i--) {
+    const m = toChatMessage(client, pending[i]!);
+    if (m) return m;
+  }
+  const events = room.getLiveTimeline().getEvents();
+  for (let i = events.length - 1; i >= 0; i--) {
+    const m = toChatMessage(client, events[i]!);
+    if (m) return m;
+  }
+  return null;
 }
 
 /** Resolve when a message satisfying `predicate` appears in `roomId`. Used by tests and UI flows. */

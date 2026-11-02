@@ -71,9 +71,13 @@ message, so the caller's app asks the API to ring the callee (allowed only betwe
 
 ## Operations
 
+- The server runs on a MacBook Air: while macOS sleeps or restarts, iMello is unavailable (see SELF_HOSTING_MACBOOK.md).
+- Backup scripts were validated in development (encrypt/decrypt and dump/restore); run `scripts/restore-test.sh` on the Mac before relying on them.
+- Calls show "Connecting" rather than "Reconnecting" after a network drop; no TURN relay.
+
 - The Docker Compose / Caddy deployment template has **not been run** (no Docker daemon in the development
   environment). The local dev stack (`scripts/dev-stack.sh`) is what the tests use.
-- No monitoring, alerting or backup automation is configured yet (documented plan in DEPLOYMENT.md).
+- No alerting is configured; `/health/deep` exists for an external monitor. Backups are a manual/launchd script.
 - Push notification workers do not exist yet.
 
 ## Performance

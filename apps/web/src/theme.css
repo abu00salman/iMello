@@ -299,3 +299,63 @@ input:focus, textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 4px r
 .call-actions.glass-bar .call-btn { width: 60px; height: 60px; }
 @media (prefers-reduced-motion: reduce) { .local-video, .remote-video { transition: none; } }
 .remote-on .call-card .lock-badge { display: none; }
+
+/* ══ Liquid Glass 2.0 — glass only where it floats ═══════════════════════
+   Glass (blur) is reserved for the floating tab bar, the conversation header,
+   the composer and call controls. Reading surfaces — cards, lists, forms,
+   bubbles — are solid: easier to read and far cheaper to composite. */
+:root { --surface-solid: #ffffff; --surface-sunken: #f3f5fb; --row-hover: rgb(61 127 224 / 0.07); }
+[data-theme="dark"] { --surface-solid: #141a2c; --surface-sunken: #0f1424; --row-hover: rgb(255 255 255 / 0.05); }
+
+.card, .segmented, .search input, .auth-card, .reply-bar, .upload-bar {
+  background: var(--surface-solid);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  border: 1px solid var(--hairline);
+  box-shadow: 0 1px 2px rgb(15 30 70 / 0.05), 0 6px 18px -10px rgb(15 30 70 / 0.18);
+}
+.auth-card { box-shadow: 0 1px 2px rgb(15 30 70 / 0.05), 0 24px 60px -24px rgb(30 50 110 / 0.35); }
+.card { border-radius: 20px; padding: 1rem 1.1rem; margin-bottom: 0.75rem; }
+.card h2 { font-size: 0.95rem; margin-bottom: 0.6rem; }
+.card p { font-size: 0.92rem; }
+.segmented { background: var(--surface-sunken); box-shadow: none; }
+.segmented button[aria-checked="true"] { background: var(--surface-solid); }
+.search input { background: var(--surface-sunken); border-color: transparent; box-shadow: none; }
+input:not([type="checkbox"]), textarea { background: var(--surface-sunken); }
+.composer textarea { background: transparent; }
+
+/* Chat list: compact rows, solid hover/selection. */
+.conv-row { padding: 0.6rem 0.7rem; border-radius: 16px; }
+.conv-row:hover { background: var(--row-hover); }
+.conv-row.active { background: rgb(61 127 224 / 0.12); box-shadow: none; }
+.conv-row .avatar { --avatar-size: 50px !important; }
+.conv-list li + li .conv-row { border-top: 0; }
+
+/* Bubbles: solid, crisp edges. */
+.msg.theirs .bubble { background: var(--surface-solid); border: 1px solid var(--hairline); box-shadow: 0 1px 1px rgb(15 30 70 / 0.05); }
+.msg.own .bubble { box-shadow: 0 1px 1px rgb(15 30 70 / 0.08); }
+.msg-wrap + .msg-wrap .msg { margin-top: 2px; }
+.day-sep span { background: var(--surface-solid); border: 1px solid var(--hairline); box-shadow: none; }
+.bubble, .msg-wrap { contain: layout paint; }
+
+/* Calmer backdrop. */
+[data-theme="dark"] { --aurora-a: rgb(61 127 224 / 0.22); --aurora-b: rgb(124 108 242 / 0.2); --aurora-c: rgb(34 195 166 / 0.1); }
+:root:not([data-theme="dark"]) { --aurora-a: rgb(61 127 224 / 0.24); --aurora-b: rgb(124 108 242 / 0.18); --aurora-c: rgb(34 195 166 / 0.16); }
+
+/* The glass that stays: slightly denser for legibility over content. */
+.tabbar, .conv-header, .composer { --glass-fill: rgb(255 255 255 / 0.72); }
+[data-theme="dark"] .tabbar, [data-theme="dark"] .conv-header, [data-theme="dark"] .composer { --glass-fill: rgb(20 26 44 / 0.72); }
+
+/* Never hide content under the floating tab bar (phones). */
+@media (max-width: 760px) {
+  .page, .conv-list { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+  .shell:has(.split.has-detail) .page { padding-bottom: 0; }
+}
+
+/* System "Reduce Transparency" (and browsers without blur): solid everywhere. */
+@media (prefers-reduced-transparency: reduce) {
+  .tabbar, .conv-header, .composer, .call-actions.glass-bar {
+    -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+    background: var(--surface-solid) !important;
+  }
+  .shell::before, .auth::before { opacity: 0.4; }
+}

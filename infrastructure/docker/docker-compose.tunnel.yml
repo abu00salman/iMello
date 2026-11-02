@@ -9,6 +9,7 @@ services:
       - caddy_data:/data
 
   cloudflared:
+    logging: { driver: json-file, options: { max-size: "10m", max-file: "5" } }
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
     command: tunnel --no-autoupdate run

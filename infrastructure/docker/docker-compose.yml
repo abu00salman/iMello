@@ -7,8 +7,14 @@
 
 name: imello
 
+# Keep container logs bounded on the Mac's disk (default json-file logging grows forever).
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "5" }
+
 services:
   postgres:
+    logging: *logging
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
@@ -26,6 +32,7 @@ services:
     networks: [backend]
 
   api:
+    logging: *logging
     build: { context: ../.., dockerfile: services/api/Dockerfile }
     restart: unless-stopped
     env_file: ../../.env
@@ -38,6 +45,7 @@ services:
     networks: [backend, edge]
 
   synapse:
+    logging: *logging
     image: ghcr.io/element-hq/synapse:latest
     restart: unless-stopped
     environment:
@@ -50,6 +58,7 @@ services:
     networks: [backend, edge]
 
   caddy:
+    logging: *logging
     image: caddy:2-alpine
     restart: unless-stopped
     ports: ["80:80", "443:443"]

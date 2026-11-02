@@ -289,6 +289,7 @@ export function SettingsScreen() {
       <Card>
         <h2>{t("settings.security")}</h2>
         <LockBadge label={t("chat.encrypted")} />
+        <p className="muted small">{t("security.verifyNote")}</p>
         <div className="row wrap">
           <Button variant="secondary" onClick={() => void exportData()}>{t("settings.exportData")}</Button>
           <Button variant="secondary" onClick={() => void confirmSignOut()}>{t("auth.signOut")}</Button>

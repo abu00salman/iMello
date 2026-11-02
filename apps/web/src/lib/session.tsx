@@ -233,13 +233,19 @@ export function useClientVersion(client: MatrixClient | null): number {
   const [version, setVersion] = useState(0);
   useEffect(() => {
     if (!client) return;
-    let frame = 0;
+    // Coalesce bursts (initial sync, decrypting hundreds of events, typing) into at most one
+    // re-render per 120 ms. Re-rendering every animation frame during a burst was the main cause of
+    // freezes: each frame redrew whole conversations (measured: 35 long tasks for 40 incoming messages).
+    let timer: ReturnType<typeof setTimeout> | 0 = 0;
+    let last = 0;
     const bump = () => {
-      if (frame) return;
-      frame = requestAnimationFrame(() => {
-        frame = 0;
+      if (timer) return;
+      const wait = Math.max(0, 120 - (Date.now() - last));
+      timer = setTimeout(() => {
+        timer = 0;
+        last = Date.now();
         setVersion((v) => v + 1);
-      });
+      }, wait);
     };
     const events = [
       RoomEvent.Timeline, RoomEvent.LocalEchoUpdated, RoomEvent.MyMembership, RoomEvent.Name, RoomEvent.Receipt,
@@ -249,7 +255,7 @@ export function useClientVersion(client: MatrixClient | null): number {
     const emitter = client as unknown as { on(e: string, f: () => void): void; off(e: string, f: () => void): void };
     for (const e of events) emitter.on(e, bump);
     return () => {
-      cancelAnimationFrame(frame);
+      if (timer) clearTimeout(timer);
       for (const e of events) emitter.off(e, bump);
     };
   }, [client]);

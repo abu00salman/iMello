@@ -13,7 +13,7 @@ import {
   type ConversationSummary,
   type MatrixClient,
 } from "@imello/core/messaging";
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { usePrefs } from "../lib/prefs";
 import { navigate } from "../lib/router";
 import { useCalls } from "../lib/calls";
@@ -122,12 +122,71 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
   const messages = useMemo(() => roomMessages(client, roomId), [client, roomId, version]);
   const typing = room?.currentState.getMembers().filter((m) => m.typing && m.userId !== client.getUserId()) ?? [];
 
+  // Encryption state only changes with membership/state events, not every sync tick.
   useEffect(() => {
     void isRoomEncrypted(client, roomId).then(setEncrypted);
-  }, [client, roomId, version]);
+  }, [client, roomId, membership]);
+
+  // Render only the newest messages; older ones are added when you scroll up (and fetched from the
+  // server when the local timeline runs out). Keeps the DOM small in long conversations.
+  const [limit, setLimit] = useState(PAGE);
+  const listRef = useRef<HTMLDivElement>(null);
+  const nearBottom = useRef(true);
+  const prependAnchor = useRef<number | null>(null);
+  const loadingOlder = useRef(false);
+  const userScrolled = useRef(false);
+  const visible = messages.length > limit ? messages.slice(-limit) : messages;
+
+  const loadEarlier = useCallback(async () => {
+    const el = listRef.current;
+    if (!el || loadingOlder.current) return;
+    if (limit < messages.length) {
+      prependAnchor.current = el.scrollHeight - el.scrollTop;
+      setLimit((l) => l + PAGE);
+      return;
+    }
+    if (!room || !room.oldState.paginationToken) return;
+    loadingOlder.current = true;
+    prependAnchor.current = el.scrollHeight - el.scrollTop;
+    try {
+      await client.scrollback(room, PAGE);
+      setLimit((l) => l + PAGE);
+    } catch {
+      prependAnchor.current = null;
+    } finally {
+      loadingOlder.current = false;
+    }
+  }, [client, room, limit, messages.length]);
+
+  const onScroll = useCallback(() => {
+    const el = listRef.current;
+    if (!el) return;
+    nearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 140;
+    // Only when the person scrolls up through a list that actually overflows — never on mount or
+    // programmatic scrolls (that chained page after page of history fetch + decryption on open).
+    if (userScrolled.current && el.scrollHeight > el.clientHeight + 200 && el.scrollTop < 240) void loadEarlier();
+  }, [loadEarlier]);
+
+  // Keep the reader's place when older messages are inserted above.
+  useLayoutEffect(() => {
+    const el = listRef.current;
+    if (el && prependAnchor.current !== null) {
+      el.scrollTop = el.scrollHeight - prependAnchor.current;
+      prependAnchor.current = null;
+    }
+  }, [visible.length]);
+
+  // Open at the newest message.
+  useLayoutEffect(() => {
+    const el = listRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [roomId]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    // Follow new messages only when you're already at the bottom (or just sent one yourself);
+    // never yank you away from older messages you're reading.
+    const el = listRef.current;
+    if (el && (nearBottom.current || messages.at(-1)?.isOwn)) el.scrollTop = el.scrollHeight;
     const last = room?.getLiveTimeline().getEvents().at(-1);
     if (last && membership === "join" && document.visibilityState === "visible") void client.sendReadReceipt(last).catch(() => undefined);
   }, [messages.length, client, room, membership]);
@@ -222,7 +281,6 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
     }
   }
 
-  let lastDay = "";
   return (
     <div className="conversation">
       <header className="conv-header">
@@ -243,41 +301,21 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
           </div>
         )}
       </header>
-      <div className="messages" role="log" aria-live="polite" aria-relevant="additions">
-        {messages.map((m) => {
+      <div className="messages" role="log" aria-live="polite" aria-relevant="additions" ref={listRef} onScroll={onScroll} onWheel={() => (userScrolled.current = true)} onTouchMove={() => (userScrolled.current = true)} onKeyDown={() => (userScrolled.current = true)}>
+        {visible.map((m, i) => {
           const day = formatDay(new Date(m.timestamp), locale);
-          const showDay = day !== lastDay;
-          lastDay = day;
+          const prev = visible[i - 1];
+          const showDay = !prev || formatDay(new Date(prev.timestamp), locale) !== day;
           const quoted = m.replyTo ? messages.find((x) => x.id === m.replyTo) : null;
           return (
-            <div key={m.txnId ?? m.id}>
-              {showDay && <div className="day-sep"><span>{day}</span></div>}
-              <div className={`msg ${m.isOwn ? "own" : "theirs"} ${m.decryptionFailed ? "undecryptable" : ""}`} data-testid="message">
-                <div className="bubble" onDoubleClick={() => !m.decryptionFailed && setReplyTo(m)}>
-                  {quoted && <div className="quote" dir="auto">{quoted.body ?? "🔒"}</div>}
-                  {m.attachment ? (
-                    <AttachmentView client={client} info={m.attachment} />
-                  ) : (
-                    <span dir="auto" className="body">{m.decryptionFailed ? t("chat.unableToDecrypt") : m.body}</span>
-                  )}
-                  <span className="meta">
-                    <time>{formatTime(new Date(m.timestamp), locale)}</time>
-                    {m.isOwn && (
-                      <span className={`state ${m.state}`} aria-label={t(`chat.status.${m.state}`)}>
-                        {m.state === "sending" ? (
-                          <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 8v4l2.5 1.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-                        ) : m.state === "failed" ? "!" : (
-                          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12.5 4.5 4.5L19 6.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                        )}
-                      </span>
-                    )}
-                  </span>
-                </div>
-                {!m.decryptionFailed && (
-                  <button className="reply-btn" onClick={() => setReplyTo(m)} aria-label="Reply"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 8V4l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11Z" fill="currentColor" /></svg></button>
-                )}
-              </div>
-            </div>
+            <MessageRow
+              key={m.txnId ?? m.id}
+              client={client}
+              m={m}
+              day={showDay ? day : null}
+              quotedBody={quoted ? (quoted.body ?? "🔒") : null}
+              onReply={setReplyTo}
+            />
           );
         })}
         {typing.length > 0 && <div className="typing" aria-live="polite">{typing.map((m) => m.name).join(", ")} …</div>}
@@ -346,3 +384,53 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
     </div>
   );
 }
+
+const PAGE = 50;
+
+/** One message. Memoised: a sync tick re-renders only the rows whose content or status changed. */
+const MessageRow = memo(
+  function MessageRow({ client, m, day, quotedBody, onReply }: { client: MatrixClient; m: ChatMessage; day: string | null; quotedBody: string | null; onReply: (m: ChatMessage) => void }) {
+    const { t, locale } = usePrefs();
+    return (
+      <div className="msg-wrap">
+        {day && <div className="day-sep"><span>{day}</span></div>}
+        <div className={`msg ${m.isOwn ? "own" : "theirs"} ${m.decryptionFailed ? "undecryptable" : ""}`} data-testid="message">
+          <div className="bubble" onDoubleClick={() => !m.decryptionFailed && onReply(m)}>
+            {quotedBody && <div className="quote" dir="auto">{quotedBody}</div>}
+            {m.attachment ? (
+              <AttachmentView client={client} info={m.attachment} />
+            ) : (
+              <span dir="auto" className="body">{m.decryptionFailed ? t("chat.unableToDecrypt") : m.body}</span>
+            )}
+            <span className="meta">
+              <time>{formatTime(new Date(m.timestamp), locale)}</time>
+              {m.isOwn && (
+                <span className={`state ${m.state}`} aria-label={t(`chat.status.${m.state}`)}>
+                  {m.state === "sending" ? (
+                    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 8v4l2.5 1.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+                  ) : m.state === "failed" ? "!" : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12.5 4.5 4.5L19 6.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  )}
+                </span>
+              )}
+            </span>
+          </div>
+          {!m.decryptionFailed && (
+            <button className="reply-btn" onClick={() => onReply(m)} aria-label="Reply"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 8V4l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11Z" fill="currentColor" /></svg></button>
+          )}
+        </div>
+      </div>
+    );
+  },
+  (a, b) =>
+    a.client === b.client &&
+    a.day === b.day &&
+    a.quotedBody === b.quotedBody &&
+    a.onReply === b.onReply &&
+    a.m.id === b.m.id &&
+    a.m.state === b.m.state &&
+    a.m.body === b.m.body &&
+    a.m.decryptionFailed === b.m.decryptionFailed &&
+    a.m.timestamp === b.m.timestamp &&
+    a.m.attachment?.file.url === b.m.attachment?.file.url,
+);

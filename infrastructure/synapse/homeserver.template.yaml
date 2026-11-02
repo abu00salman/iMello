@@ -96,3 +96,8 @@ modules:
 
 macaroon_secret_key: "${SYNAPSE_MACAROON_SECRET_KEY}"
 form_secret: "${SYNAPSE_FORM_SECRET}"
+
+# Serve fresh initial syncs. The default 2-minute cache made a reopened app start from a stale
+# snapshot and then replay every newer message (measured: 8 s+ to show the latest message).
+caches:
+  sync_response_cache_duration: 0

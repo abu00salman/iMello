@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="t">
+  <title id="t">iMello</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5B9BF0"/>
+      <stop offset="0.55" stop-color="#3D7FE0"/>
+      <stop offset="1" stop-color="#8E78E8"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/>
+      <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="116" fill="url(#shine)"/>
+  <!-- A lowercase "m" whose last stroke flows into a speech-bubble tail: two arches = two people, connected. -->
+  <path d="M140 356 V246 a58 58 0 0 1 116 0 V356 M256 246 a58 58 0 0 1 116 0 V318 c0 26 14 44 38 54"
+        fill="none" stroke="#FFFFFF" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="256" cy="150" r="20" fill="#FFFFFF" fill-opacity="0.92"/>
+</svg>

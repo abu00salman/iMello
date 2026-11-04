@@ -83,6 +83,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setClient(null);
     setMe(null);
     setNotice(msg ?? null);
+    try { localStorage.removeItem("imello.returning"); } catch { /* ignore */ }
     setStatus("signedOut");
   }, []);
 
@@ -110,6 +111,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setMe(profile);
       setTemporary(isTemporary);
       setNotice(null);
+      // Lets the landing page send returning users straight to the app.
+      if (!isTemporary) try { localStorage.setItem("imello.returning", "1"); } catch { /* ignore */ }
       setStatus("ready");
     },
     [forget],

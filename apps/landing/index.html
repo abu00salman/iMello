@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="boot.js"></script>
+<title>آي ميلو — خلّك قريب من اللي تحبهم | iMello</title>
+<meta name="description" content="آي ميلو: تطبيق مراسلة للعائلة. رسائل وصور ومكالمات مشفّرة من طرف إلى طرف، رقم mell- بدل رقم الجوال، ووضع للأطفال بموافقة ولي الأمر. بدون إعلانات ولا تتبّع.">
+<meta name="theme-color" content="#0f1521">
+<meta name="color-scheme" content="dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'self'">
+<meta property="og:type" content="website">
+<meta property="og:title" content="آي ميلو — Stay Close. Feel Connected.">
+<meta property="og:description" content="مراسلة عائلية مشفّرة، بدون رقم جوال، بدون إعلانات.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preload" href="fonts/readex-pro-arabic-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/ibm-plex-sans-arabic-arabic-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#features"><span data-l="ar">إلى المحتوى</span><span data-l="en">Skip to content</span></a>
+<main>
+<header class="top">
+  <a class="brand" href="#top"><img src="favicon.svg" width="36" height="36" alt=""><span>iMello</span></a>
+  <nav class="top-nav" aria-label="Main">
+    <a href="#features"><span data-l="ar">المزايا</span><span data-l="en">Features</span></a>
+    <a href="#how"><span data-l="ar">كيف يشتغل</span><span data-l="en">How it works</span></a>
+    <a href="#faq"><span data-l="ar">أسئلة</span><span data-l="en">Questions</span></a>
+    <button type="button" class="lang" id="lang" aria-label="Switch language"><span data-l="ar" lang="en">EN</span><span data-l="en" lang="ar">عربي</span></button>
+  </nav>
+  <a class="btn" href="app/"><span data-l="ar">افتح التطبيق</span><span data-l="en">Open the app</span></a>
+</header>
+
+<section class="hero" id="top">
+  <div class="card-wrap">
+    <div class="card">
+      <i class="sc a"></i><i class="sc b"></i><i class="sc c"></i><i class="sc d"></i>
+      <img class="card-logo" src="favicon.svg" width="56" height="56" alt="">
+      <h1 class="card-title"><span class="l1" data-rise><span data-l="ar">خلّك قريب</span><span data-l="en">Stay close.</span></span><span class="l2" data-rise data-d="1"><span data-l="ar">من اللي تحبهم</span><span data-l="en">Feel connected.</span></span></h1>
+      <div class="card-num" data-rise data-d="2">
+        <p class="number" dir="ltr" aria-live="polite">mell-<span id="num">482913</span></p>
+        <p class="card-label"><span data-l="ar">رقمك في آي ميلو</span><span data-l="en">Your iMello number</span></p>
+        <p class="card-name" id="cardname" data-ar="اسمك" data-en="Your name">اسمك</p>
+      </div>
+      <form class="card-form" id="cardform" data-rise data-d="3" autocomplete="off">
+        <label class="sr" for="nm"><span data-l="ar">اكتب اسمك</span><span data-l="en">Type your name</span></label>
+        <input id="nm" name="nm" type="text" maxlength="24" placeholder="اكتب اسمك" data-ph-ar="اكتب اسمك" data-ph-en="Type your name" enterkeyhint="done">
+        <button type="button" class="again" id="again"><span data-l="ar">رقم ثاني</span><span data-l="en">Another number</span></button>
+      </form>
+      <p class="card-note" data-rise data-d="3"><span data-l="ar">مثال فقط. رقمك الحقيقي يطلع لك أول ما تبدأ.</span><span data-l="en">An example only. Your real number appears when you start.</span></p>
+      <ul class="card-facts">
+        <li><span data-l="ar">مشفّرة من طرف إلى طرف</span><span data-l="en">End-to-end encrypted</span></li>
+        <li><span data-l="ar">بدون رقم جوال</span><span data-l="en">No phone number</span></li>
+        <li><span data-l="ar">بدون إعلانات</span><span data-l="en">No ads</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="intro" aria-labelledby="intro-h">
+  <div class="intro-row">
+    <h2 id="intro-h" class="intro-h" data-rise><span data-l="ar">مراسلة لعائلتك</span><span data-l="en">A messenger for family</span></h2>
+    <p class="intro-note" data-rise data-d="1"><span data-l="ar">تطبيق للعائلة والأصحاب المقرّبين. تبدأ بضغطة، تشارك رقمك، وكل شي بينكم يبقى بينكم.</span><span data-l="en">An app for family and close friends. Start with one tap, share your number, and what's between you stays between you.</span></p>
+  </div>
+  <ul class="facts">
+        <li><p class="fact"><span data-l="ar">مشفّرة</span><span data-l="en">Encrypted</span></p><p class="fact-note"><span data-l="ar">الرسائل والصور والملفات والتسجيلات تُشفَّر على جهازك قبل ما تطلع.</span><span data-l="en">Messages, photos, files and voice notes are encrypted on your device before they leave.</span></p></li>
+        <li><p class="fact"><span data-l="ar">بدون جوال</span><span data-l="en">No phone number</span></p><p class="fact-note"><span data-l="ar">رقمك mell- من ٦ أرقام يغنيك عن رقم الجوال والإيميل.</span><span data-l="en">A six-digit mell- number replaces your phone number and email.</span></p></li>
+        <li><p class="fact"><span data-l="ar">بدون إعلانات</span><span data-l="en">No ads</span></p><p class="fact-note"><span data-l="ar">ولا تتبّع، ولا خلاصة عشوائية.</span><span data-l="en">No tracking and no random feed.</span></p></li>
+        <li><p class="fact"><span data-l="ar">وضع الأطفال</span><span data-l="en">Kids Mode</span></p><p class="fact-note"><span data-l="ar">ولي الأمر يوافق على من يتواصل معهم الطفل.</span><span data-l="en">A guardian approves who a child can talk to.</span></p></li>
+  </ul>
+</section>
+
+<section class="features" id="features" aria-labelledby="feat-h">
+  <h2 id="feat-h" class="feat-h" data-rise><span data-l="ar">كل اللي تحتاجه، بدون الزيادات</span><span data-l="en">Everything you need, nothing extra</span></h2>
+  <div class="stack">
+    <article class="sheet s1">
+      <h3 class="sheet-name"><span data-l="ar">رسائل مشفّرة</span><span data-l="en">Encrypted chats</span></h3>
+      <p class="sheet-text"><span data-l="ar">نص وصور وملفات وتسجيلات صوتية، تُشفَّر على جهازك قبل ما تطلع. السيرفر يحفظ نصًا مشفّرًا فقط.</span><span data-l="en">Text, photos, files and voice notes are encrypted on your device before they leave. The server only ever stores ciphertext.</span></p>
+      <video class="sheet-img" width="390" height="844" muted loop playsinline preload="none" poster="img/chat-poster.jpg" aria-label="محادثة حقيقية في آي ميلو" data-ar="محادثة حقيقية في آي ميلو" data-en="A real chat in iMello" data-attr="aria-label"><source src="img/chat.webm" type="video/webm"><source src="img/chat.mp4" type="video/mp4"></video>
+    </article>
+    <article class="sheet s2">
+      <h3 class="sheet-name"><span data-l="ar">مكالمات صوت وفيديو</span><span data-l="en">Voice and video calls</span></h3>
+      <p class="sheet-text"><span data-l="ar">اتصل بأهلك صوت أو فيديو من نفس المحادثة. الصوت والصورة يمرّون بين الجهازين مباشرة.</span><span data-l="en">Call family by voice or video from the same chat. Audio and picture go straight between the two devices.</span></p>
+      <img class="sheet-img" src="img/call.jpg" width="640" height="1066" alt="شاشة مكالمة واردة" data-ar="شاشة مكالمة واردة" data-en="An incoming call" data-attr="alt" loading="lazy" decoding="async">
+    </article>
+    <article class="sheet s3">
+      <h3 class="sheet-name"><span data-l="ar">رقمك بدل رقم الجوال</span><span data-l="en">A number, not your phone number</span></h3>
+      <p class="sheet-text"><span data-l="ar">تاخذ رقمًا مثل mell-482913 تشاركه مع أهلك وأصحابك. ما نطلب رقم جوال ولا إيميل.</span><span data-l="en">You get a number like mell-482913 to share with family and friends. We never ask for a phone number or an email.</span></p>
+      <img class="sheet-img" src="img/settings.jpg" width="640" height="1066" alt="رقمك في الإعدادات" data-ar="رقمك في الإعدادات" data-en="Your number in Settings" data-attr="alt" loading="lazy" decoding="async">
+    </article>
+    <article class="sheet s4">
+      <h3 class="sheet-name"><span data-l="ar">بدون إعلانات ولا تتبّع</span><span data-l="en">No ads, no tracking</span></h3>
+      <p class="sheet-text"><span data-l="ar">ما فيه إعلانات، ولا خلاصة عشوائية، ولا تتبّع. النسخة الاحتياطية لمفاتيحك ملف على جوالك أنت، ولا تنرفع لأي مكان.</span><span data-l="en">No ads, no feed, no tracking. Your key backup is a file on your own phone and is never uploaded anywhere.</span></p>
+      <img class="sheet-img" src="img/list.jpg" width="640" height="1066" alt="قائمة المحادثات" data-ar="قائمة المحادثات" data-en="The chat list" data-attr="alt" loading="lazy" decoding="async">
+    </article>
+    <article class="sheet s5">
+      <h3 class="sheet-name"><span data-l="ar">وضع الأطفال</span><span data-l="en">Kids Mode</span></h3>
+      <p class="sheet-text"><span data-l="ar">ولي الأمر يضيف حساب الطفل ويوافق على من يتواصل معهم. الطفل ما يستقبل طلبات من الغرباء. هذا مفروض من السيرفر، مو من الواجهة بس.</span><span data-l="en">A guardian creates the child's account and approves who they can talk to. Strangers can't reach a child. The server enforces it, not just the interface.</span></p>
+      <p class="sheet-big"><span data-l="ar">مع من توافق عليه فقط</span><span data-l="en">Only people you approve</span></p>
+    </article>
+  </div>
+</section>
+
+<section class="how" id="how" aria-labelledby="how-h">
+  <div class="how-text">
+    <h2 id="how-h" class="how-h" data-rise><span data-l="ar">كيف يشتغل</span><span data-l="en">How it works</span></h2>
+    <p data-rise data-d="1"><span data-l="ar">ثلاث خطوات، بدون إيميل ولا رقم جوال.</span><span data-l="en">Three steps, no email and no phone number.</span></p>
+  </div>
+  <div class="slip" data-rise data-d="1">
+          <h4 class="slip-h"><span data-l="ar">أول مرة</span><span data-l="en">The first time</span></h4>
+          <p class="slip-row"><span class="slip-what"><span data-l="ar">تضغط «ابدأ الآن»</span><span data-l="en">Tap “Start now”</span></span><span class="dots" aria-hidden="true"></span><span class="slip-val"><span data-l="ar">بدون تسجيل</span><span data-l="en">no sign-up</span></span></p><p class="slip-row"><span class="slip-what"><span data-l="ar">تاخذ رقمك mell-</span><span data-l="en">You get your mell- number</span></span><span class="dots" aria-hidden="true"></span><span class="slip-val"><span data-l="ar">فورًا</span><span data-l="en">instantly</span></span></p>
+          <h4 class="slip-h"><span data-l="ar">تضيف أهلك</span><span data-l="en">Add your people</span></h4>
+          <p class="slip-row"><span class="slip-what"><span data-l="ar">تشارك رقمك أو تكتب رقمهم</span><span data-l="en">Share your number or type theirs</span></span><span class="dots" aria-hidden="true"></span><span class="slip-val"><span data-l="ar">ضغطة</span><span data-l="en">one tap</span></span></p><p class="slip-row"><span class="slip-what"><span data-l="ar">هم يقبلون الطلب</span><span data-l="en">They accept the request</span></span><span class="dots" aria-hidden="true"></span><span class="slip-val"><span data-l="ar">منهم</span><span data-l="en">on their side</span></span></p>
+          <h4 class="slip-h"><span data-l="ar">بعدها</span><span data-l="en">Then</span></h4>
+          <p class="slip-row"><span class="slip-what"><span data-l="ar">تراسلهم نص وصور وصوت ومكالمات</span><span data-l="en">Message, send photos and voice, call</span></span><span class="dots" aria-hidden="true"></span><span class="slip-val"><span data-l="ar">مشفّرة</span><span data-l="en">encrypted</span></span></p><p class="slip-row"><span class="slip-what"><span data-l="ar">تحمي حسابك بكلمة سر</span><span data-l="en">Protect your account with a password</span></span><span class="dots" aria-hidden="true"></span><span class="slip-val"><span data-l="ar">اختياري</span><span data-l="en">optional</span></span></p><p class="slip-row"><span class="slip-what"><span data-l="ar">تحفظ نسخة مفاتيحك على جوالك</span><span data-l="en">Save a key backup on your phone</span></span><span class="dots" aria-hidden="true"></span><span class="slip-val"><span data-l="ar">اختياري</span><span data-l="en">optional</span></span></p>
+    <p class="slip-end"><span><span data-l="ar">النتيجة: محادثة مشفّرة مع من تحب</span><span data-l="en">Result: an encrypted chat with the people you love</span></span></p>
+  </div>
+</section>
+
+<section class="faq" id="faq" aria-labelledby="faq-h">
+  <h2 id="faq-h" class="faq-h" data-rise><span data-l="ar">أسئلة وأجوبة صريحة</span><span data-l="en">Straight answers</span></h2>
+  <div class="cards">
+      <details class="icard c0" name="faq" open>
+        <summary><span class="tab"><span data-l="ar">الأمان</span><span data-l="en">Security</span></span><span class="q"><span data-l="ar">هل رسائلي مشفّرة فعلًا؟</span><span data-l="en">Are my messages really encrypted?</span></span></summary>
+        <p class="a"><span data-l="ar">نعم: الرسائل والصور والملفات والتسجيلات تُشفَّر من طرف إلى طرف، والسيرفر ما يشوف إلا نصًا مشفّرًا. لكن آي ميلو لسا نسخة تجريبية، وما راجعه طرف أمني مستقل بعد. لا تعتمد عليه في اتصالات عالية الخطورة.</span><span data-l="en">Yes: messages, photos, files and voice notes are end-to-end encrypted, and the server only sees ciphertext. But iMello is still a preview and hasn't had an independent security review. Don't rely on it for high-risk communication.</span></p>
+      </details>
+      <details class="icard c1" name="faq">
+        <summary><span class="tab"><span data-l="ar">الجوال</span><span data-l="en">Phone</span></span><span class="q"><span data-l="ar">وش يصير لو ضاع جوالي؟</span><span data-l="en">What if I lose my phone?</span></span></summary>
+        <p class="a"><span data-l="ar">لو ما حطيت كلمة سر لحسابك، الحساب مربوط بالجهاز وينفقد معه. احمِ حسابك بكلمة سر من الإعدادات، واحفظ نسخة المفاتيح على جوالك: الرسائل القديمة ما ترجع بدونها.</span><span data-l="en">If you haven't set a password, the account is tied to the device and is lost with it. Protect your account from Settings and keep a key backup on your phone: old messages can't come back without it.</span></p>
+      </details>
+      <details class="icard c2" name="faq">
+        <summary><span class="tab"><span data-l="ar">الأطفال</span><span data-l="en">Kids</span></span><span class="q"><span data-l="ar">كيف يشتغل وضع الأطفال؟</span><span data-l="en">How does Kids Mode work?</span></span></summary>
+        <p class="a"><span data-l="ar">ولي الأمر ينشئ حساب الطفل ويوافق على جهات الاتصال. أي طلب لطفل يروح لولي الأمر أول، والسيرفر يرفض أي تواصل ما وافق عليه.</span><span data-l="en">A guardian creates the child's account and approves contacts. Any request to a child goes to the guardian first, and the server rejects contact that wasn't approved.</span></p>
+      </details>
+      <details class="icard c0" name="faq">
+        <summary><span class="tab"><span data-l="ar">الخصوصية</span><span data-l="en">Privacy</span></span><span class="q"><span data-l="ar">هل فيه إعلانات أو تتبّع؟</span><span data-l="en">Are there ads or tracking?</span></span></summary>
+        <p class="a"><span data-l="ar">لا. ما فيه إعلانات ولا تحليلات تتبّع. الإشعارات ما تعرض نص الرسالة، وتقدر تطفيها.</span><span data-l="en">No. There are no ads and no tracking analytics. Notifications never show message text, and you can turn them off.</span></p>
+      </details>
+      <details class="icard c1" name="faq">
+        <summary><span class="tab"><span data-l="ar">التحميل</span><span data-l="en">Install</span></span><span class="q"><span data-l="ar">وين أحمّل التطبيق؟</span><span data-l="en">Where do I get the app?</span></span></summary>
+        <p class="a"><span data-l="ar">افتح التطبيق من الزر فوق، وعلى الآيفون اضغط مشاركة ثم «إضافة إلى الشاشة الرئيسية»، وبعدها تشتغل الإشعارات حتى والتطبيق مقفول. نسخ آيفون وأندرويد التجريبية على الطلب من المطوّر.</span><span data-l="en">Open the app with the button above; on iPhone tap Share, then “Add to Home Screen”, and notifications work even when it's closed. iPhone and Android preview builds are available from the developer on request.</span></p>
+      </details>
+      <details class="icard c2" name="faq">
+        <summary><span class="tab"><span data-l="ar">السيرفر</span><span data-l="en">Server</span></span><span class="q"><span data-l="ar">ليش أحيانًا ما يفتح؟</span><span data-l="en">Why does it sometimes not open?</span></span></summary>
+        <p class="a"><span data-l="ar">السيرفر مستضاف ذاتيًا على جهاز واحد في البيت، فممكن يتوقف مؤقتًا لو الجهاز نام أو انقطع النت. حسابك ورسائلك ما تضيع، وترجع لك لما يشتغل.</span><span data-l="en">The server is self-hosted on one computer at home, so it can pause when that computer sleeps or loses internet. Your account and messages aren't lost; they come back when it's up.</span></p>
+      </details>
+  </div>
+</section>
+
+<section class="cta" aria-labelledby="cta-h">
+  <form class="cta-form" id="ctaform" action="app/" autocomplete="off">
+    <h2 id="cta-h" class="cta-sentence" data-rise>
+      <label for="cta-name"><span data-l="ar">اسمي</span><span data-l="en">My name is</span></label>
+      <input id="cta-name" type="text" maxlength="24" placeholder="اسمك" data-ph-ar="اسمك" data-ph-en="your name">
+      <span><span data-l="ar">وأبي</span><span data-l="en">and I'd like to</span></span>
+      <button type="submit" class="go"><span data-l="ar">أبدأ</span><span data-l="en">start</span></button>
+    </h2>
+    <p class="cta-after" data-rise data-d="1"><span data-l="ar">يفتح التطبيق وتاخذ رقمك على طول. ما نطلب إيميل ولا رقم جوال.</span><span data-l="en">This opens the app and you get your number straight away. We don't ask for an email or a phone number.</span></p>
+  </form>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="tiles">
+    <div class="tile t-state"><p class="t-big"><span data-l="ar">آي ميلو نسخة تجريبية: ما راجعه طرف أمني مستقل بعد.</span><span data-l="en">iMello is a preview: it hasn't had an independent security review yet.</span></p><p class="t-legal"><span data-l="ar">© 2026 آي ميلو. تطوير abu00salman.</span><span data-l="en">© 2026 iMello. Developed by abu00salman.</span></p></div>
+    <nav class="tile t-nav" aria-label="Footer"><a href="#features"><span data-l="ar">المزايا</span><span data-l="en">Features</span></a><a href="#how"><span data-l="ar">كيف يشتغل</span><span data-l="en">How it works</span></a><a href="#faq"><span data-l="ar">أسئلة</span><span data-l="en">Questions</span></a><a href="https://abu00salman.github.io/rm/" rel="noopener"><span data-l="ar">عن المطوّر</span><span data-l="en">About the developer</span></a></nav>
+    <div class="tile t-time"><p class="t-label"><span data-l="ar">الرياض</span><span data-l="en">Riyadh</span></p><p class="t-clock" id="clock" dir="ltr">--:--</p></div>
+    <a class="tile t-mail" href="mailto:abu00salman@yahoo.com"><span dir="ltr">abu00salman@yahoo.com</span></a>
+    <div class="tile t-word"><p class="wordmark" dir="ltr">iMello</p></div>
+    <a class="tile t-open" href="app/"><span><span data-l="ar">افتح التطبيق</span><span data-l="en">Open the app</span></span><svg viewBox="0 0 48 48" width="40" height="40" aria-hidden="true"><path d="M40 8 8 40M16 8h24v24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="square"/></svg></a>
+  </div>
+</footer>
+<script src="app.js" defer></script>
+</body>
+</html>

@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   push:
     branches: ["claude/imello-messenger-dev-12zxqe"]
-    paths: ["apps/web/**", "packages/**", ".github/workflows/deploy-pages.yml"]
+    paths: ["apps/web/**", "apps/landing/**", "packages/**", "scripts/assemble-pages.sh", ".github/workflows/deploy-pages.yml"]
 
 permissions:
   contents: read
@@ -25,18 +25,16 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
-      - name: Build
+      - name: Assemble site (landing page at the root, the app under app/)
         env:
-          # "/" when a custom domain (e.g. imello.abu00salman.com) is set; otherwise /<repo>/.
-          VITE_BASE: ${{ vars.IMELLO_PAGES_BASE || format('/{0}/', github.event.repository.name) }}
           VITE_CSP_META: "true"
-          # Until a server exists these point nowhere; the sign-in screen says so.
           VITE_API_URL: ${{ vars.IMELLO_API_URL || 'https://imello-api.abu00salman.com' }}
           VITE_HOMESERVER_URL: ${{ vars.IMELLO_HOMESERVER_URL || 'https://imello-matrix.abu00salman.com' }}
-        run: pnpm --filter @imello/web run build
+        # "/" when a custom domain is set; otherwise /<repo>/.
+        run: bash scripts/assemble-pages.sh "${{ vars.IMELLO_PAGES_BASE || format('/{0}/', github.event.repository.name) }}" site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
-        with: { path: apps/web/dist }
+        with: { path: site }
 
   deploy:
     needs: build

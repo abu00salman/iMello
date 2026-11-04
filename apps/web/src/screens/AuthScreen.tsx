@@ -12,7 +12,10 @@ export function AuthScreen() {
   const [mode, setMode] = useState<Mode>("start");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  // The landing page can hand over the name typed in its "My name is ___" sentence.
+  const [displayName, setDisplayName] = useState(() => {
+    try { return (localStorage.getItem("imello.prefillName") ?? "").slice(0, 24); } catch { return ""; }
+  });
   const [temporary, setTemporary] = useState(false);
   const [busy, setBusy] = useState(false);
   const [slow, setSlow] = useState(false);
@@ -77,7 +80,12 @@ export function AuthScreen() {
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    if (mode === "start") return void run(() => quickStart(displayName, locale));
+    if (mode === "start") {
+      return void run(async () => {
+        await quickStart(displayName, locale);
+        try { localStorage.removeItem("imello.prefillName"); } catch { /* ignore */ }
+      });
+    }
     if (mode === "register") {
       if (validateUsername(username.trim().toLowerCase())) return setError(t("auth.usernameHint"));
       if (password.length < MIN_PASSWORD_LENGTH) return setError(t("auth.passwordHint"));

@@ -42,6 +42,21 @@ No monthly cost. The Mac must stay on and awake; uptime depends on home power/in
    ```
 5. Continue with steps 3–5 of the quick path below (GitHub variables, Pages domain, app rebuild).
 
+## GitHub Pages layout (landing page + app)
+
+`abu00salman.github.io/iMello/` serves a **landing page** (`apps/landing`, plain static files; `node apps/landing/build.mjs`
+regenerates `index.html`), and the **web app lives at `/iMello/app/`**. `scripts/assemble-pages.sh <base> <out>` builds both
+(the deploy workflow calls it). Things that depend on this:
+
+- Links people already have keep working: `boot.js` forwards `/iMello/#/…` (invite links, notification clicks) to
+  `/iMello/app/#/…`; the Home Screen app (standalone), the native iMello app (user agent `iMelloApp`) and anyone who has
+  already used the app in this browser (`localStorage imello.returning`) skip the landing page. `?landing` always shows it.
+- The service worker stays at `/iMello/sw.js` (scope `/iMello/`), as before, so existing push subscriptions survive; the app
+  registers it via `VITE_SW_BASE` (set by `assemble-pages.sh`).
+- The native app's `extra.webUrl` is `https://abu00salman.github.io/iMello/app/` (older builds point at `/iMello/` and are
+  forwarded by the user-agent rule).
+- Rollback: re-run the previous commit's "Deploy web to GitHub Pages" workflow (it publishes the app at `/iMello/` again).
+
 ## Quick path for abu00salman.com (one VPS + Cloudflare DNS + GitHub Pages)
 
 | Host | DNS record (Cloudflare, **DNS only / grey cloud**) | Serves |

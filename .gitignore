@@ -1,52 +1,49 @@
-# Dependencies
-node_modules/
-.pnpm-store/
 
+!.env.example
 # Build output
-dist/
-build/
-.expo/
-web-build/
-apps/mobile/android/
-apps/mobile/ios/
-*.tsbuildinfo
-coverage/
-playwright-report/
-test-results/
-
+# Dependencies
 # Environment & secrets — NEVER commit these
+# Local runtime state
+# OS / editor
+# Python
+*.db
+*.jks
+*.key
+*.keystore
+*.log
+*.mobileprovision
+*.p12
+*.p8
+*.pem
+*.pyc
+*.signing.key
+*.sqlite
+*.swp
+*.tsbuildinfo
+.DS_Store
+.dev-stack/
 .env
 .env.*
-!.env.example
-*.pem
-*.key
-*.p8
-*.p12
-*.mobileprovision
-*.jks
-*.keystore
-google-services.json
+.expo/
+.idea/
+.pnpm-store/
+.taste-skill/
+.venv/
 GoogleService-Info.plist
+Thumbs.db
+__pycache__/
+apps/mobile/android/
+apps/mobile/ios/
+build/
+coverage/
 credentials.json
-*.signing.key
+dist/
+downloads/
+google-services.json
 infrastructure/synapse/data/
 infrastructure/synapse/homeserver.generated.yaml
-
-# Local runtime state
-.dev-stack/
-*.log
-*.db
-*.sqlite
+node_modules/
 pgdata/
-
-# OS / editor
-.DS_Store
-Thumbs.db
-.idea/
-*.swp
-
-# Python
-__pycache__/
-*.pyc
-.venv/
-downloads/
+playwright-report/
+test-results/
+web-build/

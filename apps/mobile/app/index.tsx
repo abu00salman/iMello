@@ -23,7 +23,7 @@ import type { ComponentType, Ref } from "react";
 // re-type the component once instead of casting every prop.
 const WebView = RNWebView as unknown as ComponentType<WebViewProps & { ref?: Ref<RNWebView> }>;
 
-const WEB_URL: string = (Constants.expoConfig?.extra?.webUrl as string | undefined) ?? "https://abu00salman.github.io/iMello/";
+const WEB_URL: string = (Constants.expoConfig?.extra?.webUrl as string | undefined) ?? "https://abu00salman.github.io/iMello/app/";
 const WEB_ORIGIN = new URL(WEB_URL).origin;
 
 // Show message banners even while the app is in the foreground (the web client only asks when the

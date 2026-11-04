@@ -28,9 +28,11 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - name: Unit tests
-        run: pnpm --filter @imello/core --filter @imello/ui --filter @imello/localization --filter @imello/web run test
+        run: pnpm --filter @imello/core --filter @imello/ui --filter @imello/localization --filter @imello/web --filter @imello/mobile run test
       - name: Build web client
         run: pnpm --filter @imello/web run build
+      - name: Build headless crypto engine
+        run: pnpm --filter @imello/mobile run build:engine
       - name: Bundle mobile app (Android + iOS JS)
         working-directory: apps/mobile
         env: { CI: "1" }

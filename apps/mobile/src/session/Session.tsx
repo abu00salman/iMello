@@ -4,6 +4,7 @@ import * as Crypto from "expo-crypto";
 import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { File, Paths } from "expo-file-system";
 import { AppState, Platform } from "react-native";
 import type { WebView } from "react-native-webview";
 import { formatDiagnostics, stageExpired, type BootStage } from "../engine/diagnostics";
@@ -275,6 +276,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       clearInterval(ping);
     };
   }, [failBoot, generation]);
+
+  useEffect(() => {
+    if (phase !== "out" && phase !== "in") return;
+    try {
+      const marker = new File(Paths.document, "imello-boot.txt");
+      if (marker.exists) marker.delete();
+      marker.create();
+      marker.write(phase);
+    } catch {
+      /* The simulator job reads this file to prove the splash finished. */
+    }
+  }, [phase]);
 
   useEffect(() => {
     const total = rooms.reduce((sum, room) => sum + room.unread, 0);

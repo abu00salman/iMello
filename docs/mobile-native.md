@@ -30,7 +30,7 @@ Synapse Client-Server API
 
 The policy API (contacts, family, invites, account) is called with React Native `fetch` through `ImelloApiClient`. That traffic is not subject to browser CORS. Only the Matrix client runs inside the engine, because that is where the WASM and IndexedDB crypto store have to live.
 
-The engine page is bundled into the app (`pnpm --filter @imello/mobile run build:engine`) and opened from the app's own file URL. The bytes of `matrix-sdk-crypto-wasm` are compiled into that file; nothing is loaded from the iMello website. IndexedDB open is bounded by a timeout so a stuck storage call cannot leave the splash up. Keychain is not used on this path, so a re-signed bundle id does not block startup.
+The engine page is bundled into the app (`pnpm --filter @imello/mobile run build:engine`) as one classic `<script>` (an IIFE, not `type="module"`) and opened from the app's own file URL. Inlining that script must not use `String.replace`, because `$&` in the SDK is the replacement pattern for the whole match and was being turned into a literal `<script` tag. `node --check` parses the result as a classic script before CI continues. The bytes of `matrix-sdk-crypto-wasm` are compiled into that file; nothing is loaded from the iMello website. IndexedDB open is bounded by a timeout so a stuck storage call cannot leave the splash up. Keychain is not used on this path, so a re-signed bundle id does not block startup.
 
 ### Bridge
 

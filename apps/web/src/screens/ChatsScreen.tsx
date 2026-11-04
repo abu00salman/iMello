@@ -4,6 +4,8 @@ import {
   conversations,
   isRoomEncrypted,
   NotEncryptedError,
+  readByOthers,
+  typingMembers,
   AttachmentTooLargeError,
   roomMessages,
   sendAttachment,
@@ -21,6 +23,7 @@ import { useClientVersion, useSession } from "../lib/session";
 import { AttachmentView, formatDuration, imageSize, useVoiceRecorder } from "../ui/attachments";
 import { Avatar, Button, EmptyState, LockBadge } from "../ui/components";
 import { prettyName } from "../lib/names";
+import { EmojiPicker } from "../ui/emoji";
 
 // Drafts are kept in memory only: they may contain sensitive text.
 const drafts = new Map<string, string>();
@@ -44,8 +47,16 @@ export function ChatsScreen({ roomId }: { roomId?: string }) {
   return (
     <div className={`split ${roomId ? "has-detail" : ""}`}>
       <aside className="list-pane" aria-label={t("nav.chats")}>
-        <header className="pane-header">
-          <h1>{t("nav.chats")}</h1>
+        <header className="bbm-bar profile-bar">
+          <h1 className="sr">{t("nav.chats")}</h1>
+          <Avatar name={me?.displayName || me?.pin || "?"} id={me?.userId ?? "me"} size={46} />
+          <div className="bar-titles">
+            <strong className="bar-title" dir="auto">{me?.displayName || me?.pin}</strong>
+            {me?.pin && <span className="bar-sub" dir="ltr">{me.pin}</span>}
+          </div>
+          <a className="bar-action" href="#/contacts" aria-label={t("chats.new")} title={t("chats.new")}>
+            <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 3h13a2 2 0 0 1 2 2v6.1a6 6 0 0 0-6.9 7.9H8l-4 3V5a2 2 0 0 1 2-2Zm14 10h2v3h3v2h-3v3h-2v-3h-3v-2h3Z" /></svg>
+          </a>
         </header>
         {me?.credential === "device" && (
           <a className="protect-banner" href="#/settings">🔐 {t("protect.banner")}</a>
@@ -75,29 +86,46 @@ export function ChatsScreen({ roomId }: { roomId?: string }) {
 
 function ConversationRow({ client, c, active }: { client: MatrixClient; c: ConversationSummary; active: boolean }) {
   const { t, locale } = usePrefs();
+  const typing = c.membership === "join" ? typingMembers(client, c.roomId) : [];
+  const last = c.lastMessage;
   const preview = c.membership === "invite"
     ? t("chat.invitedYou", { name: displayNameOf(client, c.otherUserId, c.name) })
-    : c.lastMessage?.decryptionFailed
-      ? "🔒"
-      : c.lastMessage?.attachment
-        ? c.lastMessage.attachment.voice
-          ? `🎤 ${t("chat.voiceMessage")}`
-          : c.lastMessage.attachment.kind === "image"
-            ? `📷 ${t("chat.photo")}`
-            : `📄 ${c.lastMessage.attachment.name}`
-        : c.lastMessage?.body ?? "";
+    : typing.length
+      ? t("chat.writing")
+      : last?.decryptionFailed
+        ? "🔒"
+        : last?.attachment
+          ? last.attachment.voice
+            ? `🎤 ${t("chat.voiceMessage")}`
+            : last.attachment.kind === "image"
+              ? `📷 ${t("chat.photo")}`
+              : `📄 ${last.attachment.name}`
+          : last?.body ?? "";
+  const unread = c.unread > 0;
+  // Delivery marks on your own last message (D = on the server, R = read); a dot for theirs (gold = unread).
+  const mark = !last || typing.length || c.membership === "invite"
+    ? null
+    : last.isOwn
+      ? last.state === "sent" ? (readByOthers(client, c.roomId, last.id) ? "R" : "D") : null
+      : unread ? "new" : "seen";
   return (
     <li>
-      <a className={`conv-row ${active ? "active" : ""} ${c.membership === "invite" ? "invite" : ""}`} href={`#/chats/${encodeURIComponent(c.roomId)}`} aria-current={active ? "page" : undefined}>
-        <Avatar name={prettyName(c.name)} id={c.otherUserId ?? c.roomId} size={52} />
+      <a className={`conv-row ${active ? "active" : ""} ${c.membership === "invite" ? "invite" : ""} ${unread ? "unread" : ""}`} href={`#/chats/${encodeURIComponent(c.roomId)}`} aria-current={active ? "page" : undefined}>
+        <Avatar name={prettyName(c.name)} id={c.otherUserId ?? c.roomId} size={56} />
         <span className="conv-main">
           <span className="conv-top">
             <strong className="conv-name" dir="auto">{prettyName(c.name)}</strong>
             {c.lastActivity > 0 && <time className="conv-time">{formatTime(new Date(c.lastActivity), locale)}</time>}
           </span>
-          <span className="conv-preview" dir="auto">{preview}</span>
+          <span className={`conv-preview ${typing.length ? "is-typing" : ""}`}>
+            {mark === "D" || mark === "R" ? (
+              <span className={`dr dr-${mark}`} aria-label={t(mark === "R" ? "chat.status.read" : "chat.status.sent")}>{mark}</span>
+            ) : mark ? (
+              <span className={`dot ${mark}`} aria-label={unread ? t("chat.unreadCount", { count: c.unread }) : undefined} aria-hidden={unread ? undefined : true} />
+            ) : null}
+            <span className="conv-preview-text" dir="auto">{preview}</span>
+          </span>
         </span>
-        {c.unread > 0 && <span className="badge" aria-label={`${c.unread}`}>{c.unread}</span>}
       </a>
     </li>
   );
@@ -115,6 +143,9 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
   const typingRef = useRef<number>(0);
   // All hooks must run before any early return below (invite / loading states).
   const calls = useCalls();
+  const { me } = useSession();
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const textRef = useRef<HTMLTextAreaElement>(null);
   const recorder = useVoiceRecorder();
   const fileInput = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState<{ name: string; progress: number } | null>(null);
@@ -254,6 +285,15 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
     }
   }
 
+  function insertEmoji(e: string) {
+    const el = textRef.current;
+    const start = el?.selectionStart ?? text.length;
+    const end = el?.selectionEnd ?? text.length;
+    const next = text.slice(0, start) + e + text.slice(end);
+    onChange(next);
+    requestAnimationFrame(() => el?.setSelectionRange(start + e.length, start + e.length));
+  }
+
   function submit() {
     const body = text.trim();
     if (!body || !encrypted) return;
@@ -307,11 +347,15 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
           const prev = visible[i - 1];
           const showDay = !prev || formatDay(new Date(prev.timestamp), locale) !== day;
           const quoted = m.replyTo ? messages.find((x) => x.id === m.replyTo) : null;
+          const name = m.isOwn ? (me?.displayName || t("chat.you")) : displayNameOf(client, m.sender, m.sender);
           return (
             <MessageRow
               key={m.txnId ?? m.id}
               client={client}
               m={m}
+              name={name}
+              avatarId={m.isOwn ? (me?.userId ?? m.sender) : m.sender}
+              read={m.isOwn && m.state === "sent" && readByOthers(client, roomId, m.id)}
               day={showDay ? day : null}
               quotedBody={quoted ? (quoted.body ?? "🔒") : null}
               onReply={setReplyTo}
@@ -344,6 +388,7 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
           </Button>
         </div>
       ) : (
+      <>
       <div className="composer">
         <input
           ref={fileInput}
@@ -356,10 +401,8 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
             if (f) void sendFile(f, f.name);
           }}
         />
-        <button className="icon-btn" onClick={() => fileInput.current?.click()} disabled={!encrypted || !!uploading} aria-label={t("chat.attach")}>
-          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.5 6.5v10a4.5 4.5 0 0 1-9 0V5a3 3 0 0 1 6 0v10.5a1.5 1.5 0 0 1-3 0V6.5H9v9a3 3 0 0 0 6 0V5a4.5 4.5 0 0 0-9 0v11.5a6 6 0 0 0 12 0v-10Z" /></svg>
-        </button>
         <textarea
+          ref={textRef}
           rows={1}
           dir="auto"
           placeholder={t("chat.placeholder")}
@@ -367,19 +410,34 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
           value={text}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={onKey}
+          onFocus={() => setEmojiOpen(false)}
           disabled={!encrypted}
           maxLength={20000}
         />
-        {text.trim() ? (
-          <Button onClick={submit} disabled={!encrypted} aria-label={t("chat.send")} className="send">
-            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" className="send-icon"><path fill="currentColor" d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z" /></svg>
-          </Button>
-        ) : (
-          <Button onClick={() => void toggleRecording()} disabled={!encrypted || !!uploading} aria-label={t("chat.record")} className="send">
-            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z" /></svg>
-          </Button>
-        )}
+        <button type="button" className="emoji-key" onClick={() => setEmojiOpen((o) => !o)} aria-expanded={emojiOpen} aria-controls="emoji-panel" disabled={!encrypted} aria-label={t("chat.emoji")}>
+          <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13" className="ek-face" /><circle cx="11.5" cy="13" r="1.9" className="ek-eye" /><circle cx="20.5" cy="13" r="1.9" className="ek-eye" /><path d="M10 18.5c1.4 3 3.6 4.4 6 4.4s4.6-1.4 6-4.4" className="ek-mouth" /></svg>
+        </button>
       </div>
+      {emojiOpen && <EmojiPicker id="emoji-panel" label={t("chat.emoji")} onPick={insertEmoji} />}
+      <div className="actionbar" role="toolbar" aria-label={t("chat.actions")}>
+        <button type="button" className="ab ab-back" onClick={() => navigate({ name: "chats" })}>
+          <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" className="flip-rtl"><path fill="currentColor" d="M15.4 4 7.4 12l8 8 1.4-1.4L10.2 12l6.6-6.6Z" /></svg>
+          <span>{t("common.back")}</span>
+        </button>
+        <button type="button" className="ab" onClick={() => fileInput.current?.click()} disabled={!encrypted || !!uploading} aria-label={t("chat.attach")}>
+          <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.5 6.5v10a4.5 4.5 0 0 1-9 0V5a3 3 0 0 1 6 0v10.5a1.5 1.5 0 0 1-3 0V6.5H9v9a3 3 0 0 0 6 0V5a4.5 4.5 0 0 0-9 0v11.5a6 6 0 0 0 12 0v-10Z" /></svg>
+          <span aria-hidden="true">{t("chat.attachShort")}</span>
+        </button>
+        <button type="button" className="ab" onClick={() => void toggleRecording()} disabled={!encrypted || !!uploading} aria-label={t("chat.record")}>
+          <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z" /></svg>
+          <span aria-hidden="true">{t("chat.voiceShort")}</span>
+        </button>
+        <button type="button" className="ab ab-send" onClick={submit} disabled={!encrypted || !text.trim()} aria-label={t("chat.send")}>
+          <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" className="flip-rtl"><path fill="currentColor" d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z" /></svg>
+          <span aria-hidden="true">{t("chat.send")}</span>
+        </button>
+      </div>
+      </>
       )}
     </div>
   );
@@ -389,31 +447,35 @@ const PAGE = 50;
 
 /** One message. Memoised: a sync tick re-renders only the rows whose content or status changed. */
 const MessageRow = memo(
-  function MessageRow({ client, m, day, quotedBody, onReply }: { client: MatrixClient; m: ChatMessage; day: string | null; quotedBody: string | null; onReply: (m: ChatMessage) => void }) {
+  function MessageRow({ client, m, name, avatarId, read, day, quotedBody, onReply }: { client: MatrixClient; m: ChatMessage; name: string; avatarId: string; read: boolean; day: string | null; quotedBody: string | null; onReply: (m: ChatMessage) => void }) {
     const { t, locale } = usePrefs();
+    const status = m.isOwn ? (m.state === "sent" ? (read ? "read" : "sent") : m.state) : null;
     return (
       <div className="msg-wrap">
         {day && <div className="day-sep"><span>{day}</span></div>}
         <div className={`msg ${m.isOwn ? "own" : "theirs"} ${m.decryptionFailed ? "undecryptable" : ""}`} data-testid="message">
+          <Avatar name={name} id={avatarId} size={44} />
           <div className="bubble" onDoubleClick={() => !m.decryptionFailed && onReply(m)}>
+            <div className="card-head">
+              <strong className="who" dir="auto">{name}</strong>
+              <time className="when">{formatTime(new Date(m.timestamp), locale)}</time>
+            </div>
             {quotedBody && <div className="quote" dir="auto">{quotedBody}</div>}
-            {m.attachment ? (
-              <AttachmentView client={client} info={m.attachment} />
-            ) : (
-              <span dir="auto" className="body">{m.decryptionFailed ? t("chat.unableToDecrypt") : m.body}</span>
-            )}
-            <span className="meta">
-              <time>{formatTime(new Date(m.timestamp), locale)}</time>
-              {m.isOwn && (
-                <span className={`state ${m.state}`} aria-label={t(`chat.status.${m.state}`)}>
-                  {m.state === "sending" ? (
-                    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 8v4l2.5 1.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-                  ) : m.state === "failed" ? "!" : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12.5 4.5 4.5L19 6.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <div className="card-body">
+              {status && (
+                <span className={`state ${status}`} aria-label={t(`chat.status.${status}`)}>
+                  {status === "read" ? "R" : status === "sent" ? "D" : status === "failed" ? "!" : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="2.4" /><path d="M12 8v4l2.5 1.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" /></svg>
                   )}
                 </span>
               )}
-            </span>
+              {!m.isOwn && !m.decryptionFailed && <span className="dot seen" aria-hidden="true" />}
+              {m.attachment ? (
+                <AttachmentView client={client} info={m.attachment} />
+              ) : (
+                <span dir="auto" className="body">{m.decryptionFailed ? t("chat.unableToDecrypt") : m.body}</span>
+              )}
+            </div>
           </div>
           {!m.decryptionFailed && (
             <button className="reply-btn" onClick={() => onReply(m)} aria-label="Reply"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 8V4l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11Z" fill="currentColor" /></svg></button>
@@ -425,6 +487,9 @@ const MessageRow = memo(
   (a, b) =>
     a.client === b.client &&
     a.day === b.day &&
+    a.name === b.name &&
+    a.avatarId === b.avatarId &&
+    a.read === b.read &&
     a.quotedBody === b.quotedBody &&
     a.onReply === b.onReply &&
     a.m.id === b.m.id &&

@@ -5,7 +5,8 @@ import { CallsProvider } from "./lib/calls";
 import { PrefsProvider } from "./lib/prefs";
 import { SessionProvider } from "./lib/session";
 import "./styles.css";
-import "./theme.css";
+import "./calls.css";
+import "./bbm.css";
 import { registerServiceWorker } from "./lib/push";
 
 registerServiceWorker(localStorage.getItem("imello.locale") === "en" ? "en" : "ar");

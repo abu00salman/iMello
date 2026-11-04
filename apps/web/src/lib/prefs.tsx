@@ -3,7 +3,8 @@ import { createTranslator, direction, negotiateLocale, type Locale, type Message
 import { darkScheme, lightScheme, schemeToCssVariables, typography } from "@imello/ui";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-export type ThemePref = "system" | "light" | "dark";
+/** "classic" (default) is the classic messenger look: blue bars, grey ground, white cards. */
+export type ThemePref = "classic" | "system" | "light" | "dark";
 
 interface Prefs {
   locale: Locale;
@@ -29,7 +30,7 @@ function initialLocale(): Locale {
 
 function initialTheme(): ThemePref {
   const saved = localStorage.getItem(THEME_KEY);
-  return saved === "light" || saved === "dark" ? saved : "system";
+  return saved === "light" || saved === "dark" || saved === "system" ? saved : "classic";
 }
 
 export function PrefsProvider({ children }: { children: ReactNode }) {
@@ -44,7 +45,8 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
     return () => mq.removeEventListener("change", on);
   }, []);
 
-  const resolvedTheme = theme === "system" ? (systemDark ? "dark" : "light") : theme;
+  const resolvedTheme: "light" | "dark" = theme === "system" ? (systemDark ? "dark" : "light") : theme === "dark" ? "dark" : "light";
+  const palette = theme === "classic" ? "classic" : resolvedTheme;
   const dir = direction(locale);
 
   useEffect(() => {
@@ -53,6 +55,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
     sendPrefsToServiceWorker(locale);
     root.dir = dir;
     root.dataset.theme = resolvedTheme;
+    root.dataset.palette = palette;
     window.ReactNativeWebView?.postMessage(JSON.stringify({ type: "theme", dark: resolvedTheme === "dark" }));
     // CSSOM assignments are permitted under our CSP (no inline <style> needed).
     for (const [k, v] of Object.entries(schemeToCssVariables(resolvedTheme === "dark" ? darkScheme : lightScheme))) {
@@ -61,7 +64,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
     root.style.setProperty("--font-family", typography.fontFamily);
     root.style.setProperty("--line-height", String(locale === "ar" ? typography.lineHeight.arabic : typography.lineHeight.latin));
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", resolvedTheme === "dark" ? darkScheme.background : lightScheme.accent);
-  }, [locale, dir, resolvedTheme]);
+  }, [locale, dir, resolvedTheme, palette]);
 
   const value = useMemo<Prefs>(
     () => ({

@@ -212,7 +212,7 @@ export function SettingsScreen() {
         </div>
         <h2>{t("settings.theme")}</h2>
         <div className="segmented" role="radiogroup" aria-label={t("settings.theme")}>
-          {(["system", "light", "dark"] as ThemePref[]).map((v) => (
+          {(["classic", "light", "dark", "system"] as ThemePref[]).map((v) => (
             <button key={v} role="radio" aria-checked={theme === v} onClick={() => setTheme(v)}>{t(`settings.theme.${v}`)}</button>
           ))}
         </div>

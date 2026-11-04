@@ -35,11 +35,11 @@ export function App() {
   return <Shell route={route} />;
 }
 
+// Classic messenger tab bar: Chats · Contacts · Family · Settings (calls start from inside a chat).
 const NAV: { name: Route["name"]; label: MessageKey; icon: ReactNode }[] = [
-  { name: "chats", label: "nav.chats", icon: <path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 3v-3H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" /> },
-  { name: "calls", label: "nav.calls", icon: <path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11 11 0 0 0 3.6.6 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11 11 0 0 0 .6 3.6 1 1 0 0 1-.25 1Z" /> },
-  { name: "family", label: "nav.family", icon: <path d="M12 3 2 11h3v9h5v-6h4v6h5v-9h3Z" /> },
-  { name: "contacts", label: "nav.contacts", icon: <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z" /> },
+  { name: "chats", label: "nav.chats", icon: <path d="M3 4h18v12H9l-5 4v-4H3Zm4 4v2h10V8Zm0 4v2h7v-2Z" fillRule="evenodd" /> },
+  { name: "contacts", label: "nav.contacts", icon: <path d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12Zm0 2c-4.4 0-8.5 2.2-8.5 5.5V21h17v-1.5C20.5 16.2 16.4 14 12 14Z" /> },
+  { name: "family", label: "nav.family", icon: <path d="M8.5 11a3.5 3.5 0 1 0-3.5-3.5A3.5 3.5 0 0 0 8.5 11Zm7.5 0a3 3 0 1 0-3-3 3 3 0 0 0 3 3Zm-7.5 2C5 13 1.5 14.7 1.5 17.3V19h14v-1.7C15.5 14.7 12 13 8.5 13Zm7.5.4a8 8 0 0 1 1.6 3.9V19h4.9v-1.4c0-2.2-2.9-3.9-6.5-4.2Z" /> },
   { name: "settings", label: "nav.settings", icon: <path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7 7 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7 7 0 0 0 1.7-1l2.4 1 2-3.4ZM13 15.5A3.5 3.5 0 1 1 16.5 12 3.5 3.5 0 0 1 13 15.5Z" transform="translate(-1 0)" /> },
 ];
 

@@ -429,6 +429,23 @@ function dedupeByPerson(client: MatrixClient) {
   };
 }
 
+/**
+ * Has someone else in the conversation read up to this message? (Matrix read receipts.)
+ * Used for the "D" (delivered to the server) / "R" (read) marks on your own messages.
+ */
+export function readByOthers(client: MatrixClient, roomId: string, eventId: string): boolean {
+  const room = client.getRoom(roomId);
+  if (!room || !eventId.startsWith("$")) return false;
+  const me = client.getUserId();
+  return room.getJoinedMembers().some((m) => m.userId !== me && room.hasUserReadEvent(m.userId, eventId));
+}
+
+/** Other people currently typing in this conversation. */
+export function typingMembers(client: MatrixClient, roomId: string): string[] {
+  const me = client.getUserId();
+  return (client.getRoom(roomId)?.currentState.getMembers() ?? []).filter((m) => m.typing && m.userId !== me).map((m) => m.name);
+}
+
 /** Newest displayable message without converting the whole timeline (cheap for the chat list). */
 function lastMessage(client: MatrixClient, room: Room): ChatMessage | null {
   const pending = room.getPendingEvents();

@@ -67,8 +67,8 @@ test("two independent browser sessions exchange end-to-end encrypted messages", 
   await alice.getByRole("button", { name: "Send" }).click();
   await expect(bob.getByTestId("message").filter({ hasText: reply })).toBeVisible();
 
-  // Sent state is shown for own messages.
-  await expect(bob.getByTestId("message").filter({ hasText: hello }).getByLabel("Sent")).toBeVisible();
+  // Delivery state is shown for own messages: D (sent) turns into R once Alice has read it.
+  await expect(bob.getByTestId("message").filter({ hasText: hello }).getByLabel(/^(Sent|Read)$/)).toBeVisible();
 
   // Switching Alice to Arabic flips the whole interface to RTL.
   await alice.getByRole("link", { name: "Settings" }).click();

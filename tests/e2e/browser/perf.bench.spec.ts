@@ -26,7 +26,7 @@ test("benchmark", async ({ browser }) => {
   const page = await ctx.newPage();
   await page.goto("/");
   await page.getByRole("button", { name: "Sign in" }).first().click();
-  await page.getByLabel("iMello number or username").fill(a.username);
+  await page.getByLabel("iMello Code or username").fill(a.username);
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in" }).last().click();
   await expect(page.locator("nav.tabbar")).toBeVisible({ timeout: 120_000 });

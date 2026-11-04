@@ -64,7 +64,7 @@ test("Start now → add by number → accept → encrypted chat → protect acco
   await expect(fahad.page.getByText("Your account is protected.")).toBeVisible();
   await fahad.page.getByRole("button", { name: "Sign out", exact: true }).click();
   await fahad.page.getByRole("button", { name: "Sign in" }).click();
-  await fahad.page.getByLabel("iMello number or username").fill(fahad.pin.toUpperCase());
+  await fahad.page.getByLabel("iMello Code or username").fill(fahad.pin.toUpperCase());
   await fahad.page.getByLabel("Password").fill(password);
   await fahad.page.getByRole("button", { name: "Sign in" }).last().click();
   await expect(fahad.page.getByRole("navigation", { name: "iMello" })).toBeVisible({ timeout: 60_000 });

@@ -1,15 +1,4 @@
-/* Fonts and the call screens (voice/video), kept from the previous design layer. */
-@import "@fontsource/readex-pro/arabic-500.css";
-@import "@fontsource/readex-pro/arabic-700.css";
-@import "@fontsource/readex-pro/500.css";
-@import "@fontsource/readex-pro/700.css";
-@import "@fontsource/ibm-plex-sans-arabic/arabic-400.css";
-@import "@fontsource/ibm-plex-sans-arabic/arabic-500.css";
-@import "@fontsource/ibm-plex-sans-arabic/arabic-600.css";
-@import "@fontsource/ibm-plex-sans-arabic/400.css";
-@import "@fontsource/ibm-plex-sans-arabic/500.css";
-@import "@fontsource/ibm-plex-sans-arabic/600.css";
-
+/* Call screens. Type comes from tokens.css (Inter + IBM Plex Sans Arabic). */
 :root { --blue: #3d7fe0; --iris: #7c6cf2; --lagoon: #22c3a6; --ember: #ff5a6a; }
 
 @keyframes aurora-drift {

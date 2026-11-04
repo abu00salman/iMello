@@ -13,14 +13,17 @@ import {
   previewEnabled,
   setPreviewEnabled,
 } from "../lib/notifications";
-import { usePrefs, type ThemePref } from "../lib/prefs";
+import { soundEnabled, setSoundEnabled } from "../lib/sounds";
+import { usePrefs } from "../lib/prefs";
 import { useSession } from "../lib/session";
-import { Button, Card, Field, LockBadge } from "../ui/components";
+import { AppearancePanel } from "./Appearance";
+import { Button, Card, Field, LockBadge, Ltr } from "../ui/components";
 
 const VERSION = "1.0.0";
 
 export function SettingsScreen() {
-  const { t, locale, setLocale, theme, setTheme } = usePrefs();
+  const { t, locale, setLocale } = usePrefs();
+  const [sounds, setSounds] = useState({ message: soundEnabled("message"), inChat: soundEnabled("inChat"), ping: soundEnabled("ping") });
   const { client, api, me, signOut, forget, temporary, deviceSecret, protectAccount } = useSession();
   const unprotected = me?.credential === "device";
   const [pw1, setPw1] = useState("");
@@ -167,9 +170,9 @@ export function SettingsScreen() {
       <Card>
         <h2>{me?.displayName}</h2>
         {me?.pin ? (
-          <div className="pin-card">
+          <div className="code-card">
             <span className="muted small">{t("me.yourNumber")}</span>
-            <strong className="pin" dir="ltr" data-testid="my-pin">{me.pin}</strong>
+            <strong className="code-value" data-testid="my-pin"><Ltr>{me.pin}</Ltr></strong>
             <Button variant="secondary" onClick={() => void navigator.clipboard.writeText(me.pin!).then(() => setCopiedPin(true))}>
               {copiedPin ? t("common.copied") : t("common.copy")}
             </Button>
@@ -210,13 +213,9 @@ export function SettingsScreen() {
           <button role="radio" aria-checked={locale === "en"} onClick={() => setLocale("en")} lang="en">English</button>
           <button role="radio" aria-checked={locale === "ar"} onClick={() => setLocale("ar")} lang="ar">العربية</button>
         </div>
-        <h2>{t("settings.theme")}</h2>
-        <div className="segmented" role="radiogroup" aria-label={t("settings.theme")}>
-          {(["classic", "light", "dark", "system"] as ThemePref[]).map((v) => (
-            <button key={v} role="radio" aria-checked={theme === v} onClick={() => setTheme(v)}>{t(`settings.theme.${v}`)}</button>
-          ))}
-        </div>
       </Card>
+
+      <AppearancePanel />
 
       <Card>
         <h2>🔔 {t("notify.title")}</h2>
@@ -246,6 +245,19 @@ export function SettingsScreen() {
             ) : !backgroundPushSupported() ? (
               <p className="muted small">{t("notify.limit")}</p>
             ) : null}
+            {(["message", "inChat", "ping"] as const).map((kind) => (
+              <label className="check" key={kind}>
+                <input
+                  type="checkbox"
+                  checked={sounds[kind]}
+                  onChange={(e) => {
+                    setSoundEnabled(kind, e.target.checked);
+                    setSounds((s) => ({ ...s, [kind]: e.target.checked }));
+                  }}
+                />
+                <span>{t(kind === "message" ? "sounds.message" : kind === "inChat" ? "sounds.inChat" : "sounds.ping")}</span>
+              </label>
+            ))}
           </>
         ) : (
           <p className="muted">{needsHomeScreen() ? t("notify.homeScreen") : t("notify.unsupported")}</p>

@@ -1,0 +1,337 @@
+/* iMello Design Tokens v0.3 — RS Design (Random Selection)
+   Naming: --im-<category>-<role>[-<variant>]  (mirrors design-system.md §12 and §14)
+   v0.1/v0.2 screens: :root = light, [data-theme="dark"] = dark (legacy "Mello iOS" direction, Coral palette).
+   v0.3 "Classic structure" direction (design-system.md §14): two user-selectable THEMES x two MODES
+     <html data-theme="classic-blue|coral" data-mode="light|dark|system">  (no data-theme = Classic Blue, the default)
+   Theme layers only change colour tokens; structure tokens (--im-k-*) are shared.
+   Locales: [lang="ar"] overrides line-heights/fonts. */
+
+/* Latin: Inter. Arabic: IBM Plex Sans Arabic (OFL). Subsets only, so the pages bundle stays small. */
+@import "@fontsource/inter/latin-400.css";
+@import "@fontsource/inter/latin-500.css";
+@import "@fontsource/inter/latin-600.css";
+@import "@fontsource/inter/latin-700.css";
+@import "@fontsource/inter/latin-800.css";
+@import "@fontsource/ibm-plex-sans-arabic/latin-400.css";
+@import "@fontsource/ibm-plex-sans-arabic/latin-500.css";
+@import "@fontsource/ibm-plex-sans-arabic/latin-600.css";
+@import "@fontsource/ibm-plex-sans-arabic/latin-700.css";
+@import "@fontsource/ibm-plex-sans-arabic/arabic-400.css";
+@import "@fontsource/ibm-plex-sans-arabic/arabic-500.css";
+@import "@fontsource/ibm-plex-sans-arabic/arabic-600.css";
+@import "@fontsource/ibm-plex-sans-arabic/arabic-700.css";
+
+:root {
+  /* Default theme (CEO 4 Nov 2026, v0.3.1): Classic Blue + Automatic mode for new installs. Coral stays selectable. */
+  --im-default-theme: classic-blue;   /* appearance.theme default */
+  --im-default-mode: system;          /* appearance.mode default (light/dark follows OS) */
+  /* ---------- Brand ramps (theme-independent) ---------- */
+  --im-coral-50:#FFF4F1; --im-coral-100:#FFE6DF; --im-coral-200:#FFCBBD; --im-coral-300:#FFA48E;
+  --im-coral-400:#FF8A6E; --im-coral-500:#E8664B; --im-coral-600:#C8432C; --im-coral-700:#B23A26; --im-coral-800:#8C2C1C; --im-coral-900:#5E1D12;
+  --im-lagoon-100:#D9F3F0; --im-lagoon-400:#3CC7BC; --im-lagoon-600:#12807A; --im-lagoon-800:#0B5551;
+  --im-honey-100:#FFF3D6; --im-honey-400:#F2B640; --im-honey-700:#9A5B00;
+  --im-ink-900:#14171C; --im-ink-950:#0E1116;
+
+  /* ---------- Light theme semantic tokens ---------- */
+  --im-color-primary:#C8432C;            /* Mello Coral 600 — buttons, out bubble, links, active tab */
+  --im-color-primary-pressed:#B23A26;
+  --im-color-primary-fill:#C8432C;       /* filled buttons/FAB */
+  --im-color-on-primary:#FFFFFF;
+  --im-color-primary-tint:#FFE6DF;       /* selected rows, chips */
+  --im-color-secondary:#12807A;          /* Lagoon — Family Space, verified, online */
+  --im-color-on-secondary:#FFFFFF;
+  --im-color-secondary-tint:#D9F3F0;
+  --im-color-accent:#F2B640;             /* Honey — pins, highlights (decorative only, never text on white) */
+  --im-color-accent-tint:#FFF3D6;
+
+  --im-color-bg:#FFFFFF;                 /* app background (plain lists) */
+  --im-color-bg-grouped:#F5F6F8;         /* settings / grouped background */
+  --im-color-surface:#FFFFFF;            /* cards, sheets, nav bars */
+  --im-color-surface-2:#F1F2F5;          /* search fields, inputs, in-bubble */
+  --im-color-surface-3:#E7E9EE;          /* pressed / skeleton */
+  --im-color-overlay:rgba(14,17,22,.40); /* sheet scrim */
+  --im-color-chat-bg:#FAF7F5;            /* conversation wallpaper (warm paper) */
+
+  --im-color-text:#14171C;               /* primary text 17.9:1 on bg */
+  --im-color-text-2:#5B6270;             /* secondary 6.1:1 */
+  --im-color-text-3:#6B7280;             /* tertiary/meta 4.8:1 */
+  --im-color-text-disabled:#A3A9B3;
+  --im-color-text-link:#C8432C;
+
+  --im-color-separator:#E6E8EC;
+  --im-color-separator-strong:#D3D7DE;
+
+  --im-color-bubble-in:#FFFFFF;          /* on chat-bg; border uses separator */
+  --im-color-bubble-in-text:#14171C;
+  --im-color-bubble-in-meta:#6B7280;
+  --im-color-bubble-out:#C8432C;
+  --im-color-bubble-out-text:#FFFFFF;    /* 4.9:1 */
+  --im-color-bubble-out-meta:#FFF2EE;    /* 4.5:1 */
+
+  --im-color-success:#1B7F45; --im-color-success-tint:#DDF4E6;
+  --im-color-warning:#9A5B00; --im-color-warning-tint:#FFF1D6;
+  --im-color-error:#C62828;   --im-color-error-tint:#FDE3E3;
+  --im-color-info:#12807A;
+
+  /* Message status. D = accepted by the iMello server (status.delivered.semantics = server_accepted, CEO 4 Nov 2026) — design-system.md §8.4 */
+  --im-status-sending:#6B7280;
+  --im-status-sent:#6B7280;
+  --im-status-delivered:#5B6270;
+  --im-status-read:#12807A;              /* R = Lagoon chip, filled */
+  --im-status-failed:#C62828;
+
+  /* Avatar palette (initials backgrounds), assigned by hash(userId) % 6 */
+  --im-avatar-1:#E8664B; --im-avatar-2:#12807A; --im-avatar-3:#6E5BD8; --im-avatar-4:#D9922B; --im-avatar-5:#3C7DD9; --im-avatar-6:#B5527C;
+
+  /* ---------- Typography ---------- */
+  --im-font-latin: "Inter", -apple-system, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
+  --im-font-arabic: "IBM Plex Sans Arabic", "Noto Sans Arabic", "SF Arabic", "Geeza Pro", Tahoma, sans-serif;
+  --im-font-mono: "IBM Plex Mono", "SF Mono", ui-monospace, Menlo, monospace;
+  --im-font-ui: var(--im-font-latin), var(--im-font-arabic);
+
+  /* size / line-height (Latin) */
+  --im-fs-large-title:34px; --im-lh-large-title:41px;
+  --im-fs-title-1:28px;     --im-lh-title-1:34px;
+  --im-fs-title-2:22px;     --im-lh-title-2:28px;
+  --im-fs-title-3:20px;     --im-lh-title-3:25px;
+  --im-fs-headline:17px;    --im-lh-headline:22px;
+  --im-fs-body:17px;        --im-lh-body:22px;
+  --im-fs-callout:16px;     --im-lh-callout:21px;
+  --im-fs-subhead:15px;     --im-lh-subhead:20px;
+  --im-fs-footnote:13px;    --im-lh-footnote:18px;
+  --im-fs-caption:12px;     --im-lh-caption:16px;
+  --im-fs-caption-2:11px;   --im-lh-caption-2:13px;
+  --im-fw-regular:400; --im-fw-medium:500; --im-fw-semibold:600; --im-fw-bold:700;
+  --im-tracking-large-title:-0.02em; --im-tracking-title:-0.01em; --im-tracking-body:-0.005em;
+
+  /* ---------- Spacing (4pt grid) ---------- */
+  --im-space-0:0; --im-space-0-5:2px; --im-space-1:4px; --im-space-2:8px; --im-space-3:12px; --im-space-4:16px;
+  --im-space-5:20px; --im-space-6:24px; --im-space-8:32px; --im-space-10:40px; --im-space-12:48px; --im-space-16:64px;
+  --im-gutter:16px;           /* screen horizontal margin (iPhone) */
+  --im-row-height:72px;       /* chat list row */
+  --im-row-height-compact:52px;/* settings/contact row */
+  --im-hit-min:44px;          /* minimum touch target (Material: 48dp) */
+
+  /* ---------- Radii ---------- */
+  --im-radius-xs:6px; --im-radius-sm:10px; --im-radius-md:14px; --im-radius-lg:20px; --im-radius-xl:28px; --im-radius-full:999px;
+  --im-radius-bubble:20px; --im-radius-bubble-tail:6px; --im-radius-sheet:28px; --im-radius-input:20px; --im-radius-card:20px; --im-radius-app-icon:22.37%;
+
+  /* ---------- Elevation ---------- */
+  --im-shadow-1:0 1px 2px rgba(20,23,28,.06), 0 1px 1px rgba(20,23,28,.04);
+  --im-shadow-2:0 4px 12px rgba(20,23,28,.08), 0 1px 3px rgba(20,23,28,.06);
+  --im-shadow-3:0 12px 32px rgba(20,23,28,.14), 0 2px 6px rgba(20,23,28,.08);
+  --im-blur-bar:saturate(180%) blur(20px);
+  --im-bar-bg:rgba(255,255,255,.86);
+
+  /* ---------- Motion ---------- */
+  --im-dur-instant:100ms; --im-dur-fast:160ms; --im-dur-base:240ms; --im-dur-slow:360ms;
+  --im-ease-standard:cubic-bezier(.2,0,0,1); --im-ease-emphasized:cubic-bezier(.3,0,0,1.15); --im-ease-exit:cubic-bezier(.4,0,1,1);
+
+  /* ---------- Icons ---------- */
+  --im-icon-sm:16px; --im-icon-md:22px; --im-icon-lg:28px; --im-icon-stroke:1.75;
+
+  /* ---------- Product limits (tokenized) ---------- */
+  --im-limit-family-members:30;  /* family.maxMembers (CEO 4 Nov 2026); warn at 25 */
+  --im-limit-attachment-mb:100;  /* display value; enforce server m.upload.size (recommend 95 MB) */
+}
+
+[data-theme="dark"] {
+  --im-color-primary:#FF8A6E;            /* coral 400 for text/icons on dark: 8.2:1 */
+  --im-color-primary-pressed:#E8664B;
+  --im-color-primary-fill:#C94C35;       /* filled buttons on dark (white text 4.6:1) */
+  --im-color-on-primary:#FFFFFF;
+  --im-color-primary-tint:#3A1F1A;
+  --im-color-secondary:#3CC7BC;
+  --im-color-on-secondary:#0E1116;
+  --im-color-secondary-tint:#12302E;
+  --im-color-accent:#F2B640;
+  --im-color-accent-tint:#33290F;
+
+  --im-color-bg:#0E1116;
+  --im-color-bg-grouped:#0E1116;
+  --im-color-surface:#171B22;
+  --im-color-surface-2:#20252E;
+  --im-color-surface-3:#2A303A;
+  --im-color-overlay:rgba(0,0,0,.56);
+  --im-color-chat-bg:#0E1116;
+
+  --im-color-text:#F2F4F7;
+  --im-color-text-2:#A9B1BD;
+  --im-color-text-3:#7E8794;
+  --im-color-text-disabled:#4C5360;
+  --im-color-text-link:#FF8A6E;
+
+  --im-color-separator:#262B34;
+  --im-color-separator-strong:#343B46;
+
+  --im-color-bubble-in:#20252E;
+  --im-color-bubble-in-text:#F2F4F7;
+  --im-color-bubble-in-meta:#A9B1BD;
+  --im-color-bubble-out:#B23A26;
+  --im-color-bubble-out-text:#FFFFFF;
+  --im-color-bubble-out-meta:#FFD2C7;
+
+  --im-color-success:#3FCB7E; --im-color-success-tint:#123222;
+  --im-color-warning:#F5B544; --im-color-warning-tint:#33270E;
+  --im-color-error:#FF6B6B;   --im-color-error-tint:#3A1719;
+  --im-color-info:#3CC7BC;
+
+  --im-status-sending:#7E8794; --im-status-sent:#A9B1BD; --im-status-delivered:#A9B1BD; --im-status-read:#3CC7BC; --im-status-failed:#FF6B6B;
+
+  --im-shadow-1:0 1px 2px rgba(0,0,0,.4);
+  --im-shadow-2:0 4px 12px rgba(0,0,0,.45);
+  --im-shadow-3:0 12px 32px rgba(0,0,0,.6);
+  --im-bar-bg:rgba(23,27,34,.86);
+}
+
+/* Arabic: script-first stack + taller line-heights (~1.45–1.65x) to clear ascenders/dots/diacritics */
+[lang="ar"] {
+  --im-font-ui: var(--im-font-arabic), var(--im-font-latin);
+  --im-lh-large-title:50px; --im-lh-title-1:42px; --im-lh-title-2:34px; --im-lh-title-3:31px;
+  --im-lh-headline:28px; --im-lh-body:28px; --im-lh-callout:26px; --im-lh-subhead:24px;
+  --im-lh-footnote:21px; --im-lh-caption:19px; --im-lh-caption-2:17px;
+  --im-tracking-large-title:0; --im-tracking-title:0; --im-tracking-body:0;  /* never letter-space Arabic */
+}
+
+/* =====================================================================
+   v0.3 THEME LAYERS — Classic structure (see design-system.md §14)
+   Original RS hex values. Classic Blue is a flat, deeper blue (#1F64AC).
+   Do not add a gradient or gloss to the header.
+   ===================================================================== */
+[data-theme="classic-blue"], [data-theme="coral"], :root:not([data-theme]) {
+  /* Structure (theme-independent) */
+  --im-k-header-h:64px;            /* profile/header bar (56dp + 8 safe) */
+  --im-k-tabbar-h:60px;            /* + home-indicator inset on iOS */
+  --im-k-tab-indicator:3px;        /* active tab top bar */
+  --im-k-row-h:72px;               /* chat list row */
+  --im-k-avatar-radius:6px;        /* "soft square" avatars (RS; not hard squares, not circles) */
+  --im-k-card-radius:6px;          /* message card */
+  --im-k-card-bar:3px;             /* coloured bottom bar per sender */
+  --im-k-tail:9px;                 /* tail size, top corner on the sender side */
+  --im-k-card-gap:10px;            /* vertical gap between cards */
+  --im-k-status-size:13px;         /* D / R letter size (bold 800) */
+  --im-k-emoji-cols:8; --im-k-emoji-panel-h:268px;
+  --im-k-btn-radius:6px;
+  /* Motion (motion-spec.md) */
+  --im-mo-fast:120ms; --im-mo-base:160ms; --im-mo-nav:240ms; --im-mo-sheet:280ms; --im-mo-ping:420ms; --im-ping-shake-max:6px;
+  --im-ease-out:cubic-bezier(.22,.9,.32,1); --im-ease-in:cubic-bezier(.4,0,1,1); --im-ease-std:cubic-bezier(.3,0,.2,1);
+  --im-ping-cooldown-s:15;  /* 1 Ping per 15 s per chat */
+}
+
+/* ---------- Classic Blue · light (DEFAULT: also applies when no data-theme is set) ---------- */
+[data-theme="classic-blue"], :root:not([data-theme]) {
+  --im-color-primary:#1D5FA6;  --im-color-primary-pressed:#174E8A; --im-color-primary-fill:#1D5FA6; --im-color-on-primary:#FFFFFF;
+  --im-color-primary-tint:#E3EEFA;
+  --im-color-secondary:#12807A; --im-color-on-secondary:#FFFFFF; --im-color-secondary-tint:#D9F3F0;
+  --im-color-accent:#F2B640;   --im-color-accent-tint:#FFF3D6;
+  --im-color-bg:#FFFFFF; --im-color-bg-grouped:#F1F3F6; --im-color-surface:#FFFFFF; --im-color-surface-2:#EEF1F5; --im-color-surface-3:#E1E6EC;
+  --im-color-text:#16191E; --im-color-text-2:#525A66; --im-color-text-3:#69707C; --im-color-text-link:#1D5FA6;
+  --im-color-separator:#E2E6EB; --im-color-separator-strong:#CDD3DB;
+  --im-k-header-bg:#1F64AC;    --im-k-header-text:#FFFFFF; --im-k-header-sub:#E2EDF9;
+  --im-k-tabbar-bg:#24272C;    --im-k-tabbar-sep:#33373D; --im-k-tabbar-active-bg:#30343A; --im-k-tabbar-text:#B9BEC6; --im-k-tabbar-active-text:#FFFFFF; --im-k-tabbar-indicator:#5AA2EE;
+  --im-k-wallpaper:#E8ECF1;    --im-k-card-bg:#FFFFFF; --im-k-card-text:#16191E; --im-k-card-meta:#69707C; --im-k-card-shadow:0 1px 1.5px rgba(22,25,30,.16);
+  --im-k-bar-own:#2F7DD1;      /* own messages' bottom bar */
+  --im-k-unread-pill:#1D5FA6;  --im-k-unread-text:#FFFFFF;
+  --im-status-sent:#69707C; --im-status-delivered:#69707C; /* D: grey */ --im-status-read:#1D5FA6; /* R: theme blue */ --im-status-failed:#C62828;
+  --im-k-avail:#1E8E50; --im-k-busy:#D23F31;
+  --im-k-ping-bg:#FFF3D6; --im-k-ping-bar:#F2B640; --im-k-ping-text:#5A3A00; --im-k-ping-icon-bg:#F2B640; --im-k-ping-icon:#14171C;
+  --im-k-emoji-panel-bg:#F1F3F6;
+}
+/* ---------- Classic Blue · dark ---------- */
+[data-theme="classic-blue"][data-mode="dark"], :root:not([data-theme])[data-mode="dark"] {
+  --im-color-error:#FF6B6B;
+  --im-color-primary:#6AAEF0; --im-color-primary-pressed:#4C97E3; --im-color-primary-fill:#2A6DB0; --im-color-on-primary:#FFFFFF;
+  --im-color-primary-tint:#14263B;
+  --im-color-secondary:#3CC7BC; --im-color-on-secondary:#0E1116; --im-color-secondary-tint:#12302E;
+  --im-color-accent-tint:#33290F;
+  --im-color-bg:#0F1318; --im-color-bg-grouped:#0F1318; --im-color-surface:#181D24; --im-color-surface-2:#222831; --im-color-surface-3:#2C333D;
+  --im-color-text:#EEF1F5; --im-color-text-2:#AAB2BE; --im-color-text-3:#8C95A1; --im-color-text-link:#6AAEF0;
+  --im-color-separator:#252B33; --im-color-separator-strong:#343B45;
+  --im-k-header-bg:#173B63; --im-k-header-sub:#C8D6E8;
+  --im-k-tabbar-bg:#0A0C0F; --im-k-tabbar-sep:#1A1E24; --im-k-tabbar-active-bg:#1A1F26; --im-k-tabbar-indicator:#6AAEF0;
+  --im-k-wallpaper:#0F1318; --im-k-card-bg:#1B2027; --im-k-card-text:#EEF1F5; --im-k-card-meta:#9AA3AF; --im-k-card-shadow:none;
+  --im-k-bar-own:#4C97E3;
+  --im-k-unread-pill:#2A6DB0;
+  --im-status-sent:#8C95A1; --im-status-delivered:#8C95A1; --im-status-read:#6AAEF0; --im-status-failed:#FF6B6B;
+  --im-k-avail:#3FCB7E; --im-k-busy:#FF6B6B;
+  --im-k-ping-bg:#3A2C0C; --im-k-ping-bar:#F2B640; --im-k-ping-text:#FFE7A6;
+  --im-k-emoji-panel-bg:#151A20;
+}
+/* ---------- Coral · light (current RS system on the classic structure) ---------- */
+[data-theme="coral"] {
+  --im-k-header-bg:#C8432C; --im-k-header-text:#FFFFFF; --im-k-header-sub:#FFFFFF;
+  --im-k-tabbar-bg:#2A2523; --im-k-tabbar-sep:#3A3330; --im-k-tabbar-active-bg:#38312E; --im-k-tabbar-text:#C4BAB6; --im-k-tabbar-active-text:#FFFFFF; --im-k-tabbar-indicator:#FF8A6E;
+  --im-k-wallpaper:#F1ECE9; --im-k-card-bg:#FFFFFF; --im-k-card-text:#14171C; --im-k-card-meta:#6B7280; --im-k-card-shadow:0 1px 1.5px rgba(20,23,28,.16);
+  --im-k-bar-own:#C8432C;
+  --im-k-unread-pill:#C8432C; --im-k-unread-text:#FFFFFF;
+  --im-status-sent:#6B7280; --im-status-delivered:#6B7280; /* D grey */ --im-status-read:#12807A; /* R Lagoon */
+  --im-k-avail:#1B7F45; --im-k-busy:#C62828;
+  --im-k-ping-bg:#FFF3D6; --im-k-ping-bar:#F2B640; --im-k-ping-text:#5A3A00; --im-k-ping-icon-bg:#F2B640; --im-k-ping-icon:#14171C;
+  --im-k-emoji-panel-bg:#F5F6F8;
+}
+/* ---------- Coral · dark ---------- */
+[data-theme="coral"][data-mode="dark"] {
+  --im-color-primary:#FF8A6E; --im-color-primary-pressed:#E8664B; --im-color-primary-fill:#C94C35; --im-color-on-primary:#FFFFFF;
+  --im-color-primary-tint:#3A1F1A;
+  --im-color-secondary:#3CC7BC; --im-color-on-secondary:#0E1116; --im-color-secondary-tint:#12302E;
+  --im-color-accent-tint:#33290F;
+  --im-color-bg:#0E1116; --im-color-bg-grouped:#0E1116; --im-color-surface:#171B22; --im-color-surface-2:#20252E; --im-color-surface-3:#2A303A;
+  --im-color-text:#F2F4F7; --im-color-text-2:#A9B1BD; --im-color-text-3:#8C95A1; --im-color-text-link:#FF8A6E;
+  --im-color-separator:#262B34; --im-color-separator-strong:#343B46;
+  --im-color-error:#FF6B6B;
+  --im-k-header-bg:#8C2C1C; --im-k-header-sub:#FFD9CF;
+  --im-k-tabbar-bg:#0A0C10; --im-k-tabbar-sep:#1A1D23; --im-k-tabbar-active-bg:#1C1A1C; --im-k-tabbar-indicator:#FF8A6E;
+  --im-k-wallpaper:#0E1116; --im-k-card-bg:#1C2027; --im-k-card-text:#F2F4F7; --im-k-card-meta:#A9B1BD; --im-k-card-shadow:none;
+  --im-k-bar-own:#FF8A6E;
+  --im-k-unread-pill:#C94C35;
+  --im-status-sent:#8C95A1; --im-status-delivered:#8C95A1; --im-status-read:#3CC7BC; --im-status-failed:#FF6B6B;
+  --im-k-avail:#3FCB7E; --im-k-busy:#FF6B6B;
+  --im-k-ping-bg:#3A2C0C; --im-k-ping-bar:#F2B640; --im-k-ping-text:#FFE7A6;
+  --im-k-emoji-panel-bg:#13161C;
+}
+
+/* ---------- Automatic mode (default appearance.mode = system) ----------
+   With no data-mode (or data-mode="system"), the default Classic Blue theme follows the OS.
+   Coral/explicit light/dark are set by the app via data-mode. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]):not([data-mode]), :root:not([data-theme])[data-mode="system"],
+  [data-theme="classic-blue"]:not([data-mode]), [data-theme="classic-blue"][data-mode="system"] {
+    --im-color-primary:#6AAEF0; --im-color-primary-pressed:#4C97E3; --im-color-primary-fill:#2A6DB0; --im-color-on-primary:#FFFFFF;
+    --im-color-primary-tint:#14263B;
+    --im-color-secondary:#3CC7BC; --im-color-on-secondary:#0E1116; --im-color-secondary-tint:#12302E;
+    --im-color-accent-tint:#33290F;
+    --im-color-bg:#0F1318; --im-color-bg-grouped:#0F1318; --im-color-surface:#181D24; --im-color-surface-2:#222831; --im-color-surface-3:#2C333D;
+    --im-color-text:#EEF1F5; --im-color-text-2:#AAB2BE; --im-color-text-3:#8C95A1; --im-color-text-link:#6AAEF0;
+    --im-color-separator:#252B33; --im-color-separator-strong:#343B45;
+    --im-color-error:#FF6B6B;
+    --im-k-header-bg:#173B63; --im-k-header-sub:#C8D6E8;
+    --im-k-tabbar-bg:#0A0C0F; --im-k-tabbar-sep:#1A1E24; --im-k-tabbar-active-bg:#1A1F26; --im-k-tabbar-indicator:#6AAEF0;
+    --im-k-wallpaper:#0F1318; --im-k-card-bg:#1B2027; --im-k-card-text:#EEF1F5; --im-k-card-meta:#9AA3AF; --im-k-card-shadow:none;
+    --im-k-bar-own:#4C97E3;
+    --im-k-unread-pill:#2A6DB0;
+    --im-status-sent:#8C95A1; --im-status-delivered:#8C95A1; --im-status-read:#6AAEF0; --im-status-failed:#FF6B6B;
+    --im-k-avail:#3FCB7E; --im-k-busy:#FF6B6B;
+    --im-k-ping-bg:#3A2C0C; --im-k-ping-bar:#F2B640; --im-k-ping-text:#FFE7A6;
+    --im-k-emoji-panel-bg:#151A20;
+  }
+  /* Coral + Automatic follows the OS the same way Classic Blue does. */
+  [data-theme="coral"]:not([data-mode]), [data-theme="coral"][data-mode="system"] {
+    --im-color-primary:#FF8A6E; --im-color-primary-pressed:#E8664B; --im-color-primary-fill:#C94C35; --im-color-on-primary:#FFFFFF;
+    --im-color-primary-tint:#3A1F1A;
+    --im-color-secondary:#3CC7BC; --im-color-on-secondary:#0E1116; --im-color-secondary-tint:#12302E;
+    --im-color-accent-tint:#33290F;
+    --im-color-bg:#0E1116; --im-color-bg-grouped:#0E1116; --im-color-surface:#171B22; --im-color-surface-2:#20252E; --im-color-surface-3:#2A303A;
+    --im-color-text:#F2F4F7; --im-color-text-2:#A9B1BD; --im-color-text-3:#8C95A1; --im-color-text-link:#FF8A6E;
+    --im-color-separator:#262B34; --im-color-separator-strong:#343B46;
+    --im-color-error:#FF6B6B;
+    --im-k-header-bg:#8C2C1C; --im-k-header-sub:#FFD9CF;
+    --im-k-tabbar-bg:#0A0C10; --im-k-tabbar-sep:#1A1D23; --im-k-tabbar-active-bg:#1C1A1C; --im-k-tabbar-indicator:#FF8A6E;
+    --im-k-wallpaper:#0E1116; --im-k-card-bg:#1C2027; --im-k-card-text:#F2F4F7; --im-k-card-meta:#A9B1BD; --im-k-card-shadow:none;
+    --im-k-bar-own:#FF8A6E;
+    --im-k-unread-pill:#C94C35;
+    --im-status-sent:#8C95A1; --im-status-delivered:#8C95A1; --im-status-read:#3CC7BC; --im-status-failed:#FF6B6B;
+    --im-k-avail:#3FCB7E; --im-k-busy:#FF6B6B;
+    --im-k-ping-bg:#3A2C0C; --im-k-ping-bar:#F2B640; --im-k-ping-text:#FFE7A6;
+    --im-k-emoji-panel-bg:#13161C;
+  }
+}

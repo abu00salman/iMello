@@ -1,0 +1,139 @@
+/**
+ * Original in-app sounds, synthesised in the browser (no samples).
+ * Tonal centre E5, falling major second for a new message. Not a rising chime.
+ * D and R are silent.
+ */
+
+const MESSAGE_KEY = "imello.sound.message";
+const IN_CHAT_KEY = "imello.sound.inchat";
+const PING_KEY = "imello.sound.ping";
+
+function enabled(key: string): boolean {
+  try {
+    return localStorage.getItem(key) !== "false";
+  } catch {
+    return true;
+  }
+}
+
+export function soundEnabled(kind: "message" | "inChat" | "ping"): boolean {
+  return enabled(kind === "message" ? MESSAGE_KEY : kind === "inChat" ? IN_CHAT_KEY : PING_KEY);
+}
+
+export function setSoundEnabled(kind: "message" | "inChat" | "ping", on: boolean) {
+  const key = kind === "message" ? MESSAGE_KEY : kind === "inChat" ? IN_CHAT_KEY : PING_KEY;
+  try { localStorage.setItem(key, String(on)); } catch { /* ignore */ }
+}
+
+let ctx: AudioContext | null = null;
+let unlocked = false;
+
+function audio(): AudioContext | null {
+  const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AC) return null;
+  if (!ctx) ctx = new AC();
+  if (ctx.state === "suspended") void ctx.resume();
+  return ctx;
+}
+
+/** Call from the first pointer/key gesture so later sounds are allowed to play. */
+export function unlockSounds() {
+  if (unlocked) return;
+  unlocked = true;
+  audio();
+}
+
+function envGain(c: AudioContext, when: number, peak: number, attack: number, dur: number): GainNode {
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, when);
+  g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), when + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+  return g;
+}
+
+/** Soft glass pluck: sine plus a quiet octave-down body, low-passed. No square or saw. */
+function pluck(c: AudioContext, when: number, freq: number, dur: number, peak: number) {
+  const filter = c.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(2800, when);
+  filter.frequency.exponentialRampToValueAtTime(900, when + dur);
+  const g = envGain(c, when, peak, 0.004, dur);
+  const tone = c.createOscillator();
+  tone.type = "sine";
+  tone.frequency.value = freq;
+  const body = c.createOscillator();
+  body.type = "sine";
+  body.frequency.value = freq / 2;
+  const bodyGain = c.createGain();
+  bodyGain.gain.value = 0.22;
+  tone.connect(filter);
+  body.connect(bodyGain);
+  bodyGain.connect(filter);
+  filter.connect(g);
+  g.connect(c.destination);
+  tone.start(when);
+  body.start(when);
+  tone.stop(when + dur + 0.02);
+  body.stop(when + dur + 0.02);
+}
+
+function noiseBurst(c: AudioContext, when: number, dur: number, peak: number) {
+  const n = Math.floor(c.sampleRate * dur);
+  const buffer = c.createBuffer(1, n, c.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < n; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const src = c.createBufferSource();
+  src.buffer = buffer;
+  const filter = c.createBiquadFilter();
+  filter.type = "highpass";
+  filter.frequency.value = 1800;
+  const g = envGain(c, when, peak, 0.002, dur);
+  src.connect(filter);
+  filter.connect(g);
+  g.connect(c.destination);
+  src.start(when);
+  src.stop(when + dur);
+}
+
+function play(run: (c: AudioContext, t: number) => void) {
+  const c = audio();
+  if (!c || !unlocked) return;
+  run(c, c.currentTime + 0.01);
+}
+
+/** New message while this chat is not the one on screen. E5 → D5, falling second. */
+export function playIncoming(group = false) {
+  if (!soundEnabled("message")) return;
+  const root = group ? 493.88 : 659.25; // B4 or E5
+  const next = group ? 440 : 587.33; // A4 or D5
+  play((c, t) => {
+    pluck(c, t, root, 0.28, 0.09);
+    pluck(c, t + 0.16, next, 0.34, 0.06);
+  });
+}
+
+/** Barely-there tick for a message in the open chat. */
+export function playTick() {
+  if (!soundEnabled("inChat")) return;
+  play((c, t) => pluck(c, t, 987.77, 0.07, 0.035));
+}
+
+/** Soft flick when your own message leaves. */
+export function playSent() {
+  if (!soundEnabled("inChat")) return;
+  play((c, t) => {
+    noiseBurst(c, t, 0.09, 0.03);
+    pluck(c, t, 880, 0.08, 0.02);
+  });
+}
+
+/** Three wooden taps, E5 E5 G#5, with a low thump under the first. */
+export function playPing() {
+  if (!soundEnabled("ping")) return;
+  play((c, t) => {
+    pluck(c, t, 164.81, 0.18, 0.07);
+    pluck(c, t, 659.25, 0.16, 0.11);
+    pluck(c, t + 0.12, 659.25, 0.16, 0.1);
+    pluck(c, t + 0.28, 830.61, 0.32, 0.12);
+  });
+}

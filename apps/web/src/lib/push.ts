@@ -34,10 +34,24 @@ export function registerServiceWorker(locale: string) {
   // site root (/iMello/sw.js) so existing registrations and push subscriptions keep working.
   const swBase = (import.meta.env.VITE_SW_BASE as string | undefined) || import.meta.env.BASE_URL;
   void navigator.serviceWorker
-    .register(`${swBase}sw.js`, { scope: swBase })
-    .then(() => navigator.serviceWorker.ready)
+    .register(`${swBase}sw.js`, { scope: swBase, updateViaCache: "none" })
+    .then((reg) => {
+      void reg.update().catch(() => undefined);
+      return navigator.serviceWorker.ready;
+    })
     .then((reg) => reg.active?.postMessage({ type: "prefs", locale }))
     .catch(() => undefined);
+  // A newly activated worker means a deploy. Reload once so the page doesn't keep
+  // running the previous bundle. Skip the offline preview route used for screenshots.
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloaded || location.hash.startsWith("#/preview")) return;
+    if (sessionStorage.getItem("imello.sw-reloaded") === "1") return;
+    reloaded = true;
+    try { sessionStorage.setItem("imello.sw-reloaded", "1"); } catch { /* ignore */ }
+    location.reload();
+  });
+  setTimeout(() => { try { sessionStorage.removeItem("imello.sw-reloaded"); } catch { /* ignore */ } }, 15_000);
   navigator.serviceWorker.addEventListener("message", (e) => {
     if (e.data?.type === "open" && typeof e.data.hash === "string" && e.data.hash.startsWith("#/")) location.hash = e.data.hash;
   });

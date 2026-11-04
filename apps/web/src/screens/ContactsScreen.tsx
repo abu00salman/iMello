@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { usePrefs } from "../lib/prefs";
 import { inviteUrl, navigate } from "../lib/router";
 import { useSession } from "../lib/session";
-import { Avatar, Button, Card, EmptyState } from "../ui/components";
+import { Avatar, Button, Card, EmptyState, Ltr } from "../ui/components";
 
 export function ContactsScreen({ initialToken }: { initialToken?: string }) {
   const { t } = usePrefs();
@@ -161,7 +161,7 @@ export function ContactsScreen({ initialToken }: { initialToken?: string }) {
         </form>
         {me?.pin && (
           <p className="muted small">
-            {t("me.yourNumber")}: <strong dir="ltr" className="pin-inline">{me.pin}</strong>
+            {t("me.yourNumber")}: <strong className="code-inline"><Ltr>{me.pin}</Ltr></strong>
           </p>
         )}
       </Card>
@@ -175,7 +175,7 @@ export function ContactsScreen({ initialToken }: { initialToken?: string }) {
                 <Avatar name={r.displayName} id={r.userId} size={44} />
                 <span className="contact-main">
                   <strong>{t("contacts.wantsToAdd", { name: r.displayName })}</strong>
-                  {r.pin && <small className="muted" dir="ltr">{r.pin}</small>}
+                  {r.pin && <small className="muted"><Ltr>{r.pin}</Ltr></small>}
                 </span>
                 <Button onClick={() => void respond(r, true)}>{t("contacts.accept")}</Button>
                 <Button variant="ghost" onClick={() => void respond(r, false)}>{t("contacts.decline")}</Button>

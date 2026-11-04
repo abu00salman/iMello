@@ -41,6 +41,8 @@ jobs:
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: "17" }
       - run: pnpm install --frozen-lockfile
+      - name: Build headless crypto engine
+        run: pnpm --filter @imello/mobile run build:engine
       - name: Generate native Android project
         working-directory: apps/mobile
         env: { CI: "1" }
@@ -77,6 +79,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
+      - name: Build headless crypto engine
+        run: pnpm --filter @imello/mobile run build:engine
       - name: Generate native iOS project (+ CocoaPods)
         working-directory: apps/mobile
         env: { CI: "1" }

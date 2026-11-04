@@ -12,6 +12,8 @@
  * gateway (see docs/ROADMAP.md).
  */
 import { parseAttachment, type MatrixClient } from "@imello/core/messaging";
+import { isPingBody } from "./ping";
+import { playIncoming, playPing } from "./sounds";
 import { EventType, MatrixEventEvent, RoomEvent, type MatrixEvent, type Room } from "matrix-js-sdk";
 
 declare global {
@@ -109,8 +111,12 @@ export function watchMessages(client: MatrixClient, texts: Texts): () => void {
     if (!roomId) return;
     seen.add(id);
     updateTitle();
-    if (!notificationsEnabled() || viewing(roomId)) return;
+    if (viewing(roomId)) return;
     const room = client.getRoom(roomId);
+    const raw = String(ev.getContent().body ?? "");
+    if (isPingBody(raw)) playPing();
+    else playIncoming((room?.getJoinedMemberCount() ?? 0) > 2);
+    if (!notificationsEnabled()) return;
     const sender = room?.getMember(ev.getSender()!)?.name ?? ev.getSender()!;
     const content = ev.getContent();
     const att = parseAttachment(content);

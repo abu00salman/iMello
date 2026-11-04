@@ -79,7 +79,7 @@ test("bbm screens", async ({ browser }) => {
   await a.getByRole("link", { name: /Omar/ }).first().click();
   await a.waitForTimeout(800);
   await shot(a, "10-conversation-light");
-  await theme(a, "Classic", "Chats");
+  await theme(a, "Classic Blue", "Chats");
   await a.getByRole("link", { name: "Settings" }).click();
   await a.getByRole("radio", { name: "العربية" }).click();
   await a.getByRole("link", { name: "المحادثات" }).click();

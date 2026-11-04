@@ -19,7 +19,6 @@ async function getLocale() {
 }
 
 self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
 
 self.addEventListener("message", (e) => {
   if (e.data?.type === "prefs" && (e.data.locale === "ar" || e.data.locale === "en")) {
@@ -85,44 +84,64 @@ self.addEventListener("notificationclick", (event) => {
   );
 });
 
-/* App-shell speed-up: cache the build's content-hashed files (/assets/*-<hash>.js|css|wasm|woff2).
- * Their names change whenever their content changes, so a cached copy can never be stale or serve
- * outdated security code. index.html and API/homeserver traffic are never cached, and no message
- * content ever passes through here. */
-const ASSET_CACHE = "imello-assets-v1";
+/* Hashed build files are immutable, so a cache hit matches the bytes the current
+ * index.html asked for. HTML navigations are always network-only (no-store) so a
+ * deploy cannot keep serving the previous app. On activate, every asset cache
+ * from an older worker is deleted. */
+const ASSET_CACHE = "imello-assets-v2";
 const HASHED = /\/assets\/[^/]+-[A-Za-z0-9_-]{8,}\.(?:js|css|wasm|woff2?|svg|png)$/;
+
+async function fetchFresh(req, ms) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(req, { cache: "no-store", signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
-  if (url.origin !== self.location.origin || !HASHED.test(url.pathname)) return;
+  if (url.origin !== self.location.origin) return;
+  if (req.mode === "navigate" || url.pathname.endsWith("/index.html") || url.pathname.endsWith("/")) {
+    event.respondWith(fetchFresh(req, 12_000));
+    return;
+  }
+  if (!HASHED.test(url.pathname)) return;
   event.respondWith(
     (async () => {
       const cache = await caches.open(ASSET_CACHE);
       const hit = await cache.match(req.url);
       if (hit) return hit;
-      const res = await fetch(req);
+      const res = await fetchFresh(req, 20_000);
       if (res.ok && res.type === "basic") cache.put(req.url, res.clone()).catch(() => {});
       return res;
     })(),
   );
 });
 
-// Drop cached files that the current build no longer references (keeps storage small).
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
+      const names = await caches.keys();
+      await Promise.all(names.filter((name) => name.startsWith("imello-assets") && name !== ASSET_CACHE).map((name) => caches.delete(name)));
       try {
-        const res = await fetch(self.registration.scope, { cache: "no-store" });
-        const html = await res.text();
+        const pages = await Promise.all([
+          fetchFresh(self.registration.scope, 8_000).then((r) => r.text()).catch(() => ""),
+          fetchFresh(new URL("app/", self.registration.scope).href, 8_000).then((r) => r.text()).catch(() => ""),
+          fetchFresh(new URL("app/index.html", self.registration.scope).href, 8_000).then((r) => r.text()).catch(() => ""),
+        ]);
+        const html = pages.join("\n");
         const cache = await caches.open(ASSET_CACHE);
         for (const req of await cache.keys()) {
           const name = new URL(req.url).pathname.split("/").pop();
-          // Keep what the current index.html references (scripts, styles, the preloaded crypto engine).
-          if (name && !html.includes(name) && !/\.woff2?$/.test(name)) await cache.delete(req);
+          if (name && !html.includes(name)) await cache.delete(req);
         }
       } catch { /* best effort */ }
+      await self.clients.claim();
     })(),
   );
 });

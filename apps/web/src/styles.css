@@ -2,7 +2,7 @@
    Logical properties (inline-start/end) are used throughout so RTL works automatically. */
 
 *, *::before, *::after { box-sizing: border-box; }
-html, body, #root { height: 100%; }
+html, body, #root { height: 100%; height: 100dvh; }
 body {
   margin: 0;
   font-family: var(--font-family);

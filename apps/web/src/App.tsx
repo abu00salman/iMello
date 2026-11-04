@@ -12,6 +12,7 @@ import { AuthScreen } from "./screens/AuthScreen";
 import { ChatsScreen } from "./screens/ChatsScreen";
 import { ContactsScreen } from "./screens/ContactsScreen";
 import { FamilyScreen } from "./screens/FamilyScreen";
+import { PreviewScreen } from "./screens/PreviewScreen";
 import { CallsScreen, SettingsScreen } from "./screens/SettingsScreen";
 import { Avatar, Logo } from "./ui/components";
 
@@ -26,11 +27,8 @@ export function App() {
     if (route.name === "invite") sessionStorage.setItem(PENDING_INVITE, route.token);
   }, [route]);
 
-  if (status === "loading") {
-    return (
-      <Splash />
-    );
-  }
+  if (route.name === "preview") return <PreviewScreen screen={route.screen} />;
+  if (status === "loading" || status === "offline") return <Splash failed={status === "offline"} />;
   if (status === "signedOut") return <AuthScreen />;
   return <Shell route={route} />;
 }
@@ -46,6 +44,8 @@ const NAV: { name: Route["name"]; label: MessageKey; icon: ReactNode }[] = [
 function Shell({ route }: { route: Route }) {
   const { t, locale } = usePrefs();
   const { me, temporary, client, api } = useSession();
+  const version = useClientVersion(client);
+  const unreadChats = useMemo(() => (client ? conversations(client).filter((c) => c.unread > 0).length : 0), [client, version]);
   const isChild = me?.kind === "child";
   useEffect(() => {
     if (!client) return;
@@ -77,6 +77,7 @@ function Shell({ route }: { route: Route }) {
       case "family": content = <FamilyScreen />; break;
       case "calls": content = <CallsScreen />; break;
       case "settings": content = <SettingsScreen />; break;
+      default: content = null; break;
     }
   }
 
@@ -85,15 +86,22 @@ function Shell({ route }: { route: Route }) {
       <a href="#main" className="skip-link">Skip to content</a>
       <nav className="tabbar" aria-label="iMello">
         <div className="tabbar-brand"><Logo size={32} /><span>{t("app.name")}</span></div>
+        <a href="#/settings" className={`tab tab-end ${route.name === "settings" ? "active" : ""}`} aria-label={t("nav.settings")} aria-current={route.name === "settings" ? "page" : undefined}>
+          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+        </a>
         {nav.map((n) => {
           const active = route.name === n.name || (route.name === "invite" && n.name === "contacts");
           return (
             <a key={n.name} href={`#/${n.name}`} className={`tab ${active ? "active" : ""}`} aria-current={active ? "page" : undefined}>
               <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">{n.icon}</svg>
               <span>{t(n.label)}</span>
+              {n.name === "chats" && unreadChats > 0 && <span className="tab-badge"><bdi dir="ltr">{unreadChats}</bdi></span>}
             </a>
           );
         })}
+        <a href="#/settings" className="tab tab-end" aria-label={t("nav.more")}>
+          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="12" cy="5" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="12" cy="19" r="1.6" /></svg>
+        </a>
       </nav>
       <main id="main" className="content" tabIndex={-1}>
         {temporary && <div className="temp-banner" role="status">{t("auth.temporarySession")}</div>}
@@ -151,21 +159,22 @@ function KidsHome() {
 }
 
 /** Startup screen. If start-up takes unusually long (very slow network), offer a way out. */
-function Splash() {
+function Splash({ failed = false }: { failed?: boolean }) {
   const { t } = usePrefs();
+  const { retry } = useSession();
   const [slow, setSlow] = useState(false);
   useEffect(() => {
-    const id = setTimeout(() => setSlow(true), 20_000);
+    const id = setTimeout(() => setSlow(true), 8_000);
     return () => clearTimeout(id);
   }, []);
   return (
     <div className="splash" role="status">
       <Logo size={88} />
-      <p>{t("common.loading")}</p>
-      {slow && (
+      <p>{failed ? t("session.unreachable") : t("common.loading")}</p>
+      {(failed || slow) && (
         <>
-          <p className="muted small center">{t("common.slowLoading")}</p>
-          <button className="btn btn-secondary" onClick={() => location.reload()}>{t("common.retry")}</button>
+          {!failed && <p className="muted small center">{t("common.slowLoading")}</p>}
+          <button className="btn btn-secondary" data-testid="boot-retry" onClick={() => (failed ? retry() : location.reload())}>{t("common.retry")}</button>
         </>
       )}
     </div>

@@ -47,8 +47,9 @@ export function createTranslator(locale: Locale) {
   return (key: MessageKey, vars?: Record<string, string | number>) => translate(locale, key, vars);
 }
 
+/** Western digits in both locales (ar-u-nu-latn). Message text the user typed is never rewritten. */
 export function formatTime(date: Date, locale: Locale): string {
-  return new Intl.DateTimeFormat(locale === "ar" ? "ar" : "en", { hour: "numeric", minute: "2-digit" }).format(date);
+  return new Intl.DateTimeFormat(locale === "ar" ? "ar-u-nu-latn" : "en", { hour: "numeric", minute: "2-digit" }).format(date);
 }
 
 export function formatDay(date: Date, locale: Locale): string {

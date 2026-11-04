@@ -32,7 +32,23 @@ configureSdkLogging(import.meta.env.DEV ? "warn" : "error");
 
 export const API_URL: string = import.meta.env.VITE_API_URL ?? "http://localhost:8787";
 
-type Status = "loading" | "signedOut" | "ready";
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("timeout")), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
+type Status = "loading" | "signedOut" | "ready" | "offline";
 
 interface SessionState {
   status: Status;
@@ -51,6 +67,8 @@ interface SessionState {
   deviceSecret: () => Promise<string | null>;
   signOut: () => Promise<void>;
   refreshMe: () => Promise<void>;
+  /** Try the saved session again after a failed or timed-out boot. */
+  retry: () => void;
   /** Called after the account was deleted/deactivated: wipe locally without contacting the server. */
   forget: (notice?: string) => Promise<void>;
 }
@@ -118,31 +136,47 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [forget],
   );
 
-  // Restore a persisted session on load.
+  // One in-flight restore. Retry waits on it instead of starting a second client.
+  const inflight = useRef<Promise<void> | null>(null);
+  const [bootNonce, setBootNonce] = useState(0);
+
+  // Restore a persisted session on load. A hung wasm download, a stuck IndexedDB
+  // call, or a homeserver that never answers used to leave the splash up forever.
   useEffect(() => {
     let cancelled = false;
+    const fail = (err: unknown) => {
+      if (cancelled) return;
+      const code = (err as { httpStatus?: number; status?: number }).httpStatus ?? (err as ApiError).status;
+      if (code === 401 || code === 403) return void forget("This device was signed out.");
+      // Keep the saved session. The sign-up screen could replace the account.
+      setStatus("offline");
+    };
     (async () => {
-      const session = await loadSession();
-      if (cancelled) return; // React StrictMode re-runs effects in development.
+      setStatus("loading");
+      let session: Awaited<ReturnType<typeof loadSession>>;
+      try {
+        session = await withTimeout(loadSession(), 8_000);
+      } catch (err) {
+        return fail(err);
+      }
+      if (cancelled) return;
       if (!session) return setStatus("signedOut");
-      // A saved session is never abandoned because the server is unreachable: that would show the
-      // sign-up screen, where "Start now" could replace the saved account. Keep retrying (the
-      // splash screen explains the wait and offers a manual retry) until the server answers.
-      for (let attempt = 0; !cancelled; attempt++) {
-        try {
-          await start(session, false);
-          return;
-        } catch (err) {
-          const status = (err as { httpStatus?: number; status?: number }).httpStatus ?? (err as ApiError).status;
-          if (status === 401 || status === 403) return void (await forget("This device was signed out."));
-          await new Promise((r) => setTimeout(r, Math.min(15_000, 1500 * 2 ** Math.min(attempt, 4))));
-        }
+      if (!inflight.current) {
+        const run = start(session, false).finally(() => {
+          inflight.current = null;
+        });
+        inflight.current = run;
+      }
+      try {
+        await withTimeout(inflight.current, 18_000);
+      } catch (err) {
+        fail(err);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [start, forget]);
+  }, [start, forget, bootNonce]);
 
   // Temporary sessions: sign the device out when the tab closes.
   useEffect(() => {
@@ -227,7 +261,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   return (
     <SessionContext.Provider
-      value={{ status, client, api: apiRef.current, me, temporary, notice, signIn, register, quickStart, protectAccount, deviceSecret, signOut, refreshMe, forget }}
+      value={{ status, client, api: apiRef.current, me, temporary, notice, signIn, register, quickStart, protectAccount, deviceSecret, signOut, refreshMe, forget, retry: () => setBootNonce((n) => n + 1) }}
     >
       {children}
     </SessionContext.Provider>

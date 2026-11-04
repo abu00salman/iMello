@@ -5,19 +5,41 @@ export function Logo({ size = 40 }: { size?: number }) {
   return <img src={`${import.meta.env.BASE_URL}icon.svg`} width={size} height={size} alt="" className="logo" />;
 }
 
-const AVATAR_COLORS = ["#3D7FE0", "#8E78E8", "#2FA36B", "#D9465B", "#D99A2B", "#2B9FB3", "#C25BA8"];
+const AVATAR_VARS = ["var(--im-avatar-1)", "var(--im-avatar-2)", "var(--im-avatar-3)", "var(--im-avatar-4)", "var(--im-avatar-5)", "var(--im-avatar-6)"];
 
-export function Avatar({ name, id, size = 40 }: { name: string; id: string; size?: number }) {
+/** Stable colour for a person, shared by their avatar and their message bar. */
+export function avatarColor(id: string): string {
   let h = 0;
   for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  const initials = [...name.trim()].slice(0, 1).join("").toUpperCase() || "?";
+  return AVATAR_VARS[h % AVATAR_VARS.length]!;
+}
+
+function initialsOf(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return "?";
+  if (/[\u0600-\u06FF]/.test(trimmed)) {
+    const rest = trimmed.replace(/^(?:عمي|أبو|ابو|أم|أمي|امي|أخي|أختي|اختي)\s+/, "");
+    return [...(rest || trimmed)][0] ?? "?";
+  }
+  const parts = trimmed.split(/\s+/).filter(Boolean);
+  const letters = (parts[0]?.[0] ?? "") + (parts.length > 1 ? (parts[1]?.[0] ?? "") : "");
+  return letters.toUpperCase() || "?";
+}
+
+export function Ltr({ children }: { children: ReactNode }) {
+  return <bdi dir="ltr">{children}</bdi>;
+}
+
+export function Avatar({ name, id, size = 40 }: { name: string; id: string; size?: number }) {
+  const color = avatarColor(id);
+  const initials = initialsOf(name);
   return (
     <span
       className="avatar"
       aria-hidden="true"
       ref={(el) => {
         if (el) {
-          el.style.setProperty("--avatar-bg", AVATAR_COLORS[h % AVATAR_COLORS.length]!);
+          el.style.setProperty("--avatar-bg", color);
           el.style.setProperty("--avatar-size", `${size}px`);
         }
       }}

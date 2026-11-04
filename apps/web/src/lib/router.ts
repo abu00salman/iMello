@@ -10,7 +10,8 @@ export type Route =
   | { name: "family" }
   | { name: "calls" }
   | { name: "settings" }
-  | { name: "invite"; token: string };
+  | { name: "invite"; token: string }
+  | { name: "preview"; screen: "list" | "chat" | "appearance" | "contacts" };
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, "").split("/").map(decodeURIComponent);
@@ -24,6 +25,8 @@ export function parseRoute(hash: string): Route {
       return { name: parts[0] };
     case "i":
       return parts[1] ? { name: "invite", token: parts[1] } : { name: "contacts" };
+    case "preview":
+      return { name: "preview", screen: parts[1] === "chat" || parts[1] === "appearance" || parts[1] === "contacts" ? parts[1] : "list" };
     default:
       return { name: "chats" };
   }
@@ -35,6 +38,8 @@ export function href(route: Route): string {
       return route.roomId ? `#/chats/${encodeURIComponent(route.roomId)}` : "#/chats";
     case "invite":
       return `#/i/${route.token}`;
+    case "preview":
+      return route.screen === "list" ? "#/preview" : `#/preview/${route.screen}`;
     default:
       return `#/${route.name}`;
   }

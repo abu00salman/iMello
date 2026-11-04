@@ -1,7 +1,8 @@
-/* iMello landing: language, the live ID card, entrances. No libraries; the page works without this file. */
+/* iMello landing: language, theme, the live number card, entrances. No libraries; the page works without this file. */
 (() => {
   const root = document.documentElement;
-  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const mq = (q) => window.matchMedia && matchMedia(q);
+  const reduced = !!(mq("(prefers-reduced-motion: reduce)") || {}).matches;
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
   const store = {
@@ -23,8 +24,27 @@
   setLang(root.lang === "en" ? "en" : "ar");
   $("#lang")?.addEventListener("click", () => setLang(root.lang === "ar" ? "en" : "ar"));
 
+  /* Theme: Classic Blue (default) or Coral. Light/dark follows the OS for both. Colours only; layout never changes. */
+  const dark = mq("(prefers-color-scheme: dark)");
+  const syncMode = () => {
+    /* tokens.css has an Automatic block only for Classic Blue; for Coral we mirror the OS here. A ?mode= override wins. */
+    if (/[?&]mode=(light|dark)\b/.test(location.search)) return;
+    if (root.dataset.theme === "coral") root.dataset.mode = dark && dark.matches ? "dark" : "light";
+    else delete root.dataset.mode;
+  };
+  syncMode();
+  dark?.addEventListener?.("change", syncMode);
+  const pressed = () => $$("#theme [data-set]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.set === (root.dataset.theme || "classic-blue"))));
+  pressed();
+  $$("#theme [data-set]").forEach((b) => b.addEventListener("click", () => {
+    if (b.dataset.set === "coral") root.dataset.theme = "coral"; else delete root.dataset.theme;
+    store.set("imello.site.theme", b.dataset.set);
+    syncMode(); pressed();
+  }));
+
   /* The live card: your name and a sample number. Nothing is sent anywhere. */
   const num = $("#num"), cardName = $("#cardname"), nm = $("#nm"), again = $("#again");
+  const ctaName = $("#cta-name");
   const roll = () => { if (num) num.textContent = String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0"); };
   roll();
   nm?.addEventListener("input", () => {
@@ -37,7 +57,6 @@
   $("#cardform")?.addEventListener("submit", (e) => e.preventDefault());
 
   /* "My name is ___ and I'd like to start": the name is handed to the app's sign-up field. */
-  const ctaName = $("#cta-name");
   ctaName?.addEventListener("input", () => { ctaName.dataset.edited = "1"; });
   $("#ctaform")?.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -54,13 +73,25 @@
   /* FAQ: one card open at a time even where <details name> isn't supported. */
   $$("details.icard").forEach((d) => d.addEventListener("toggle", () => { if (d.open) $$("details.icard").forEach((o) => { if (o !== d) o.open = false; }); }));
 
-  /* Entrances */
-  const targets = $$("[data-rise], .sheet");
-  if (reduced || !("IntersectionObserver" in window)) {
-    targets.forEach((el) => el.classList.add("in"));
+  /* Entrances (motion-spec: 160ms-class, ease-out, opacity + small rise, no bounce).
+     Content is visible by default: only elements that start BELOW the fold are hidden, and only when motion is allowed,
+     IntersectionObserver exists and the page is not being captured (automation / print), so full-page screenshots,
+     no-JS, print and reduced motion all show everything. */
+  const targets = $$("[data-rise]");
+  const captured = navigator.webdriver === true || /[?&]static(&|=|$)/.test(location.search);
+  const showAll = () => targets.forEach((el) => { el.classList.remove("pre"); el.classList.add("in"); });
+  if (reduced || captured || !("IntersectionObserver" in window)) {
+    showAll();
   } else {
-    const io = new IntersectionObserver((entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
-    targets.forEach((el) => io.observe(el));
+    const fold = window.innerHeight;
+    const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+      if (e.isIntersecting) { e.target.classList.add("in"); e.target.classList.remove("pre"); io.unobserve(e.target); }
+    }), { rootMargin: "0px 0px -6% 0px", threshold: 0.06 });
+    targets.forEach((el) => {
+      if (el.getBoundingClientRect().top < fold) el.classList.add("in", "first");
+      else { el.classList.add("pre"); io.observe(el); }
+    });
+    window.addEventListener("beforeprint", showAll);
   }
 
   /* The moving picture is a real recording of the app; it plays only while on screen, and not at all with reduced motion. */

@@ -24,9 +24,27 @@ export function AuthScreen() {
   const [error, setError] = useState<string | null>(null);
   const [serverDown, setServerDown] = useState(false);
 
+  // Check the server on load and keep checking every 8 s while it is unreachable, so the screen
+  // recovers by itself when the server comes back (no reload needed).
+  const [checkNonce, setCheckNonce] = useState(0);
   useEffect(() => {
-    api.config().then(() => setServerDown(false), () => setServerDown(true));
-  }, [api]);
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const check = () =>
+      api.config().then(
+        () => !cancelled && setServerDown(false),
+        () => {
+          if (cancelled) return;
+          setServerDown(true);
+          timer = setTimeout(check, 8000);
+        },
+      );
+    void check();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [api, checkNonce]);
 
   function explain(err: unknown) {
     const code = err instanceof ApiError ? err.code : (err as { errcode?: string }).errcode;
@@ -88,7 +106,12 @@ export function AuthScreen() {
           <h1>{t("app.name")}</h1>
           <p className="tagline">{t("app.tagline")}</p>
         </div>
-        {serverDown && <p className="notice" role="status">{t("auth.serverUnavailable")}</p>}
+        {serverDown && (
+          <div className="notice" role="status" data-testid="server-down">
+            <p>{t("auth.serverUnavailable")}</p>
+            <button type="button" className="link" onClick={() => setCheckNonce((n) => n + 1)}>{t("common.retry")}</button>
+          </div>
+        )}
         {notice && <p className="notice" role="status">{notice}</p>}
 
         <form onSubmit={submit} noValidate>

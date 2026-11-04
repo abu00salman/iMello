@@ -93,7 +93,7 @@
   "family.role.guardian": "Guardian",
   "family.role.member": "Member",
   "family.role.child": "Child",
-  "auth.serverUnavailable": "The iMello server is not connected yet, so signing in and creating accounts will not work on this test site.",
+  "auth.serverUnavailable": "Can't reach the iMello server right now. It is probably paused for a moment (for example the computer running it is asleep or offline). We retry automatically every few seconds, or you can tap “Try again”.",
   "auth.startNow": "Start now",
   "auth.startNowHint": "No sign-up needed. You'll get your own iMello number to share with family and friends.",
   "auth.yourName": "Your name (optional)",
@@ -188,5 +188,6 @@
   "auth.serverError": "The server had a temporary problem. Try again in a minute.",
   "auth.displayNameInvalid": "That name can't be used. Try a shorter name without special symbols.",
   "security.verifyNote": "Messages and calls are encrypted between devices. Manually verifying your contacts' devices (comparing codes) isn't available yet, so devices are not shown as “verified”.",
-  "auth.firstLoad": "First time only: setting up encryption on this device (about 8 MB). On mobile data this can take a minute; next time is faster."
+  "auth.firstLoad": "First time only: setting up encryption on this device (about 8 MB). On mobile data this can take a minute; next time is faster.",
+  "session.unreachable": "Couldn't restore your session because the server isn't responding. Your account and chats are safe and will come back as soon as the server is up."
 }

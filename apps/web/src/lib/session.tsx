@@ -98,7 +98,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const c = await startSecureClient({ session, cryptoStore, passwordForCrossSigningSetup: password });
       c.on(HttpApiEvent.SessionLoggedOut, () => void forget("This device was signed out."));
       apiRef.current.setAccessToken(session.accessToken);
-      const profile = await apiRef.current.me();
+      let profile: Me;
+      try {
+        profile = await apiRef.current.me();
+      } catch (err) {
+        c.stopClient(); // don't leak a running client on each failed attempt
+        throw err;
+      }
       clientRef.current = c;
       setClient(c);
       setMe(profile);
@@ -116,14 +122,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const session = await loadSession();
       if (cancelled) return; // React StrictMode re-runs effects in development.
       if (!session) return setStatus("signedOut");
-      try {
-        await start(session, false);
-      } catch (err) {
-        const status = (err as { httpStatus?: number; status?: number }).httpStatus ?? (err as ApiError).status;
-        if (status === 401 || status === 403) await forget("This device was signed out.");
-        else {
-          setNotice("Could not reach iMello. Check your connection and reload.");
-          setStatus("signedOut");
+      // A saved session is never abandoned because the server is unreachable: that would show the
+      // sign-up screen, where "Start now" could replace the saved account. Keep retrying (the
+      // splash screen explains the wait and offers a manual retry) until the server answers.
+      for (let attempt = 0; !cancelled; attempt++) {
+        try {
+          await start(session, false);
+          return;
+        } catch (err) {
+          const status = (err as { httpStatus?: number; status?: number }).httpStatus ?? (err as ApiError).status;
+          if (status === 401 || status === 403) return void (await forget("This device was signed out."));
+          await new Promise((r) => setTimeout(r, Math.min(15_000, 1500 * 2 ** Math.min(attempt, 4))));
         }
       }
     })();

@@ -96,6 +96,7 @@ export function parseRpcMessage(raw: string): RpcMessage | null {
 /** Public error text only: never forward SDK messages that might echo request data. */
 export function safeError(err: unknown): RpcErrorBody {
   if (err instanceof RpcError) return { code: err.code, message: err.message };
+  if (err instanceof Error && /^[a-z0-9_]{1,80}$/i.test(err.message)) return { code: err.message, message: err.message };
   const http = (err as { httpStatus?: number; status?: number }).httpStatus ?? (err as { status?: number }).status;
   const code = (err as { errcode?: string; code?: string; name?: string }).errcode
     ?? (err as { code?: string }).code

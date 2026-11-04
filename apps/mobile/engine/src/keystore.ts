@@ -13,11 +13,30 @@ const SESSION = "session";
 export const CRYPTO_DB_PREFIX = "imello-crypto";
 
 function openDb(): Promise<IDBDatabase> {
+  if (typeof indexedDB === "undefined") return Promise.reject(new Error("indexeddb_missing"));
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
+    const timer = setTimeout(() => reject(new Error("indexeddb_timeout")), 12_000);
+    let req: IDBOpenDBRequest;
+    try {
+      req = indexedDB.open(DB_NAME, 1);
+    } catch (err) {
+      clearTimeout(timer);
+      reject(err instanceof Error ? err : new Error("indexeddb_error"));
+      return;
+    }
     req.onupgradeneeded = () => req.result.createObjectStore(STORE);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    req.onsuccess = () => {
+      clearTimeout(timer);
+      resolve(req.result);
+    };
+    req.onerror = () => {
+      clearTimeout(timer);
+      reject(req.error ?? new Error("indexeddb_error"));
+    };
+    req.onblocked = () => {
+      clearTimeout(timer);
+      reject(new Error("indexeddb_blocked"));
+    };
   });
 }
 

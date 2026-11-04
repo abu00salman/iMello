@@ -14,7 +14,7 @@ Two ways to put Matrix encryption on the phone were considered.
 
 **Choice: A.** It is the path that produces a working APK and unsigned IPA without replacing the tested crypto. Architecture §6 remains the long-term plan for a direct `matrix-rust-sdk` binding. This build does not weaken that plan and does not fork the protocol.
 
-The WebView is a 1px clipped view (`EngineView`). It is not focusable, not tappable, and it never draws a screen. If it fails, the app shows a native error, not a website.
+The WebView is not focusable and not tappable, and it never draws a screen. It is a small on-screen view (not 1px) so iOS will start its content process. The engine document is loaded from a `file://` URL with `allowingReadAccessToURL` set to that file's directory. It is not passed through the React Native bridge as a multi-megabyte HTML string, which never finished on a re-signed iPhone. The script is inline, so WebAssembly is instantiated from bytes already in the file (no `file://` fetch, no MIME lookup). The engine repeats `hello` and the last `session` until the host sends `ack`, and the host pings on load. Each startup stage times out after 20 seconds and the app shows a native error with Retry and Copy diagnostics.
 
 ## How the pieces talk
 
@@ -30,7 +30,7 @@ Synapse Client-Server API
 
 The policy API (contacts, family, invites, account) is called with React Native `fetch` through `ImelloApiClient`. That traffic is not subject to browser CORS. Only the Matrix client runs inside the engine, because that is where the WASM and IndexedDB crypto store have to live.
 
-The engine page is bundled into the app (`pnpm --filter @imello/mobile run build:engine`). Its `baseUrl` is `https://imello.engine.local/` so IndexedDB has a stable origin. The bytes of `matrix-sdk-crypto-wasm` are compiled into that bundle; nothing is loaded from the iMello website.
+The engine page is bundled into the app (`pnpm --filter @imello/mobile run build:engine`) and opened from the app's own file URL. The bytes of `matrix-sdk-crypto-wasm` are compiled into that file; nothing is loaded from the iMello website. IndexedDB open is bounded by a timeout so a stuck storage call cannot leave the splash up. Keychain is not used on this path, so a re-signed bundle id does not block startup.
 
 ### Bridge
 

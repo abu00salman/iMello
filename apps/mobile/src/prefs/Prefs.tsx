@@ -62,6 +62,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
   const systemDark = useColorScheme() === "dark";
   const [pref, setPref] = useState<PrefState>({ ...DEFAULTS, locale: fallbackLocale() });
   const [hydrated, setHydrated] = useState(false);
+  const [fontsGaveUp, setFontsGaveUp] = useState(false);
   const [fontsLoaded] = useFonts({
     Inter: require("../../assets/fonts/Inter-Regular.ttf"),
     "Inter-Medium": require("../../assets/fonts/Inter-Medium.ttf"),
@@ -72,6 +73,11 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
     "Plex-SemiBold": require("../../assets/fonts/IBMPlexSansArabic-SemiBold.ttf"),
     "Plex-Bold": require("../../assets/fonts/IBMPlexSansArabic-Bold.ttf"),
   });
+
+  useEffect(() => {
+    const id = setTimeout(() => setFontsGaveUp(true), 20_000);
+    return () => clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     void (async () => {
@@ -112,7 +118,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
   const value = useMemo<PrefsApi>(
     () => ({
       ...pref,
-      ready: hydrated && fontsLoaded,
+      ready: hydrated && (fontsLoaded || fontsGaveUp),
       colors,
       rtl,
       font: (weight = "400") => fontName(rtl, weight),
@@ -124,7 +130,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
       setPreview: (preview) => setPref((p) => ({ ...p, preview })),
       setStatus: (status) => setPref((p) => ({ ...p, status })),
     }),
-    [pref, hydrated, fontsLoaded, colors, rtl],
+    [pref, hydrated, fontsLoaded, fontsGaveUp, colors, rtl],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

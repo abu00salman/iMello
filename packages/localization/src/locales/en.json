@@ -189,5 +189,9 @@
   "auth.displayNameInvalid": "That name can't be used. Try a shorter name without special symbols.",
   "security.verifyNote": "Messages and calls are encrypted between devices. Manually verifying your contacts' devices (comparing codes) isn't available yet, so devices are not shown as “verified”.",
   "auth.firstLoad": "First time only: setting up encryption on this device (about 8 MB). On mobile data this can take a minute; next time is faster.",
-  "session.unreachable": "Couldn't restore your session because the server isn't responding. Your account and chats are safe and will come back as soon as the server is up."
+  "session.unreachable": "Couldn't restore your session because the server isn't responding. Your account and chats are safe and will come back as soon as the server is up.",
+  "common.skipToContent": "Skip to content",
+  "chat.reply": "Reply",
+  "contacts.inviteLinkLabel": "Invite link",
+  "family.inviteLinkLabel": "Family invite link"
 }

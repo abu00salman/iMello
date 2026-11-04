@@ -82,7 +82,7 @@ function Shell({ route }: { route: Route }) {
 
   return (
     <div className={`shell ${isChild ? "kids" : ""}`}>
-      <a href="#main" className="skip-link">Skip to content</a>
+      <a href="#main" className="skip-link">{t("common.skipToContent")}</a>
       <nav className="tabbar" aria-label="iMello">
         <div className="tabbar-brand"><Logo size={32} /><span>{t("app.name")}</span></div>
         {nav.map((n) => {
@@ -140,7 +140,7 @@ function KidsHome() {
           {invites.map((c) => (
             <li key={c.roomId}>
               <a className="kids-invite" href={`#/chats/${encodeURIComponent(c.roomId)}`}>
-                ✉️ {t("chat.invitedYou", { name: c.name })}
+                {t("chat.invitedYou", { name: c.name })}
               </a>
             </li>
           ))}

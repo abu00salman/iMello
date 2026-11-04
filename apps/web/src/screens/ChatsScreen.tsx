@@ -416,7 +416,7 @@ const MessageRow = memo(
             </span>
           </div>
           {!m.decryptionFailed && (
-            <button className="reply-btn" onClick={() => onReply(m)} aria-label="Reply"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 8V4l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11Z" fill="currentColor" /></svg></button>
+            <button className="reply-btn" onClick={() => onReply(m)} aria-label={t("chat.reply")}><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 8V4l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11Z" fill="currentColor" /></svg></button>
           )}
         </div>
       </div>

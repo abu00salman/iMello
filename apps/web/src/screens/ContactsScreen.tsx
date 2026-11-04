@@ -192,7 +192,7 @@ export function ContactsScreen({ initialToken }: { initialToken?: string }) {
           {invite ? (
             <div className="invite-share">
               {qr && <img src={qr} alt="QR code" width={220} height={220} className="qr" />}
-              <input readOnly value={link} dir="ltr" aria-label="Invite link" onFocus={(e) => e.target.select()} data-testid="invite-link" />
+              <input readOnly value={link} dir="ltr" aria-label={t("contacts.inviteLinkLabel")} onFocus={(e) => e.target.select()} data-testid="invite-link" />
               <Button variant="secondary" onClick={() => void navigator.clipboard.writeText(link).then(() => setCopied(true))}>
                 {copied ? t("common.copied") : t("common.copy")}
               </Button>

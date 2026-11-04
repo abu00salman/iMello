@@ -103,7 +103,7 @@ export function FamilyScreen() {
           {(f.role === "admin" || f.role === "guardian") && (
             <>
               <Button variant="secondary" onClick={() => void inviteToFamily(f)}>{t("contacts.invite")}</Button>
-              {familyLink && <input readOnly value={familyLink} dir="ltr" onFocus={(e) => e.target.select()} aria-label="Family invite link" />}
+              {familyLink && <input readOnly value={familyLink} dir="ltr" onFocus={(e) => e.target.select()} aria-label={t("family.inviteLinkLabel")} />}
             </>
           )}
         </FamilyCard>

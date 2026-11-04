@@ -139,42 +139,58 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   // One in-flight restore. Retry waits on it instead of starting a second client.
   const inflight = useRef<Promise<void> | null>(null);
   const [bootNonce, setBootNonce] = useState(0);
+  const statusRef = useRef(status);
+  statusRef.current = status;
 
-  // Restore a persisted session on load. A hung wasm download, a stuck IndexedDB
-  // call, or a homeserver that never answers used to leave the splash up forever.
+  // Restore a persisted session on load. Each attempt is bounded so a hung IndexedDB
+  // call, crypto download, or homeserver cannot leave the splash spinning with no way out.
+  // Failures keep retrying on their own (a saved account must come back when the server does)
+  // and never fall through to the sign-up screen.
   useEffect(() => {
     let cancelled = false;
-    const fail = (err: unknown) => {
-      if (cancelled) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const authError = (err: unknown) => {
       const code = (err as { httpStatus?: number; status?: number }).httpStatus ?? (err as ApiError).status;
-      if (code === 401 || code === 403) return void forget("This device was signed out.");
-      // Keep the saved session. The sign-up screen could replace the account.
-      setStatus("offline");
+      return code === 401 || code === 403;
     };
-    (async () => {
-      setStatus("loading");
+    const again = (n: number) => {
+      const wait = Math.min(15_000, 1_500 * 2 ** Math.min(n, 4));
+      timer = setTimeout(() => void run(n + 1), wait);
+    };
+    const run = async (n: number) => {
+      if (cancelled || statusRef.current === "ready" || statusRef.current === "signedOut") return;
+      if (n === 0) setStatus("loading");
       let session: Awaited<ReturnType<typeof loadSession>>;
       try {
         session = await withTimeout(loadSession(), 8_000);
       } catch (err) {
-        return fail(err);
+        if (cancelled) return;
+        if (authError(err)) return void forget("This device was signed out.");
+        setStatus("offline");
+        again(n);
+        return;
       }
       if (cancelled) return;
       if (!session) return setStatus("signedOut");
-      if (!inflight.current) {
-        const run = start(session, false).finally(() => {
-          inflight.current = null;
-        });
-        inflight.current = run;
-      }
       try {
+        if (!inflight.current) {
+          const pending = start(session, false).finally(() => {
+            inflight.current = null;
+          });
+          inflight.current = pending;
+        }
         await withTimeout(inflight.current, 18_000);
       } catch (err) {
-        fail(err);
+        if (cancelled) return;
+        if (authError(err)) return void forget("This device was signed out.");
+        setStatus("offline");
+        again(n);
       }
-    })();
+    };
+    void run(0);
     return () => {
       cancelled = true;
+      if (timer) clearTimeout(timer);
     };
   }, [start, forget, bootNonce]);
 

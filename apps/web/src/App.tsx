@@ -38,7 +38,6 @@ const NAV: { name: Route["name"]; label: MessageKey; icon: ReactNode }[] = [
   { name: "chats", label: "nav.chats", icon: <path d="M3 4h18v12H9l-5 4v-4H3Zm4 4v2h10V8Zm0 4v2h7v-2Z" fillRule="evenodd" /> },
   { name: "contacts", label: "nav.contacts", icon: <path d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12Zm0 2c-4.4 0-8.5 2.2-8.5 5.5V21h17v-1.5C20.5 16.2 16.4 14 12 14Z" /> },
   { name: "family", label: "nav.family", icon: <path d="M8.5 11a3.5 3.5 0 1 0-3.5-3.5A3.5 3.5 0 0 0 8.5 11Zm7.5 0a3 3 0 1 0-3-3 3 3 0 0 0 3 3Zm-7.5 2C5 13 1.5 14.7 1.5 17.3V19h14v-1.7C15.5 14.7 12 13 8.5 13Zm7.5.4a8 8 0 0 1 1.6 3.9V19h4.9v-1.4c0-2.2-2.9-3.9-6.5-4.2Z" /> },
-  { name: "settings", label: "nav.settings", icon: <path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7 7 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7 7 0 0 0 1.7-1l2.4 1 2-3.4ZM13 15.5A3.5 3.5 0 1 1 16.5 12 3.5 3.5 0 0 1 13 15.5Z" transform="translate(-1 0)" /> },
 ];
 
 function Shell({ route }: { route: Route }) {
@@ -170,11 +169,12 @@ function Splash({ failed = false }: { failed?: boolean }) {
   return (
     <div className="splash" role="status">
       <Logo size={88} />
-      <p>{failed ? t("session.unreachable") : t("common.loading")}</p>
+      <p>{t("common.loading")}</p>
+      {failed && <p className="muted small center">{t("session.unreachable")}</p>}
       {(failed || slow) && (
         <>
           {!failed && <p className="muted small center">{t("common.slowLoading")}</p>}
-          <button className="btn btn-secondary" data-testid="boot-retry" onClick={() => (failed ? retry() : location.reload())}>{t("common.retry")}</button>
+          <button className="btn btn-secondary" data-testid="boot-retry" onClick={() => retry()}>{t("common.retry")}</button>
         </>
       )}
     </div>

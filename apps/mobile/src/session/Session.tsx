@@ -67,6 +67,7 @@ interface SessionApi {
   logs: string[];
   diagnostics: string;
   retryBoot: () => void;
+  loginStage: string | null;
 }
 
 const Ctx = createContext<SessionApi | null>(null);
@@ -110,6 +111,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [bootError, setBootError] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
   const [assetInfo, setAssetInfo] = useState<EngineAssetInfo | null>(null);
+  const [loginStage, setLoginStage] = useState<string | null>(null);
   const bootRef = useRef({ stage: "asset" as BootStage, started: Date.now(), settled: false });
   const active = useRef<string | null>(null);
   const roomsRef = useRef<WireRoom[]>([]);
@@ -182,6 +184,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const offSession = rpc.on("session", (data) => {
       const info = data as SessionInfo;
       settle();
+      setLoginStage(null);
       if (info.status === "signedOut") {
         api.setAccessToken(null);
         setMe(null);
@@ -201,6 +204,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const offTimeline = rpc.on("timeline", (data) => {
       const payload = data as { roomId: string; messages: WireMessage[] };
       setTimelines((prev) => ({ ...prev, [payload.roomId]: payload.messages }));
+    });
+    const offProgress = rpc.on("progress", (data) => {
+      const stage = (data as { stage?: string }).stage;
+      if (stage) setLoginStage(stage);
     });
     const offHello = rpc.on("hello", () => {
       advance("session");
@@ -247,6 +254,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       offSession();
       offRooms();
       offTimeline();
+      offProgress();
       offHello();
       offError();
       offLog();
@@ -384,7 +392,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       assetBytes: assetInfo?.bytes,
     }),
     retryBoot: () => setGeneration((n) => n + 1),
-  }), [phase, me, rooms, timelines, shake, notice, api, refreshMe, call, prefs.locale, prefs.sounds, bootStage, bootError, logs, assetInfo]);
+    loginStage,
+  }), [phase, me, rooms, timelines, shake, notice, api, refreshMe, call, prefs.locale, prefs.sounds, bootStage, bootError, logs, assetInfo, loginStage]);
 
   return (
     <Ctx.Provider value={value}>

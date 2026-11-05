@@ -107,9 +107,9 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
 
   const rtl = pref.locale === "ar";
   useEffect(() => {
-    if (!hydrated) return;
-    if (I18nManager.isRTL === rtl) return;
+    if (!hydrated || I18nManager.isRTL === rtl) return;
     I18nManager.allowRTL(true);
+    I18nManager.swapLeftAndRightInRTL(true);
     I18nManager.forceRTL(rtl);
     void reloadAppAsync();
   }, [hydrated, rtl]);

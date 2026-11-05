@@ -23,6 +23,7 @@
       "supportsTablet": true,
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true,
+        "CFBundleLocalizations": ["en", "ar"],
         "NSMicrophoneUsageDescription": "iMello uses the microphone to record voice messages. Recordings are encrypted before they leave your phone.",
         "NSCameraUsageDescription": "iMello uses the camera for video calls and when you choose to send a photo.",
         "NSPhotoLibraryUsageDescription": "iMello lets you choose photos to send. Photos are encrypted before they leave your phone."

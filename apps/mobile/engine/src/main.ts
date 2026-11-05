@@ -42,6 +42,7 @@ import {
 import { pingRemaining, PING_COOLDOWN_MS, receiptFor, type Receipt } from "../../src/rpc/format";
 import { errorMessage, eventMessage, parseRpcMessage, responseMessage, safeError, RpcError } from "../../src/rpc/protocol";
 import type { SessionInfo, WireMessage, WireRoom } from "../../src/rpc/wire";
+import { initAsync as initCryptoWasm } from "@matrix-org/matrix-sdk-crypto-wasm";
 import { clearDeviceSecret, cryptoDbPrefix, cryptoStorageKey, loadDeviceSecret, loadSession, saveDeviceSecret, saveSession, wipeAll } from "./keystore";
 
 configureSdkLogging("error");
@@ -161,6 +162,7 @@ function roomsOf(c: MatrixClient): WireRoom[] {
             own: last.isOwn,
             ping: last.ping,
             failed: last.receipt === "failed",
+            locked: last.decryptionFailed,
             body: last.body,
             voice: last.attachment?.voice ?? false,
             kind: last.ping ? "text" : (last.attachment?.kind ?? (last.body ? "text" : "none")),
@@ -237,11 +239,19 @@ async function start(session: Session, isTemporary: boolean, password?: string):
         prefix: cryptoDbPrefix(session.userId, session.deviceId),
         storageKey: await cryptoStorageKey(session.userId, session.deviceId),
       });
-  const next = await startSecureClient({ session, cryptoStore, passwordForCrossSigningSetup: password });
+  post(eventMessage("progress", { stage: "sync" }));
+  const next = await startSecureClient({
+    session,
+    cryptoStore,
+    passwordForCrossSigningSetup: password,
+    // The UI opens as soon as the client exists. Sync keeps running; this does not skip encryption.
+    firstSyncTimeoutMs: 400,
+  });
   client = next;
   seen.clear();
   primed = false;
   bind(next);
+  void recoverHistory(next, password);
   const info: SessionInfo = {
     status: "ready",
     userId: session.userId,
@@ -259,10 +269,37 @@ function requireClient(): MatrixClient {
   return client;
 }
 
+async function recoverHistory(c: MatrixClient, password?: string): Promise<void> {
+  const crypto = c.getCrypto();
+  if (!crypto) return;
+  // Ask the user's other devices and any server-side key backup for Megolm sessions.
+  // A brand-new device otherwise cannot read history. Failures are expected when no backup exists.
+  try {
+    await crypto.checkKeyBackupAndEnable();
+  } catch {
+    /* no backup on the server */
+  }
+  if (!password) return;
+  try {
+    await crypto.restoreKeyBackupWithPassphrase(password);
+  } catch {
+    /* the account password is not necessarily the backup passphrase */
+  }
+  try {
+    await crypto.loadSessionBackupPrivateKeyFromSecretStorage();
+    await crypto.restoreKeyBackup();
+  } catch {
+    /* secret storage was never created; the user can restore a backup file */
+  }
+  schedule();
+}
+
 async function signIn(params: { homeserverUrl: string; username: string; password: string; temporary?: boolean; deviceSecret?: boolean }): Promise<{ ok: true }> {
+  post(eventMessage("progress", { stage: "connect" }));
   const session = await loginWithPassword(params.homeserverUrl, params.username, params.password, deviceName(!!params.temporary));
   if (!params.temporary) await saveSession(session);
   if (params.deviceSecret) await saveDeviceSecret(session.userId, params.password);
+  post(eventMessage("progress", { stage: "keys" }));
   await start(session, !!params.temporary, params.password);
   return { ok: true };
 }
@@ -503,6 +540,8 @@ host.__imelloReceive = (raw: string) => {
 };
 
 announce();
+// Compile the crypto module while the splash is up so sign-in is not waiting on it.
+void initCryptoWasm().catch(() => undefined);
 
 void (async () => {
   try {

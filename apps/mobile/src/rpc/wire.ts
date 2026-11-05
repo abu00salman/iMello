@@ -36,6 +36,7 @@ export interface WireRoom {
     own: boolean;
     ping: boolean;
     failed: boolean;
+    locked: boolean;
     body: string | null;
     voice: boolean;
     kind: "text" | "image" | "audio" | "file" | "video" | "none";

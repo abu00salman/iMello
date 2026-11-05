@@ -2,6 +2,7 @@ import * as Clipboard from "expo-clipboard";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Pressable, ScrollView, Share, Text, View } from "react-native";
+import { formatImelloCode } from "../src/rpc/code";
 import { usePrefs } from "../src/prefs/Prefs";
 import { useSession } from "../src/session/Session";
 import { Header, Icon, IconButton } from "../src/ui/chrome";
@@ -10,7 +11,8 @@ import { QrCode } from "../src/ui/qr";
 export default function Code() {
   const { colors, font, t } = usePrefs();
   const { me, api } = useSession();
-  const code = me?.pin || me?.username || "";
+  const raw = me?.pin || me?.username || "";
+  const code = formatImelloCode(raw);
   const [copied, setCopied] = useState(false);
   const [invite, setInvite] = useState<string | null>(null);
   const shown = invite ?? code;

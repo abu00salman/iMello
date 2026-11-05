@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { RpcClient, type RpcTransport } from "./client";
 import { colorIndex, displayInitial, formatStamp, pingRemaining, receiptFor } from "./format";
 import { errorMessage, eventMessage, parseRpcMessage, responseMessage, requestMessage } from "./protocol";
+import { formatImelloCode, normalizeImelloCode } from "./code";
 import { formatDiagnostics, readAccessDirectory, stageExpired } from "../engine/diagnostics";
 import { en, ar } from "../i18n/strings";
 
@@ -134,6 +135,16 @@ describe("names, colour and time", () => {
     const today = formatStamp(now, "ar", now);
     expect(today).toMatch(/[0-9]/);
     expect(today).not.toMatch(/[٠-٩]/);
+  });
+});
+
+describe("iMello Code", () => {
+  it("keeps the six-digit code and accepts the short Mell-XXXX form", () => {
+    expect(normalizeImelloCode("mell-447729")).toBe("mell-447729");
+    expect(normalizeImelloCode("Mell-447729")).toBe("mell-447729");
+    expect(normalizeImelloCode("Mell-AB12")).toBe("mell-ab12");
+    expect(formatImelloCode("mell-447729")).toBe("Mell-447729");
+    expect(formatImelloCode("mell-ab12")).toBe("Mell-AB12");
   });
 });
 

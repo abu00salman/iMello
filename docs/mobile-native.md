@@ -62,7 +62,8 @@ Classic Blue v0.3.1 is the default (Coral is selectable; mode is Auto / Light / 
 - New messages and the Ping shake use Reanimated (420ms, ±6px). Reduce Motion skips the shake.
 - Sounds in `assets/sounds` are synthesised in `scripts/synth-sounds.mjs` (falling major second for a message, three taps for Ping). They do not play in silent mode.
 - Local notifications reuse `expo-notifications` (banner while the JS runtime is alive, badge = unread). Remote push when the process is killed needs APNs/FCM credentials and is not in this build.
-- Arabic is RTL (IBM Plex Sans Arabic) and English is LTR (Inter). Western digits in both. The identifier is **iMello Code** / **رمز آي ميلو** (`mell-` plus six digits, the account the API already issues).
+- Arabic is RTL (IBM Plex Sans Arabic) and English is LTR (Inter). `I18nManager.forceRTL` is applied when the locale changes and again on the next cold start. Until that native reload, screens also set `direction` and the tab triggers are ordered so chats sit on the inline-start side. Western digits in both. The identifier is shown as **Mell-…** / **رمز آي ميلو**. Sign-in still accepts the current `mell-` plus six digits, and also `Mell-XXXX`.
+- A new phone is a new Matrix device. History decrypts when a key backup or another signed-in device can supply the Megolm sessions. Otherwise the bubble says so and points at backup restore, instead of a lock icon.
 
 ## Limits of this build
 

@@ -1,6 +1,4 @@
+// Expo's default Metro config detects the pnpm monorepo (watchFolders, node_modules resolution).
 const { getDefaultConfig } = require("expo/metro-config");
 
-const config = getDefaultConfig(__dirname);
-config.resolver.assetExts.push("html");
-
-module.exports = config;
+module.exports = getDefaultConfig(__dirname);

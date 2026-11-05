@@ -444,5 +444,5 @@ html[dir="rtl"][data-layout="desktop"] .tab.active::before { inset-inline: 0 aut
 /* Ping sound picker */
 .ping-tones { border: 0; padding: 0; margin: 12px 0 0; }
 .ping-tones legend { font-weight: 600; margin-bottom: 4px; }
-.ping-tone { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; }
+.ping-tone { display: flex; align-items: center; justify-content: flex-start; gap: 8px; min-height: 44px; }
 .ping-tone .btn { min-height: 40px; }

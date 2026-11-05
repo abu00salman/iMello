@@ -1,4 +1,4 @@
-import { ApiError, ImelloApiClient, normalizePin, type Me } from "@imello/core";
+import { ApiError, displayPin, ImelloApiClient, normalizePin, type Me } from "@imello/core";
 import { disableBackgroundPush } from "./push";
 import {
   configureSdkLogging,
@@ -132,6 +132,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       // Lets the landing page send returning users straight to the app.
       if (!isTemporary) try { localStorage.setItem("imello.returning", "1"); } catch { /* ignore */ }
       setStatus("ready");
+      // People who never chose a name show their number as their name: switch it to the short code.
+      const shown = profile.displayName ?? "";
+      if (profile.pin && /^mell-\d{6}$/i.test(shown) && shown.toLowerCase() !== profile.pin) {
+        void c.setDisplayName(displayPin(profile.pin)).catch(() => undefined);
+      }
     },
     [forget],
   );
@@ -215,7 +220,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     async (username: string, password: string, isTemporary: boolean) => {
       const { homeserverUrl } = await apiRef.current.config();
       // Accept an iMello number in any common spelling (mell-447729, 447729, MELL 447 729, Arabic digits).
-      const user = normalizePin(username) ?? username.trim().toLowerCase();
+      const pin = normalizePin(username);
+      const user = pin ? await apiRef.current.resolveCode(pin).then((r) => r.username, () => pin) : username.trim().toLowerCase();
       const session = await loginWithPassword(homeserverUrl, user, password, deviceName() + (isTemporary ? " (temporary)" : ""));
       if (!isTemporary) await saveSession(session);
       await start(session, isTemporary, password);

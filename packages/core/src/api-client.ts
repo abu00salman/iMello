@@ -58,6 +58,10 @@ export class ImelloApiClient {
   quickStart(input: { deviceSecret: string; displayName?: string; locale?: string }) {
     return this.request<{ userId: string; pin: string; homeserverUrl: string; serverName: string }>("POST", "/v1/auth/quick", input);
   }
+  /** Turn an iMello Code typed at sign-in (short or long) into the account's username. */
+  resolveCode(code: string) {
+    return this.request<{ username: string }>("POST", "/v1/auth/resolve", { code });
+  }
   /** Tell iMello the user has set their own password (after changing it on the homeserver). */
   markProtected() {
     return this.request<Me>("POST", "/v1/me/protected", {});

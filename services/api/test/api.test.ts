@@ -125,10 +125,11 @@ beforeEach(async () => {
 
 describe("migrations", () => {
   it("roll back and re-apply cleanly", async () => {
+    expect(await migrateDown(DATABASE_URL)).toBe("004_short_codes");
     expect(await migrateDown(DATABASE_URL)).toBe("003_push");
     expect(await migrateDown(DATABASE_URL)).toBe("002_quick_accounts");
     expect(await migrateDown(DATABASE_URL)).toBe("001_init");
-    expect(await migrateUp(DATABASE_URL)).toEqual(["001_init", "002_quick_accounts", "003_push"]);
+    expect(await migrateUp(DATABASE_URL)).toEqual(["001_init", "002_quick_accounts", "003_push", "004_short_codes"]);
     expect(await migrateUp(DATABASE_URL)).toEqual([]);
   });
 });
@@ -335,6 +336,18 @@ describe("Start now (iMello numbers) and contact requests", () => {
     expect((await as(u).get("/v1/me")).json()).toMatchObject({ pin: u.pin, credential: "device", displayName: "Mona", kind: "adult" });
     // The homeserver received the device secret as the password.
     expect(hs.users.get(u.pin)).toBe(SECRET);
+  });
+
+  it("older 6-digit numbers get a short code: shown as their number, usable to add them and to sign in", async () => {
+    const old = await quick("Old");
+    await db.query("UPDATE accounts SET username = 'mell-872864', code = 'mell-1122' WHERE user_id = $1", [old.userId]);
+    expect((await as(old).get("/v1/me")).json().pin).toBe("mell-1122");
+    const resolve = (code: string) => app.inject({ method: "POST", url: "/v1/auth/resolve", payload: { code } }).then((r) => r.json().username);
+    expect(await resolve("Mell-1122")).toBe("mell-872864");
+    expect(await resolve("mell-872864")).toBe("mell-872864");
+    const friend = await quick("Friend");
+    expect((await as(friend).post("/v1/contact-requests", { pin: "Mell-1122" })).json().status).toBe("sent");
+    expect((await as(old).get("/v1/contact-requests")).json().incoming[0]).toMatchObject({ userId: friend.userId, pin: friend.pin });
   });
 
   it("uses the number as display name when none is given, and rejects weak device secrets", async () => {

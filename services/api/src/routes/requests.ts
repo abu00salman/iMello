@@ -24,10 +24,10 @@ export async function registerRequestRoutes(app: FastifyInstance) {
     const { pin: raw } = z.object({ pin: z.string().max(64) }).parse(req.body);
     const pin = normalizePin(raw);
     if (!pin) throw new HttpError(400, "invalid_number");
-    if (pin === me.username) throw new HttpError(400, "own_number");
+    if (pin === me.username || pin === me.code) throw new HttpError(400, "own_number");
 
     const sent = () => reply.status(202).send({ status: "sent" });
-    const target = await db.query<AccountRow>("SELECT * FROM accounts WHERE username = $1 AND status = 'active'", [pin]);
+    const target = await db.query<AccountRow>("SELECT * FROM accounts WHERE (username = $1 OR code = $1) AND status = 'active'", [pin]);
     const to = target.rows[0];
     if (!to) return sent();
 
@@ -72,8 +72,8 @@ export async function registerRequestRoutes(app: FastifyInstance) {
   app.get("/v1/contact-requests", async (req) => {
     const me = await app.requireAccount(req);
     // Only incoming requests: listing outgoing ones would reveal whether a number exists (and its name).
-    const rows = await db.query<{ id: string; other: string; display_name: string; username: string; created_at: Date }>(
-      `SELECT r.id, a.user_id AS other, a.display_name, a.username, r.created_at
+    const rows = await db.query<{ id: string; other: string; display_name: string; username: string; code: string | null; created_at: Date }>(
+      `SELECT r.id, a.user_id AS other, a.display_name, a.username, a.code, r.created_at
        FROM contact_requests r
        JOIN accounts a ON a.user_id = r.from_id
        WHERE r.to_id = $1 AND r.status = 'pending' AND a.status = 'active'
@@ -84,7 +84,7 @@ export async function registerRequestRoutes(app: FastifyInstance) {
       requestId: r.id,
       userId: r.other,
       displayName: r.display_name,
-      pin: isPin(r.username) ? r.username : null,
+      pin: r.code ?? (isPin(r.username) ? r.username : null),
       createdAt: r.created_at.toISOString(),
     });
     return { incoming: rows.rows.map(view) };

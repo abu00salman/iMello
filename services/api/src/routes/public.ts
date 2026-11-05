@@ -4,6 +4,7 @@ import {
   isPin,
   normalizeDisplayName,
   PIN_DIGITS,
+  normalizePin,
   PIN_PREFIX,
   validatePassword,
   validateUsername,
@@ -20,7 +21,7 @@ export async function meView(db: Queryable, row: AccountRow) {
   return {
     userId: row.user_id,
     username: row.username,
-    pin: isPin(row.username) ? row.username : null,
+    pin: row.code ?? (isPin(row.username) ? row.username : null),
     credential: row.credential,
     displayName: row.display_name,
     kind: row.kind,
@@ -72,6 +73,15 @@ export async function createAccount(
 export async function registerPublicRoutes(app: FastifyInstance) {
   const { config, db } = app.deps;
 
+  // Sign-in by iMello Code: turn a short code (mell-1122) into the account's username.
+  app.post("/v1/auth/resolve", async (req) => {
+    const { code } = z.object({ code: z.string().max(64) }).parse(req.body);
+    const pin = normalizePin(code);
+    if (!pin) return { username: code.trim().toLowerCase() };
+    const r = await app.deps.db.query<{ username: string }>("SELECT username FROM accounts WHERE code = $1 AND status = 'active'", [pin]);
+    return { username: r.rows[0]?.username ?? pin };
+  });
+
   app.get("/v1/config", async () => ({
     homeserverUrl: config.PUBLIC_HOMESERVER_URL,
     serverName: config.MATRIX_SERVER_NAME,
@@ -110,6 +120,8 @@ export async function registerPublicRoutes(app: FastifyInstance) {
         .parse(req.body);
       for (let attempt = 0; attempt < 12; attempt++) {
         const pin = generatePin();
+        // A short code may already belong to an older account as its alias.
+        if ((await db.query("SELECT 1 FROM accounts WHERE code = $1 OR username = $1", [pin])).rowCount) continue;
         const displayName = (body.displayName && normalizeDisplayName(body.displayName)) || pin;
         try {
           const { userId } = await app.deps.homeserver.registerUser(pin, body.deviceSecret, displayName);

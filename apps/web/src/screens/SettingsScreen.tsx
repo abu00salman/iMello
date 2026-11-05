@@ -1,4 +1,5 @@
 import { MIN_PASSWORD_LENGTH } from "@imello/core";
+import { displayPin } from "@imello/core";
 import { exportKeysToFile, importKeysFromFile, listDevices, revokeDevice, WrongPassphraseError, type DeviceInfo } from "@imello/core/messaging";
 import { inApp } from "../lib/notifications";
 import { backgroundPushSupported, disableBackgroundPush, ensureBackgroundPush, needsHomeScreen, type BackgroundPushStatus } from "../lib/push";
@@ -13,7 +14,7 @@ import {
   previewEnabled,
   setPreviewEnabled,
 } from "../lib/notifications";
-import { soundEnabled, setSoundEnabled } from "../lib/sounds";
+import { soundEnabled, setSoundEnabled, PING_SOUNDS, pingSound, setPingSound, previewPing, type PingSound } from "../lib/sounds";
 import { usePrefs } from "../lib/prefs";
 import { useSession } from "../lib/session";
 import { AppearancePanel } from "./Appearance";
@@ -23,6 +24,7 @@ const VERSION = "1.0.0";
 
 export function SettingsScreen() {
   const { t, locale, setLocale } = usePrefs();
+  const [tone, setTone] = useState<PingSound>(pingSound());
   const [sounds, setSounds] = useState({ message: soundEnabled("message"), inChat: soundEnabled("inChat"), ping: soundEnabled("ping") });
   const { client, api, me, signOut, forget, temporary, deviceSecret, protectAccount } = useSession();
   const unprotected = me?.credential === "device";
@@ -172,8 +174,8 @@ export function SettingsScreen() {
         {me?.pin ? (
           <div className="code-card">
             <span className="muted small">{t("me.yourNumber")}</span>
-            <strong className="code-value" data-testid="my-pin"><Ltr>{me.pin}</Ltr></strong>
-            <Button variant="secondary" onClick={() => void navigator.clipboard.writeText(me.pin!).then(() => setCopiedPin(true))}>
+            <strong className="code-value" data-testid="my-pin"><Ltr>{displayPin(me.pin)}</Ltr></strong>
+            <Button variant="secondary" onClick={() => void navigator.clipboard.writeText(displayPin(me.pin!)).then(() => setCopiedPin(true))}>
               {copiedPin ? t("common.copied") : t("common.copy")}
             </Button>
             <p className="muted small">{t("me.shareNumber")}</p>
@@ -258,6 +260,18 @@ export function SettingsScreen() {
                 <span>{t(kind === "message" ? "sounds.message" : kind === "inChat" ? "sounds.inChat" : "sounds.ping")}</span>
               </label>
             ))}
+            <fieldset className="ping-tones">
+              <legend>{t("sounds.pingTone")}</legend>
+              {PING_SOUNDS.map((v) => (
+                <div className="ping-tone" key={v}>
+                  <label className="check">
+                    <input type="radio" name="ping-tone" checked={tone === v} onChange={() => { setPingSound(v); setTone(v); previewPing(v); }} />
+                    <span>{t(`sounds.tone.${v}`)}</span>
+                  </label>
+                  <button type="button" className="btn btn-ghost small" onClick={() => previewPing(v)} aria-label={`${t("sounds.preview")}: ${t(`sounds.tone.${v}`)}`}>▶ {t("sounds.preview")}</button>
+                </div>
+              ))}
+            </fieldset>
           </>
         ) : (
           <p className="muted">{needsHomeScreen() ? t("notify.homeScreen") : t("notify.unsupported")}</p>

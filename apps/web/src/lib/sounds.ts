@@ -127,13 +127,59 @@ export function playSent() {
   });
 }
 
-/** Three wooden taps, E5 E5 G#5, with a low thump under the first. */
-export function playPing() {
-  if (!soundEnabled("ping")) return;
-  play((c, t) => {
+export const PING_SOUNDS = ["taps", "knock", "bell", "chirp", "drum"] as const;
+export type PingSound = (typeof PING_SOUNDS)[number];
+const PING_SOUND_KEY = "imello.sound.pingTone";
+
+export function pingSound(): PingSound {
+  try {
+    const v = localStorage.getItem(PING_SOUND_KEY);
+    return (PING_SOUNDS as readonly string[]).includes(v ?? "") ? (v as PingSound) : "taps";
+  } catch {
+    return "taps";
+  }
+}
+export function setPingSound(v: PingSound) {
+  try { localStorage.setItem(PING_SOUND_KEY, v); } catch { /* ignore */ }
+}
+
+const PING_TONES: Record<PingSound, (c: AudioContext, t: number) => void> = {
+  // Three wooden taps, E5 E5 G#5, with a low thump under the first.
+  taps: (c, t) => {
     pluck(c, t, 164.81, 0.18, 0.07);
     pluck(c, t, 659.25, 0.16, 0.11);
     pluck(c, t + 0.12, 659.25, 0.16, 0.1);
     pluck(c, t + 0.28, 830.61, 0.32, 0.12);
-  });
+  },
+  // Two knocks on a door.
+  knock: (c, t) => {
+    for (const d of [0, 0.15]) { pluck(c, t + d, 130.81, 0.12, 0.14); noiseBurst(c, t + d, 0.05, 0.05); }
+  },
+  // A small bell: fifth and octave ringing out.
+  bell: (c, t) => {
+    pluck(c, t, 1046.5, 0.9, 0.08);
+    pluck(c, t, 1567.98, 0.7, 0.04);
+    pluck(c, t + 0.02, 2093, 0.5, 0.025);
+  },
+  // A rising bird-like chirp.
+  chirp: (c, t) => {
+    [1318.51, 1567.98, 1975.53].forEach((f, i) => pluck(c, t + i * 0.07, f, 0.09, 0.06));
+  },
+  // Low drum roll.
+  drum: (c, t) => {
+    [0, 0.09, 0.18, 0.3].forEach((d, i) => pluck(c, t + d, i === 3 ? 98 : 110, 0.2, 0.12));
+  },
+};
+
+/** The chosen Ping sound. */
+export function playPing() {
+  if (!soundEnabled("ping")) return;
+  play(PING_TONES[pingSound()]);
+}
+
+/** Preview a Ping sound from Settings (a tap there unlocks audio). */
+export function previewPing(v: PingSound) {
+  unlocked = true;
+  const c = audio();
+  if (c) PING_TONES[v](c, c.currentTime + 0.01);
 }

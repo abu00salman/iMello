@@ -13,17 +13,25 @@ export function validateUsername(username: string): UsernameProblem | null {
   return null;
 }
 
-/** iMello numbers ("PINs"), BBM-style: `mell-` + 6 digits, e.g. mell-447729. They are the account's username. */
+/**
+ * iMello Codes: `mell-` + digits. They are the account's username, so they never change once given.
+ * New accounts get a short 4-digit code (mell-1122); older 6-digit codes (mell-447729) keep working.
+ */
 export const PIN_PREFIX = "mell-";
-export const PIN_DIGITS = 6;
-export const PIN_RE = /^mell-\d{6}$/;
+export const PIN_DIGITS = 4;
+export const PIN_RE = /^mell-(\d{4}|\d{6})$/;
+
+/** How a code is shown to people: "Mell-1122". (Stored and matched in lower case.) */
+export function displayPin(pin: string): string {
+  return pin.replace(/\bmell-(\d{4}|\d{6})\b/gi, "Mell-$1");
+}
 
 /** Accept what people actually type: "MELL-447 729", "mell447729", "447729", "٤٤٧٧٢٩" (Arabic-Indic digits). */
 export function normalizePin(input: string): string | null {
   const western = input.replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660)).replace(/[\u06f0-\u06f9]/g, (d) => String(d.charCodeAt(0) - 0x06f0));
   const compact = western.toLowerCase().replace(/[\s_-]/g, "");
   const digits = compact.startsWith("mell") ? compact.slice(4) : compact;
-  if (!/^\d+$/.test(digits) || digits.length !== PIN_DIGITS) return null;
+  if (!/^\d+$/.test(digits) || (digits.length !== 4 && digits.length !== 6)) return null;
   return `${PIN_PREFIX}${digits}`;
 }
 

@@ -1,3 +1,4 @@
+import { displayPin } from "@imello/core";
 import { ApiError, extractInviteToken, normalizePin, type Contact, type ContactRequest, type Invite, type InvitePreview } from "@imello/core";
 import { startDirectChat } from "@imello/core/messaging";
 import QRCode from "qrcode";
@@ -150,7 +151,7 @@ export function ContactsScreen({ initialToken }: { initialToken?: string }) {
           <input
             value={pinInput}
             onChange={(e) => setPinInput(e.target.value)}
-            placeholder="mell-123456"
+            placeholder="Mell-1122"
             aria-label={t("contacts.addByNumber")}
             dir="ltr"
             inputMode="text"
@@ -161,7 +162,7 @@ export function ContactsScreen({ initialToken }: { initialToken?: string }) {
         </form>
         {me?.pin && (
           <p className="muted small">
-            {t("me.yourNumber")}: <strong className="code-inline"><Ltr>{me.pin}</Ltr></strong>
+            {t("me.yourNumber")}: <strong className="code-inline"><Ltr>{displayPin(me.pin)}</Ltr></strong>
           </p>
         )}
       </Card>
@@ -175,7 +176,7 @@ export function ContactsScreen({ initialToken }: { initialToken?: string }) {
                 <Avatar name={r.displayName} id={r.userId} size={44} />
                 <span className="contact-main">
                   <strong>{t("contacts.wantsToAdd", { name: r.displayName })}</strong>
-                  {r.pin && <small className="muted"><Ltr>{r.pin}</Ltr></small>}
+                  {r.pin && <small className="muted"><Ltr>{displayPin(r.pin)}</Ltr></small>}
                 </span>
                 <Button onClick={() => void respond(r, true)}>{t("contacts.accept")}</Button>
                 <Button variant="ghost" onClick={() => void respond(r, false)}>{t("contacts.decline")}</Button>

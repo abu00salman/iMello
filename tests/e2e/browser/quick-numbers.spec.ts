@@ -11,7 +11,7 @@ async function startNow(browser: Browser, name: string, problems: string[]) {
   await expect(page.getByRole("navigation", { name: "iMello" })).toBeVisible({ timeout: 60_000 });
   await page.getByRole("link", { name: "Settings" }).click();
   const pin = (await page.getByTestId("my-pin").textContent())!.trim();
-  expect(pin).toMatch(/^mell-\d{6}$/);
+  expect(pin).toMatch(/^Mell-\d{4}$/);
   return { page, pin };
 }
 
@@ -31,7 +31,7 @@ test("Start now → add by number → accept → encrypted chat → protect acco
 
   // Noor adds Fahad by number.
   await noor.page.getByRole("link", { name: "Contacts" }).click();
-  await noor.page.getByTestId("pin-input").fill(fahad.pin.replace("mell-", ""));
+  await noor.page.getByTestId("pin-input").fill(fahad.pin.replace(/mell-/i, ""));
   await noor.page.getByRole("button", { name: "Add", exact: true }).click();
   await expect(noor.page.getByText("Request sent.")).toBeVisible();
 

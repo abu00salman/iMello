@@ -231,5 +231,12 @@
   "sounds.message": "Message sound",
   "sounds.inChat": "In-chat sounds",
   "sounds.ping": "Ping sound",
-  "settings.appearance.mode": "Mode"
+  "settings.appearance.mode": "Mode",
+  "sounds.pingTone": "Ping sound",
+  "sounds.preview": "Listen",
+  "sounds.tone.taps": "Wooden taps",
+  "sounds.tone.knock": "Knock",
+  "sounds.tone.bell": "Bell",
+  "sounds.tone.chirp": "Chirp",
+  "sounds.tone.drum": "Drum"
 }

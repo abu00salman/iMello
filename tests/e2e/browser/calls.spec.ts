@@ -16,7 +16,7 @@ async function pair(browser: Browser) {
   const a = await startNow(browser, "Huda");
   const b = await startNow(browser, "Majed");
   await a.page.getByRole("link", { name: "Contacts" }).click();
-  await a.page.getByTestId("pin-input").fill(b.pin.replace("mell-", ""));
+  await a.page.getByTestId("pin-input").fill(b.pin.replace(/mell-/i, ""));
   await a.page.getByRole("button", { name: "Add", exact: true }).click();
   await b.page.getByRole("link", { name: "Contacts" }).click();
   await b.page.getByTestId("incoming-request").getByRole("button", { name: "Accept" }).click({ timeout: 30_000 });

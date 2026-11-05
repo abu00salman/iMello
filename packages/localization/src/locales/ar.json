@@ -231,5 +231,12 @@
   "sounds.message": "صوت الرسائل",
   "sounds.inChat": "أصوات داخل المحادثة",
   "sounds.ping": "صوت النكزة",
-  "settings.appearance.mode": "الوضع"
+  "settings.appearance.mode": "الوضع",
+  "sounds.pingTone": "صوت النكزة",
+  "sounds.preview": "استمع",
+  "sounds.tone.taps": "طرقات خشب",
+  "sounds.tone.knock": "طرق الباب",
+  "sounds.tone.bell": "جرس",
+  "sounds.tone.chirp": "زقزقة",
+  "sounds.tone.drum": "طبل"
 }

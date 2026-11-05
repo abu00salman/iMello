@@ -6,6 +6,9 @@
 
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 html, body { max-width: 100%; overflow-x: clip; }
+/* The page behind the fixed shell never scrolls; only lists inside it do. */
+html:has(.shell), html:has(.shell) body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+.messages, .conv-list, .page, .list-pane { overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
 body {
   font-family: var(--im-font-ui);
   letter-spacing: var(--im-tracking-body);
@@ -437,3 +440,9 @@ html[dir="rtl"][data-layout="desktop"] .tab.active::before { inset-inline: 0 aut
 @media (min-width: 821px) {
   html[data-layout="desktop"] .preview-wide .list-pane { width: min(440px, 40vw); }
 }
+
+/* Ping sound picker */
+.ping-tones { border: 0; padding: 0; margin: 12px 0 0; }
+.ping-tones legend { font-weight: 600; margin-bottom: 4px; }
+.ping-tone { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; }
+.ping-tone .btn { min-height: 40px; }

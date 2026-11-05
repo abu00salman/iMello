@@ -331,7 +331,7 @@ describe("Start now (iMello numbers) and contact requests", () => {
 
   it("creates an account with a mell-xxxxxx number and a device credential", async () => {
     const u = await quick("Mona");
-    expect(u.pin).toMatch(/^mell-\d{6}$/);
+    expect(u.pin).toMatch(/^mell-\d{4}$/);
     expect((await as(u).get("/v1/me")).json()).toMatchObject({ pin: u.pin, credential: "device", displayName: "Mona", kind: "adult" });
     // The homeserver received the device secret as the password.
     expect(hs.users.get(u.pin)).toBe(SECRET);

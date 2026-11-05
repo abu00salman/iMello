@@ -7,8 +7,12 @@ export function bindVisualViewport(): () => void {
   const root = document.documentElement;
   if (!vv) return () => undefined;
   const apply = () => {
-    root.style.setProperty("--im-vvh", `${Math.round(vv.height)}px`);
-    root.style.setProperty("--im-vv-top", `${Math.round(vv.offsetTop)}px`);
+    // Follow the visual viewport only while the keyboard is open. Following its offset all the time
+    // made the shell move against the finger on iPhone whenever the page itself drifted (reversed scrolling).
+    const keyboard = window.innerHeight - vv.height > 120;
+    root.style.setProperty("--im-vvh", keyboard ? `${Math.round(vv.height)}px` : "100dvh");
+    root.style.setProperty("--im-vv-top", keyboard ? `${Math.round(vv.offsetTop)}px` : "0px");
+    if (!keyboard && (window.scrollY || document.documentElement.scrollTop)) window.scrollTo(0, 0);
   };
   apply();
   vv.addEventListener("resize", apply);

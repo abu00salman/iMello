@@ -20,7 +20,9 @@ describe("validation", () => {
     expect(normalizePin("447729")).toBe("mell-447729");
     expect(normalizePin("mell447729")).toBe("mell-447729");
     expect(normalizePin("٤٤٧٧٢٩")).toBe("mell-447729");
-    expect(normalizePin("mell-4477")).toBeNull();
+    expect(normalizePin("mell-4477")).toBe("mell-4477");
+    expect(normalizePin("Mell-1122")).toBe("mell-1122");
+    expect(normalizePin("mell-44771")).toBeNull();
     expect(normalizePin("hello")).toBeNull();
   });
   it("validates passwords", () => {

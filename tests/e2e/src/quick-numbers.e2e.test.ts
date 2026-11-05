@@ -24,7 +24,7 @@ describe("Start now + add by number", () => {
 
   it("creates two accounts instantly, each with its own mell- number", async () => {
     [a, b] = await Promise.all([startNow("Noor"), startNow("Fahad")]);
-    expect(a.pin).toMatch(/^mell-\d{6}$/);
+    expect(a.pin).toMatch(/^mell-\d{4}$/);
     expect(b.pin).not.toBe(a.pin);
     expect(await a.api.me()).toMatchObject({ pin: a.pin, credential: "device", displayName: "Noor" });
   });

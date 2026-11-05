@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { RpcClient, type RpcTransport } from "./client";
 import { colorIndex, displayInitial, formatStamp, pingRemaining, receiptFor } from "./format";
 import { errorMessage, eventMessage, parseRpcMessage, responseMessage, requestMessage } from "./protocol";
+import { formatImelloCode, normalizeImelloCode } from "./code";
+import { formatDiagnostics, readAccessDirectory, stageExpired } from "../engine/diagnostics";
 import { en, ar } from "../i18n/strings";
 
 function scripted(): { transport: RpcTransport; inbound: (raw: string) => void; sent: string[] } {
@@ -133,6 +135,38 @@ describe("names, colour and time", () => {
     const today = formatStamp(now, "ar", now);
     expect(today).toMatch(/[0-9]/);
     expect(today).not.toMatch(/[٠-٩]/);
+  });
+});
+
+describe("iMello Code", () => {
+  it("keeps the six-digit code and accepts the short Mell-XXXX form", () => {
+    expect(normalizeImelloCode("mell-447729")).toBe("mell-447729");
+    expect(normalizeImelloCode("Mell-447729")).toBe("mell-447729");
+    expect(normalizeImelloCode("Mell-AB12")).toBe("mell-ab12");
+    expect(formatImelloCode("mell-447729")).toBe("Mell-447729");
+    expect(formatImelloCode("mell-ab12")).toBe("Mell-AB12");
+  });
+});
+
+describe("startup watchdog", () => {
+  it("expires a stage after 20 seconds and keeps the directory readable", () => {
+    expect(stageExpired(1_000, 20_999)).toBe(false);
+    expect(stageExpired(1_000, 21_000)).toBe(true);
+    expect(readAccessDirectory("file:///var/mobile/Containers/Data/engine/index.html")).toBe("file:///var/mobile/Containers/Data/engine/");
+  });
+
+  it("formats diagnostics without dropping the stage or the logs", () => {
+    const text = formatDiagnostics({
+      stage: "hello",
+      message: "timeout:hello",
+      logs: ["webview loaded", "error: indexeddb_timeout"],
+      assetUri: "file:///cache/index.html",
+      assetBytes: 13000000,
+    });
+    expect(text).toContain("stage: hello");
+    expect(text).toContain("timeout:hello");
+    expect(text).toContain("assetBytes: 13000000");
+    expect(text).toContain("indexeddb_timeout");
   });
 });
 

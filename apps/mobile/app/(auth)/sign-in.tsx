@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { normalizeImelloCode } from "../../src/rpc/code";
 import { RpcError } from "../../src/rpc/protocol";
 import { Field, PrimaryButton } from "../../src/ui/chrome";
 import { usePrefs } from "../../src/prefs/Prefs";
@@ -29,7 +30,7 @@ function explain(err: unknown, locale: "en" | "ar"): string {
 
 export default function SignIn() {
   const { colors, font, t, locale, setLocale } = usePrefs();
-  const { signIn, register, quickStart, api } = useSession();
+  const { signIn, register, quickStart, api, loginStage } = useSession();
   const [mode, setMode] = useState<Mode>("start");
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
@@ -75,7 +76,7 @@ export default function SignIn() {
         if (password.length < MIN_PASSWORD_LENGTH) return setError(t("tooShort"));
         await register({ username: user, password, displayName: name || user }, false);
       } else {
-        await signIn(username, password, false);
+        await signIn(normalizeImelloCode(username) ?? username, password, false);
       }
     } catch (err) {
       setError(explain(err, locale));
@@ -109,7 +110,13 @@ export default function SignIn() {
         <Text style={{ color: colors.text2, fontFamily: font("400"), textAlign: "center" }}>{t("startHint")}</Text>
       )}
       {error ? <Text style={{ color: colors.statusFailed, fontFamily: font("500"), textAlign: "center" }}>{error}</Text> : null}
-      {slow ? <Text style={{ color: colors.text2, fontFamily: font("400"), textAlign: "center" }}>{t("comingUp")}</Text> : null}
+      {loginStage ? (
+        <Text style={{ color: colors.text2, fontFamily: font("500"), textAlign: "center" }}>
+          {loginStage === "connect" ? t("stageConnect") : loginStage === "keys" ? t("stageKeys") : t("stageSync")}
+        </Text>
+      ) : slow ? (
+        <Text style={{ color: colors.text2, fontFamily: font("400"), textAlign: "center" }}>{t("comingUp")}</Text>
+      ) : null}
       <PrimaryButton label={mode === "start" ? t("startNow") : mode === "register" ? t("createUser") : t("signIn")} onPress={() => void submit()} busy={busy} />
       <Pressable onPress={() => setMode(mode === "signIn" ? "start" : "signIn")}>
         <Text style={{ color: colors.primary, fontFamily: font("600"), textAlign: "center" }}>{mode === "signIn" ? t("newHere") : t("haveCode")}</Text>

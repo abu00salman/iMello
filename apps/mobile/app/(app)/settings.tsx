@@ -1,5 +1,6 @@
 import { router } from "expo-router";
 import { Pressable, ScrollView, Switch, Text, View } from "react-native";
+import { playSound } from "../../src/media/sounds";
 import { usePrefs } from "../../src/prefs/Prefs";
 import { useSession } from "../../src/session/Session";
 import { Header } from "../../src/ui/chrome";
@@ -17,6 +18,9 @@ export default function Settings() {
         <Row label={t("codeTitle")} onPress={() => router.push("/code")} />
         <View style={{ backgroundColor: colors.surface, borderRadius: 10, paddingHorizontal: 14 }}>
           <Toggle label={t("sounds")} value={sounds} onValueChange={setSounds} />
+          <Pressable onPress={() => playSound("ping")} style={{ paddingBottom: 10 }}>
+            <Text style={{ color: colors.primary, fontFamily: font("600") }}>{t("previewPing")}</Text>
+          </Pressable>
           <Toggle label={t("preview")} value={preview} onValueChange={setPreview} />
           <Text style={{ color: colors.text3, fontFamily: font("400"), fontSize: 13, paddingBottom: 12 }}>{t("previewHint")}</Text>
         </View>

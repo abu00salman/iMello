@@ -292,7 +292,7 @@ function Bubble({
   const text = msg.ping ? colors.pingText : colors.cardText;
   return (
     <Pressable
-      onPress={msg.receipt === "failed" ? onRetry : msg.attachment ? onOpen : undefined}
+      onPress={msg.receipt === "failed" ? onRetry : msg.decryptionFailed ? () => router.push("/backup") : msg.attachment ? onOpen : undefined}
       style={{
         alignSelf: msg.isOwn ? "flex-end" : "flex-start",
         maxWidth: "82%",
@@ -333,11 +333,15 @@ function Bubble({
             <Text style={{ color: text, fontFamily: font("400"), fontSize: 13 }}>{msg.isOwn ? t("you") : t("pingFrom", { name: msg.senderName })}</Text>
           </View>
         </View>
+      ) : msg.decryptionFailed ? (
+        <Text style={{ color: colors.text2, fontFamily: font("500"), fontSize: 15, lineHeight: locale === "ar" ? 24 : 20 }}>
+          {t("unableDecrypt")} {t("restoreHint")}
+        </Text>
       ) : (
         <>
           {preview?.startsWith("data:image") ? <Image source={{ uri: preview }} style={{ width: 220, height: 160, borderRadius: 4, marginBottom: 6 }} /> : null}
-          <Text style={{ color: msg.decryptionFailed ? colors.text3 : text, fontFamily: font("400"), fontSize: 16, lineHeight: locale === "ar" ? 26 : 22 }}>
-            {msg.decryptionFailed ? "🔒" : msg.attachment ? (msg.attachment.voice ? t("voiceMessage") : msg.attachment.kind === "image" ? t("photo") : preview && !preview.startsWith("data:") ? preview : msg.attachment.name) : msg.body}
+          <Text style={{ color: text, fontFamily: font("400"), fontSize: 16, lineHeight: locale === "ar" ? 26 : 22, writingDirection: locale === "ar" ? "rtl" : "ltr" }}>
+            {msg.attachment ? (msg.attachment.voice ? t("voiceMessage") : msg.attachment.kind === "image" ? t("photo") : preview && !preview.startsWith("data:") ? preview : msg.attachment.name) : msg.body}
           </Text>
         </>
       )}

@@ -42,12 +42,17 @@ import {
 import { pingRemaining, PING_COOLDOWN_MS, receiptFor, type Receipt } from "../../src/rpc/format";
 import { errorMessage, eventMessage, parseRpcMessage, responseMessage, safeError, RpcError } from "../../src/rpc/protocol";
 import type { SessionInfo, WireMessage, WireRoom } from "../../src/rpc/wire";
+import { initAsync as initCryptoWasm } from "@matrix-org/matrix-sdk-crypto-wasm";
 import { clearDeviceSecret, cryptoDbPrefix, cryptoStorageKey, loadDeviceSecret, loadSession, saveDeviceSecret, saveSession, wipeAll } from "./keystore";
 
 configureSdkLogging("error");
 
 type Bridge = { postMessage(data: string): void };
-type Host = Window & { ReactNativeWebView?: Bridge; __imelloReceive?: (raw: string) => void };
+type Host = Window & {
+  ReactNativeWebView?: Bridge;
+  __imelloReceive?: (raw: string) => void;
+  __imelloHostPing?: () => void;
+};
 
 const host = window as Host;
 let client: MatrixClient | null = null;
@@ -60,6 +65,24 @@ const PING_KEY = "imello.pingAt";
 function post(msg: unknown): void {
   host.ReactNativeWebView?.postMessage(JSON.stringify(msg));
 }
+
+let acked = false;
+let lastSession: SessionInfo | null = null;
+
+function publishSession(info: SessionInfo): void {
+  lastSession = info;
+  post(eventMessage("session", info));
+}
+
+function announce(): void {
+  post(eventMessage("hello", { v: 1 }));
+  if (lastSession) post(eventMessage("session", lastSession));
+}
+
+host.__imelloHostPing = () => announce();
+setInterval(() => {
+  if (!acked) announce();
+}, 1500);
 
 function pretty(name: string | null | undefined): string {
   if (!name) return "";
@@ -139,6 +162,7 @@ function roomsOf(c: MatrixClient): WireRoom[] {
             own: last.isOwn,
             ping: last.ping,
             failed: last.receipt === "failed",
+            locked: last.decryptionFailed,
             body: last.body,
             voice: last.attachment?.voice ?? false,
             kind: last.ping ? "text" : (last.attachment?.kind ?? (last.body ? "text" : "none")),
@@ -215,11 +239,19 @@ async function start(session: Session, isTemporary: boolean, password?: string):
         prefix: cryptoDbPrefix(session.userId, session.deviceId),
         storageKey: await cryptoStorageKey(session.userId, session.deviceId),
       });
-  const next = await startSecureClient({ session, cryptoStore, passwordForCrossSigningSetup: password });
+  post(eventMessage("progress", { stage: "sync" }));
+  const next = await startSecureClient({
+    session,
+    cryptoStore,
+    passwordForCrossSigningSetup: password,
+    // The UI opens as soon as the client exists. Sync keeps running; this does not skip encryption.
+    firstSyncTimeoutMs: 400,
+  });
   client = next;
   seen.clear();
   primed = false;
   bind(next);
+  void recoverHistory(next, password);
   const info: SessionInfo = {
     status: "ready",
     userId: session.userId,
@@ -228,7 +260,7 @@ async function start(session: Session, isTemporary: boolean, password?: string):
     homeserverUrl: session.homeserverUrl,
     temporary: isTemporary,
   };
-  post(eventMessage("session", info));
+  publishSession(info);
   schedule();
 }
 
@@ -237,10 +269,37 @@ function requireClient(): MatrixClient {
   return client;
 }
 
+async function recoverHistory(c: MatrixClient, password?: string): Promise<void> {
+  const crypto = c.getCrypto();
+  if (!crypto) return;
+  // Ask the user's other devices and any server-side key backup for Megolm sessions.
+  // A brand-new device otherwise cannot read history. Failures are expected when no backup exists.
+  try {
+    await crypto.checkKeyBackupAndEnable();
+  } catch {
+    /* no backup on the server */
+  }
+  if (!password) return;
+  try {
+    await crypto.restoreKeyBackupWithPassphrase(password);
+  } catch {
+    /* the account password is not necessarily the backup passphrase */
+  }
+  try {
+    await crypto.loadSessionBackupPrivateKeyFromSecretStorage();
+    await crypto.restoreKeyBackup();
+  } catch {
+    /* secret storage was never created; the user can restore a backup file */
+  }
+  schedule();
+}
+
 async function signIn(params: { homeserverUrl: string; username: string; password: string; temporary?: boolean; deviceSecret?: boolean }): Promise<{ ok: true }> {
+  post(eventMessage("progress", { stage: "connect" }));
   const session = await loginWithPassword(params.homeserverUrl, params.username, params.password, deviceName(!!params.temporary));
   if (!params.temporary) await saveSession(session);
   if (params.deviceSecret) await saveDeviceSecret(session.userId, params.password);
+  post(eventMessage("progress", { stage: "keys" }));
   await start(session, !!params.temporary, params.password);
   return { ok: true };
 }
@@ -255,7 +314,7 @@ async function doSignOut(): Promise<{ ok: true }> {
   client = null;
   if (current) await matrixSignOut(current).catch(() => undefined);
   await wipeAll();
-  post(eventMessage("session", { status: "signedOut" } satisfies SessionInfo));
+  publishSession({ status: "signedOut" });
   return { ok: true };
 }
 
@@ -451,6 +510,10 @@ const handlers: Record<string, (params: never) => Promise<unknown>> = {
   listDevices: devices,
   revokeDevice: revoke,
   resume,
+  ack: async () => {
+    acked = true;
+    return { ok: true };
+  },
 };
 
 async function onRequest(raw: string): Promise<void> {
@@ -476,13 +539,15 @@ host.__imelloReceive = (raw: string) => {
   void onRequest(raw);
 };
 
-post(eventMessage("hello", { v: 1 }));
+announce();
+// Compile the crypto module while the splash is up so sign-in is not waiting on it.
+void initCryptoWasm().catch(() => undefined);
 
 void (async () => {
   try {
     const session = await loadSession();
     if (!session) {
-      post(eventMessage("session", { status: "signedOut" } satisfies SessionInfo));
+      publishSession({ status: "signedOut" });
       return;
     }
     await start(session, false);
@@ -490,9 +555,10 @@ void (async () => {
     const status = (err as { httpStatus?: number }).httpStatus;
     if (status === 401 || status === 403) {
       await wipeAll().catch(() => undefined);
-      post(eventMessage("session", { status: "signedOut" } satisfies SessionInfo));
+      publishSession({ status: "signedOut" });
       return;
     }
-    post(eventMessage("engine-error", safeError(err)));
+    const safe = safeError(err);
+    post(eventMessage("engine-error", safe));
   }
 })();

@@ -68,11 +68,11 @@ export function Header({
   leading?: ReactNode;
   trailing?: ReactNode;
 }) {
-  const { colors, font } = usePrefs();
+  const { colors, font, rtl } = usePrefs();
   const insets = useSafeAreaInsets();
   const body = (
     <View style={{ flex: 1, minWidth: 0 }}>
-      <Text numberOfLines={1} style={{ color: colors.headerText, fontFamily: font("600"), fontSize: 18, lineHeight: 26 }}>
+      <Text numberOfLines={1} style={{ color: colors.headerText, fontFamily: font("600"), fontSize: 18, lineHeight: 26, writingDirection: rtl ? "rtl" : "ltr" }}>
         {title}
       </Text>
       {subtitle ? (

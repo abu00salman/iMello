@@ -119,3 +119,43 @@ jobs:
           name: iMello-ios-unsigned-ipa
           path: out/iMello-1.0.0-unsigned.ipa
           retention-days: 14
+      - name: Simulator must leave the splash
+        working-directory: apps/mobile/ios
+        run: |
+          set -o pipefail
+          xcodebuild -workspace iMello.xcworkspace -scheme iMello -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/sim-dd" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build
+          APP=$(find "$RUNNER_TEMP/sim-dd/Build/Products" -name 'iMello.app' -type d | head -1)
+          echo "APP=$APP"
+          test -n "$APP"
+          DEVICE=$(xcrun simctl list devices available | grep -E 'iPhone' | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+          echo "DEVICE=$DEVICE"
+          xcrun simctl boot "$DEVICE" || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" "$APP"
+          xcrun simctl launch "$DEVICE" com.abu00salman.imello
+          CONTAINER=$(xcrun simctl get_app_container "$DEVICE" com.abu00salman.imello data)
+          MARKER=""
+          for _ in $(seq 1 30); do
+            MARKER=$(find "$CONTAINER" -name imello-boot.txt -print -quit || true)
+            if [ -n "$MARKER" ]; then break; fi
+            sleep 2
+          done
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          xcrun simctl io "$DEVICE" screenshot "$GITHUB_WORKSPACE/out/ios-simulator-past-splash.png" || true
+          if [ -z "$MARKER" ]; then
+            echo "app did not leave the splash (no imello-boot.txt)"
+            exit 1
+          fi
+          echo "boot marker: $(cat "$MARKER")"
+          grep -Eq '^(out|in)$' "$MARKER"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-simulator-screenshot
+          path: out/ios-simulator-past-splash.png
+          if-no-files-found: ignore
+          retention-days: 14

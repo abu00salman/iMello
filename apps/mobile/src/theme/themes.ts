@@ -51,7 +51,7 @@ export const AVATAR_COLORS = ["#E8664B", "#12807A", "#6E5BD8", "#D9922B", "#3C7D
 const classicLight: ClassicColors = {
   palette: "classic-blue",
   dark: false,
-  headerBg: "#1F64AC",
+  headerBg: "#1F6FC4",
   headerText: "#FFFFFF",
   headerSub: "#E2EDF9",
   bg: "#FFFFFF",

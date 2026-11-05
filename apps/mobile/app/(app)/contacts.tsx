@@ -1,4 +1,5 @@
-import { ApiError, extractInviteToken, normalizePin, type Contact, type ContactRequest } from "@imello/core";
+import { ApiError, extractInviteToken, type Contact, type ContactRequest } from "@imello/core";
+import { normalizeImelloCode } from "../../src/rpc/code";
 import { useFocusEffect, router } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { FlatList, Pressable, Text, TextInput, View } from "react-native";
@@ -30,7 +31,7 @@ export default function Contacts() {
 
   async function add() {
     setNote(null);
-    const pin = normalizePin(code);
+    const pin = normalizeImelloCode(code);
     const token = extractInviteToken(code);
     try {
       if (pin) {

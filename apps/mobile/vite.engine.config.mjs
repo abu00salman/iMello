@@ -29,9 +29,14 @@ export default defineConfig({
     minify: false,
     sourcemap: false,
     assetsInlineLimit: 100_000_000,
+    modulePreload: false,
     rollupOptions: {
       input: path.join(root, "engine/index.html"),
-      output: { codeSplitting: false },
+      output: {
+        format: "iife",
+        inlineDynamicImports: true,
+        name: "ImelloEngine",
+      },
     },
   },
   plugins: [
@@ -48,16 +53,30 @@ export default defineConfig({
       },
     },
     {
+      name: "imello-classic-script",
+      renderChunk(code) {
+        // WKWebView runs this file as a classic script. import.meta is a syntax error there.
+        return code.replace(/\bimport\.meta\b/g, "({url:\"\"})");
+      },
+    },
+    {
       name: "imello-single-html",
       apply: "build",
       closeBundle() {
         const htmlPath = path.join(outDir, "index.html");
         let html = readFileSync(htmlPath, "utf8");
-        const match = html.match(/<script type="module"[^>]*src="([^"]+)"><\/script>/);
+        const match = html.match(/<script(?: type="module")?[^>]*src="([^"]+)"><\/script>/);
         if (!match?.[1]) throw new Error("engine bundle script tag missing");
         const jsPath = path.join(outDir, match[1].replace(/^\//, ""));
-        const js = readFileSync(jsPath, "utf8");
-        html = html.replace(match[0], `<script type="module">\n${js}\n</script>`);
+        // String.replace treats $& $' $` in the replacement as patterns. The SDK
+        // contains "\\$&", which was rewritten into a literal <script> tag.
+        let js = readFileSync(jsPath, "utf8");
+        js = js.replace(/<\/script/gi, "<\\/script");
+        const prelude = "globalThis.global=globalThis;globalThis.process=globalThis.process||{env:{}};\n";
+        const inline = `<script>\n${prelude}${js}\n</script>`;
+        const at = html.indexOf(match[0]);
+        if (at < 0) throw new Error("engine script tag not found");
+        html = html.slice(0, at) + inline + html.slice(at + match[0].length);
         writeFileSync(htmlPath, html);
         unlinkSync(jsPath);
         rmSync(path.join(outDir, "assets"), { recursive: true, force: true });

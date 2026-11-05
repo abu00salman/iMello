@@ -4,9 +4,11 @@ import * as Crypto from "expo-crypto";
 import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { File, Paths } from "expo-file-system";
 import { AppState, Platform } from "react-native";
 import type { WebView } from "react-native-webview";
-import { EngineView } from "../engine/EngineView";
+import { formatDiagnostics, stageExpired, type BootStage } from "../engine/diagnostics";
+import { EngineView, type EngineAssetInfo } from "../engine/EngineView";
 import { armSounds, playSound } from "../media/sounds";
 import { usePrefs } from "../prefs/Prefs";
 import { RpcClient, type RpcTransport } from "../rpc/client";
@@ -60,6 +62,12 @@ interface SessionApi {
   devices: () => Promise<DeviceRow[]>;
   revokeDevice: (deviceId: string, password?: string) => Promise<void>;
   protect: (password: string) => Promise<void>;
+  bootStage: string;
+  bootError: string | null;
+  logs: string[];
+  diagnostics: string;
+  retryBoot: () => void;
+  loginStage: string | null;
 }
 
 const Ctx = createContext<SessionApi | null>(null);
@@ -98,11 +106,52 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [timelines, setTimelines] = useState<Record<string, WireMessage[]>>({});
   const [shake, setShake] = useState<{ room: string | null; token: number }>({ room: null, token: 0 });
   const [notice, setNotice] = useState<string | null>(null);
+  const [generation, setGeneration] = useState(0);
+  const [bootStage, setBootStage] = useState<BootStage>("asset");
+  const [bootError, setBootError] = useState<string | null>(null);
+  const [logs, setLogs] = useState<string[]>([]);
+  const [assetInfo, setAssetInfo] = useState<EngineAssetInfo | null>(null);
+  const [loginStage, setLoginStage] = useState<string | null>(null);
+  const bootRef = useRef({ stage: "asset" as BootStage, started: Date.now(), settled: false });
   const active = useRef<string | null>(null);
   const roomsRef = useRef<WireRoom[]>([]);
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
   roomsRef.current = rooms;
+
+  const noteLog = useCallback((line: string) => {
+    setLogs((prev) => [...prev.slice(-39), line]);
+  }, []);
+
+  const failBoot = useCallback((message: string) => {
+    if (bootRef.current.settled) return;
+    bootRef.current.settled = true;
+    setBootError(message);
+    setPhase("error");
+  }, []);
+
+  const advance = useCallback((stage: BootStage) => {
+    if (bootRef.current.settled) return;
+    const order: BootStage[] = ["asset", "webview", "hello", "session"];
+    if (order.indexOf(stage) <= order.indexOf(bootRef.current.stage)) return;
+    bootRef.current = { stage, started: Date.now(), settled: false };
+    setBootStage(stage);
+  }, []);
+
+  const settle = useCallback(() => {
+    bootRef.current.settled = true;
+  }, []);
+
+  const onAsset = useCallback((info: EngineAssetInfo) => {
+    setAssetInfo(info);
+    noteLog(`asset ${info.bytes} bytes`);
+    advance("webview");
+  }, [advance, noteLog]);
+
+  const onLoaded = useCallback(() => {
+    noteLog("webview loaded");
+    advance("hello");
+  }, [advance, noteLog]);
 
   const onEngineMessage = useCallback((raw: string) => {
     const msg = parseRpcMessage(raw);
@@ -134,15 +183,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const offSession = rpc.on("session", (data) => {
       const info = data as SessionInfo;
+      settle();
+      setLoginStage(null);
       if (info.status === "signedOut") {
         api.setAccessToken(null);
         setMe(null);
         setRooms([]);
         setPhase("out");
+        void rpc.call("ack").catch(() => undefined);
         return;
       }
       api.setAccessToken(info.accessToken ?? null);
       setPhase("in");
+      void rpc.call("ack").catch(() => undefined);
       void api.me().then(setMe).catch((err: unknown) => {
         if (err instanceof ApiError && (err.status === 401 || err.status === 403)) void rpc.call("signOut");
       });
@@ -152,7 +205,22 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const payload = data as { roomId: string; messages: WireMessage[] };
       setTimelines((prev) => ({ ...prev, [payload.roomId]: payload.messages }));
     });
-    const offError = rpc.on("engine-error", () => setPhase((p) => (p === "in" ? p : "error")));
+    const offProgress = rpc.on("progress", (data) => {
+      const stage = (data as { stage?: string }).stage;
+      if (stage) setLoginStage(stage);
+    });
+    const offHello = rpc.on("hello", () => {
+      advance("session");
+      void rpc.call("ack").catch(() => undefined);
+    });
+    const offLog = rpc.on("log", (data) => {
+      const row = data as { level?: string; message?: string };
+      noteLog(`${row.level ?? "log"}: ${(row.message ?? "").slice(0, 400)}`);
+    });
+    const offError = rpc.on("engine-error", (data) => {
+      const body = data as { message?: string; code?: string };
+      failBoot(body?.message || body?.code || "engine-error");
+    });
     const offActivity = rpc.on("activity", (data) => {
       const activity = data as Activity;
       const here = AppState.currentState === "active" && active.current === activity.roomId;
@@ -186,11 +254,48 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       offSession();
       offRooms();
       offTimeline();
+      offProgress();
+      offHello();
       offError();
+      offLog();
       offActivity();
       sub.remove();
     };
-  }, [api, rpc]);
+  }, [advance, api, failBoot, noteLog, rpc, settle]);
+
+  useEffect(() => {
+    bootRef.current = { stage: "asset", started: Date.now(), settled: false };
+    setBootStage("asset");
+    setBootError(null);
+    setLogs([]);
+    setAssetInfo(null);
+    setPhase("booting");
+    ready.current = false;
+    const watch = setInterval(() => {
+      if (bootRef.current.settled) return;
+      if (stageExpired(bootRef.current.started, Date.now())) failBoot(`timeout:${bootRef.current.stage}`);
+    }, 1000);
+    const ping = setInterval(() => {
+      if (bootRef.current.settled) return;
+      webRef.current?.injectJavaScript("window.__imelloHostPing&&window.__imelloHostPing();true;");
+    }, 2000);
+    return () => {
+      clearInterval(watch);
+      clearInterval(ping);
+    };
+  }, [failBoot, generation]);
+
+  useEffect(() => {
+    if (phase !== "out" && phase !== "in") return;
+    try {
+      const marker = new File(Paths.document, "imello-boot.txt");
+      if (marker.exists) marker.delete();
+      marker.create();
+      marker.write(phase);
+    } catch {
+      /* The simulator job reads this file to prove the splash finished. */
+    }
+  }, [phase]);
 
   useEffect(() => {
     const total = rooms.reduce((sum, room) => sum + room.unread, 0);
@@ -276,11 +381,23 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       await call("protect", { password });
       await api.markProtected().then(setMe);
     },
-  }), [phase, me, rooms, timelines, shake, notice, api, refreshMe, call, prefs.locale, prefs.sounds]);
+    bootStage,
+    bootError,
+    logs,
+    diagnostics: formatDiagnostics({
+      stage: bootStage,
+      message: bootError ?? "",
+      logs,
+      assetUri: assetInfo?.uri,
+      assetBytes: assetInfo?.bytes,
+    }),
+    retryBoot: () => setGeneration((n) => n + 1),
+    loginStage,
+  }), [phase, me, rooms, timelines, shake, notice, api, refreshMe, call, prefs.locale, prefs.sounds, bootStage, bootError, logs, assetInfo, loginStage]);
 
   return (
     <Ctx.Provider value={value}>
-      <EngineView webRef={webRef} onMessage={onEngineMessage} />
+      <EngineView key={generation} webRef={webRef} onMessage={onEngineMessage} onAsset={onAsset} onLoaded={onLoaded} />
       {children}
     </Ctx.Provider>
   );

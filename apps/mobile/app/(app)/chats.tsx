@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { FlatList, Modal, Pressable, Text, View } from "react-native";
+import { FlatList, Modal, Pressable, Text, TextInput, View } from "react-native";
 import { formatStamp, type Receipt } from "../../src/rpc/format";
 import type { WireRoom } from "../../src/rpc/wire";
 import { usePrefs } from "../../src/prefs/Prefs";
@@ -13,6 +13,7 @@ function preview(room: WireRoom, tr: ReturnType<typeof usePrefs>["t"]): { text: 
   const last = room.last;
   if (!last) return { text: "", tone: "text" };
   if (last.failed) return { text: tr("notSent"), tone: "failed" };
+  if (last.locked) return { text: tr("unableDecrypt"), tone: "failed" };
   if (last.ping) return { text: tr("pingWord"), tone: "ping" };
   if (last.voice) return { text: tr("voiceMessage"), tone: "text" };
   if (last.kind === "image") return { text: tr("photo"), tone: "text" };
@@ -24,10 +25,14 @@ export default function Chats() {
   const prefs = usePrefs();
   const { colors, font, t, locale, status, setStatus } = prefs;
   const { rooms, me } = useSession();
+  const [query, setQuery] = useState("");
   const [editor, setEditor] = useState(false);
   const [draft, setDraft] = useState(status.message);
   const [busy, setBusy] = useState(status.availability === "busy");
   const line = [busy || status.availability === "busy" ? t("busy") : t("available"), status.message].filter(Boolean).join(" · ");
+  const shown = query.trim()
+    ? rooms.filter((room) => room.name.toLowerCase().includes(query.trim().toLowerCase()) || (room.last?.body ?? "").toLowerCase().includes(query.trim().toLowerCase()))
+    : rooms;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -52,8 +57,15 @@ export default function Chats() {
           </View>
         }
       />
+      <TextInput
+        value={query}
+        onChangeText={setQuery}
+        placeholder={t("searchChats")}
+        placeholderTextColor={colors.text3}
+        style={{ margin: 10, height: 40, borderRadius: 6, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.separator, paddingHorizontal: 12, color: colors.text, fontFamily: font("400"), writingDirection: locale === "ar" ? "rtl" : "ltr" }}
+      />
       <FlatList
-        data={rooms}
+        data={shown}
         keyExtractor={(item) => item.roomId}
         windowSize={8}
         initialNumToRender={12}
@@ -81,7 +93,7 @@ export default function Chats() {
                   <ReceiptMark receipt={mark} colors={colors} />
                   <Text numberOfLines={1} style={{ flex: 1, color: tone, fontFamily: font(unread || row.tone === "ping" ? "600" : "400"), fontSize: 14 }}>{row.text}</Text>
                   {unread ? (
-                    <View style={{ minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6, backgroundColor: colors.unread, alignItems: "center", justifyContent: "center" }}>
+                    <View style={{ minWidth: 22, height: 22, borderRadius: 4, paddingHorizontal: 6, backgroundColor: colors.unread, alignItems: "center", justifyContent: "center" }}>
                       <Text style={{ color: colors.unreadText, fontFamily: font("700"), fontSize: 12 }}>{item.unread}</Text>
                     </View>
                   ) : null}

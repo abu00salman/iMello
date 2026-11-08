@@ -12,7 +12,12 @@ on:
         required: false
         default: ""
   push:
-    branches: ["claude/**"]
+    branches: ["claude/**", "cursor/**"]
+    paths:
+      - "apps/mobile/**"
+      - "packages/**"
+      - ".github/workflows/native-test-builds.yml"
+  pull_request:
     paths:
       - "apps/mobile/**"
       - "packages/**"
@@ -41,6 +46,8 @@ jobs:
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: "17" }
       - run: pnpm install --frozen-lockfile
+      - name: Build headless crypto engine
+        run: pnpm --filter @imello/mobile run build:engine
       - name: Generate native Android project
         working-directory: apps/mobile
         env: { CI: "1" }
@@ -77,6 +84,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
+      - name: Build headless crypto engine
+        run: pnpm --filter @imello/mobile run build:engine
       - name: Generate native iOS project (+ CocoaPods)
         working-directory: apps/mobile
         env: { CI: "1" }
@@ -114,4 +123,83 @@ jobs:
         with:
           name: iMello-ios-unsigned-ipa
           path: out/iMello-1.0.0-unsigned.ipa
+          retention-days: 14
+      - name: Simulator must leave the splash
+        working-directory: apps/mobile/ios
+        run: |
+          set -o pipefail
+          xcodebuild -workspace iMello.xcworkspace -scheme iMello -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/sim-dd" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build
+          APP=$(find "$RUNNER_TEMP/sim-dd/Build/Products" -name 'iMello.app' -type d | head -1)
+          echo "APP=$APP"
+          test -n "$APP"
+          DEVICE=$(xcrun simctl list devices available | grep -E 'iPhone' | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+          echo "DEVICE=$DEVICE"
+          xcrun simctl boot "$DEVICE" || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" "$APP"
+          xcrun simctl launch "$DEVICE" com.abu00salman.imello
+          CONTAINER=$(xcrun simctl get_app_container "$DEVICE" com.abu00salman.imello data)
+          MARKER=""
+          for _ in $(seq 1 30); do
+            MARKER=$(find "$CONTAINER" -name imello-boot.txt -print -quit || true)
+            if [ -n "$MARKER" ]; then break; fi
+            sleep 2
+          done
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          xcrun simctl io "$DEVICE" screenshot "$GITHUB_WORKSPACE/out/ios-simulator-past-splash.png" || true
+          if [ -z "$MARKER" ]; then
+            echo "app did not leave the splash (no imello-boot.txt)"
+            exit 1
+          fi
+          echo "boot marker: $(cat "$MARKER")"
+          grep -Eq '^(out|in)$' "$MARKER"
+      - name: Arabic fixture screens (no account data)
+        working-directory: apps/mobile/ios
+        run: |
+          set -o pipefail
+          DEVICE=$(xcrun simctl list devices | grep Booted | sed -E 's/.*\(([A-F0-9-]+)\) \(Booted\).*/\1/' | head -1)
+          echo "DEVICE=$DEVICE"
+          test -n "$DEVICE"
+          CONTAINER=$(xcrun simctl get_app_container "$DEVICE" com.abu00salman.imello data)
+          DOCS="$CONTAINER/Documents"
+          mkdir -p "$DOCS" "$GITHUB_WORKSPACE/out"
+          # A custom-scheme URL raises “Open in iMello?” and never navigates.
+          # The app reads this file on the next launch and opens the fixture.
+          capture() {
+            local screen="$1"
+            local file="$2"
+            rm -f "$DOCS/imello-preview-shown.txt"
+            printf 'ar %s\n' "$screen" > "$DOCS/imello-preview.txt"
+            xcrun simctl terminate "$DEVICE" com.abu00salman.imello || true
+            xcrun simctl launch "$DEVICE" com.abu00salman.imello
+            local shown=""
+            for _ in $(seq 1 30); do
+              shown=$(cat "$DOCS/imello-preview-shown.txt" 2>/dev/null || true)
+              if [ "$shown" = "ar $screen" ]; then break; fi
+              sleep 1
+            done
+            echo "shown=$shown"
+            test "$shown" = "ar $screen"
+            xcrun simctl io "$DEVICE" screenshot "$GITHUB_WORKSPACE/out/${file}"
+            test -s "$GITHUB_WORKSPACE/out/${file}"
+          }
+          capture chats ios-simulator-ar-chats.png
+          capture chat ios-simulator-ar-chat.png
+          capture ping ios-simulator-ar-ping.png
+          capture signin ios-simulator-ar-signin.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-simulator-screenshot
+          path: |
+            out/ios-simulator-past-splash.png
+            out/ios-simulator-ar-chats.png
+            out/ios-simulator-ar-chat.png
+            out/ios-simulator-ar-ping.png
+            out/ios-simulator-ar-signin.png
+          if-no-files-found: ignore
           retention-days: 14

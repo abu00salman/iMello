@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { PING_COOLDOWN_MS, PING_MARKER, isPingBody, markPingSent, pingCooldownLeft } from "./ping";
+import { PING_COOLDOWN_MS, PING_MARKER, isPingBody, markPingSent, pingBody, pingCooldownLeft, pingSoundId } from "./ping";
 
 beforeEach(() => {
   const mem = new Map<string, string>();
@@ -15,7 +15,9 @@ describe("ping marker", () => {
     expect(isPingBody(null)).toBe(false);
     expect(isPingBody("نكزة!")).toBe(false);
     expect(isPingBody(PING_MARKER)).toBe(true);
-    expect(isPingBody(`hello ${PING_MARKER}`)).toBe(true);
+    expect(isPingBody(pingBody("wood"))).toBe(true);
+    expect(pingSoundId(pingBody("wood"))).toBe("wood");
+    expect(pingSoundId(PING_MARKER)).toBeNull();
   });
 
   it("enforces one ping per 15 seconds in a chat", () => {

@@ -1,11 +1,10 @@
 import { randomInt } from "node:crypto";
 import {
   DEVICE_SECRET_MIN_LENGTH,
+  generateMemorablePin,
   isPin,
   normalizeDisplayName,
-  PIN_DIGITS,
   normalizePin,
-  PIN_PREFIX,
   validatePassword,
   validateUsername,
 } from "@imello/core";
@@ -32,7 +31,7 @@ export async function meView(db: Queryable, row: AccountRow) {
 }
 
 function generatePin(): string {
-  return PIN_PREFIX + String(randomInt(0, 10 ** PIN_DIGITS)).padStart(PIN_DIGITS, "0");
+  return generateMemorablePin((max) => randomInt(0, max));
 }
 
 export const registerBody = z.object({
@@ -118,7 +117,7 @@ export async function registerPublicRoutes(app: FastifyInstance) {
           locale: z.enum(["en", "ar"]).default("en"),
         })
         .parse(req.body);
-      for (let attempt = 0; attempt < 12; attempt++) {
+      for (let attempt = 0; attempt < 40; attempt++) {
         const pin = generatePin();
         // A short code may already belong to an older account as its alias.
         if ((await db.query("SELECT 1 FROM accounts WHERE code = $1 OR username = $1", [pin])).rowCount) continue;

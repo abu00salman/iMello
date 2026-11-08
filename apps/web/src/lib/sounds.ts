@@ -171,10 +171,11 @@ const PING_TONES: Record<PingSound, (c: AudioContext, t: number) => void> = {
   },
 };
 
-/** The chosen Ping sound. */
-export function playPing() {
+/** The chosen Ping sound. `id` is the timbre named in the message; otherwise the listener's default. */
+export function playPing(id?: string | null) {
   if (!soundEnabled("ping")) return;
-  play(PING_TONES[pingSound()]);
+  const tone = id && (PING_SOUNDS as readonly string[]).includes(id) ? (id as PingSound) : pingSound();
+  play(PING_TONES[tone]);
 }
 
 /** Preview a Ping sound from Settings (a tap there unlocks audio). */

@@ -2,8 +2,21 @@
 export const PING_MARKER = "\u2063imello-nudge\u2063";
 export const PING_COOLDOWN_MS = 15_000;
 
+const PING_RE = /imello-nudge(?::([a-z]+))?/;
+
 export function isPingBody(body: string | null | undefined): boolean {
-  return typeof body === "string" && body.includes(PING_MARKER);
+  return typeof body === "string" && PING_RE.test(body);
+}
+
+/** Body of a Ping that names which original timbre the receiver should play. */
+export function pingBody(sound: string): string {
+  return `\u2063imello-nudge:${sound}\u2063`;
+}
+
+/** Sound id carried by a Ping, if the sender chose one. Older Pings have none. */
+export function pingSoundId(body: string | null | undefined): string | null {
+  const match = body?.match(PING_RE);
+  return match?.[1] ?? null;
 }
 
 function key(roomId: string): string {

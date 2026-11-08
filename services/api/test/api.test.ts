@@ -3,6 +3,7 @@
  * The full homeserver-enforced behaviour is covered by tests/e2e.
  */
 import { randomBytes } from "node:crypto";
+import { isMemorablePin } from "@imello/core";
 import type { FastifyInstance } from "fastify";
 import pg from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -333,7 +334,7 @@ describe("Start now (iMello numbers) and contact requests", () => {
   it("creates an account with a mell-xxxxxx number and a device credential", async () => {
     const u = await quick("Mona");
     expect(u.pin).toMatch(/^mell-\d{4}$/);
-    expect(u.pin).toMatch(/^mell-(\d)\1(\d)\2$|^mell-(\d)(\d)\1\2$|^mell-(\d)(\d)\2\1$/);
+    expect(isMemorablePin(u.pin)).toBe(true);
     expect((await as(u).get("/v1/me")).json()).toMatchObject({ pin: u.pin, credential: "device", displayName: "Mona", kind: "adult" });
     // The homeserver received the device secret as the password.
     expect(hs.users.get(u.pin)).toBe(SECRET);

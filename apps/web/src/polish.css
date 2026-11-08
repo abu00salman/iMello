@@ -1,0 +1,44 @@
+/* iMello usability layer: loaded last. One shape rule, 44px touch targets, readable contrast.
+   Shape rule: cards, buttons, inputs, banners and avatars are 6px; status dots are round; sheets are 12px on top. */
+
+/* ── One shape rule ───────────────────────────────────────────────────── */
+.btn, .btn-ghost, .btn-secondary, .btn-primary, .btn-danger,
+input:not([type="checkbox"]):not([type="radio"]), textarea, select,
+.card, .contact-list, .segmented, .segmented button, .search input,
+.protect-banner, .protect-card, .code-card, .chip, .notice, .warn, .error,
+.att-image, .att-video, .att-placeholder, .quote, .reply-bar, .kids-card, .auth-card, .temp-banner, .k-tcard, .qr {
+  border-radius: var(--im-k-btn-radius, 6px) !important;
+}
+
+/* ── Touch targets: every control at least 44px tall ──────────────────── */
+.btn, .link, .segmented button, .bar-status, .icon-btn, .tab, .ab, .edot, .emoji {
+  min-height: 44px;
+}
+.link { display: inline-flex; align-items: center; padding-inline: 8px; }
+.bar-status { display: flex; align-items: center; }
+/* The Reply arrow stays small but its hit area is 44px. */
+.reply-btn { position: relative; min-width: 44px !important; min-height: 44px !important; display: grid; place-items: center; }
+/* On touch screens there is no hover, so the Reply arrow is always visible, quietly. */
+@media (hover: none) { .reply-btn { opacity: 0.55 !important; } }
+
+/* ── Sign-in screen on the blue background ────────────────────────────── */
+.auth .auth-lang { background: none !important; border: 0 !important; }
+.auth .auth-lang .link {
+  color: #fff !important; opacity: 1 !important;
+  background: rgb(255 255 255 / 0.16); border: 1px solid rgb(255 255 255 / 0.35);
+  border-radius: var(--im-k-btn-radius, 6px); min-height: 44px; padding-inline: 14px; font-weight: 600;
+}
+.auth .auth-lang .link:hover { background: rgb(255 255 255 / 0.26); }
+.auth > .signature, .auth .signature { color: rgb(255 255 255 / 0.85) !important; }
+.auth-card .signature { color: var(--im-color-text-2, #5b6270) !important; }
+
+/* ── Settings: sound choices read as one list ─────────────────────────── */
+.ping-tone { border-bottom: 1px solid var(--im-color-divider, rgb(0 0 0 / 0.08)); }
+.ping-tone:last-child { border-bottom: 0; }
+.ping-tone .btn { margin-inline-start: auto; min-width: 88px; }
+.sec-ic { width: 20px; height: 20px; flex-shrink: 0; color: currentColor; }
+h2:has(> .sec-ic) { display: flex; align-items: center; gap: 8px; }
+.protect-banner { display: flex !important; align-items: center; gap: 8px; min-height: 44px; }
+
+/* ── Focus is always visible for keyboard users ───────────────────────── */
+:focus-visible { outline: 3px solid var(--im-color-primary, #1f64ac) !important; outline-offset: 2px; }

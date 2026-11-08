@@ -11,6 +11,7 @@ import "./tokens.css";
 import "./styles.css";
 import "./calls.css";
 import "./classic.css";
+import "./polish.css";
 import { registerServiceWorker } from "./lib/push";
 
 watchLayout();

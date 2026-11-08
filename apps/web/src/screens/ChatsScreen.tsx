@@ -1,3 +1,4 @@
+import { LockIcon } from "../ui/icons";
 import { formatTime, type Locale } from "@imello/localization";
 import {
   acceptInvite,
@@ -71,7 +72,7 @@ export function ChatsScreen({ roomId }: { roomId?: string }) {
           }
         />
         {me?.credential === "device" && (
-          <a className="protect-banner" href="#/settings">🔐 {t("protect.banner")}</a>
+          <a className="protect-banner" href="#/settings"><LockIcon />{t("protect.banner")}</a>
         )}
         <div className="search">
           <input type="search" placeholder={t("chats.search")} aria-label={t("chats.search")} value={query} onChange={(e) => setQuery(e.target.value)} />

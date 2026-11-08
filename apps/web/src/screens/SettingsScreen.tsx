@@ -1,3 +1,4 @@
+import { ArchiveIcon, BellIcon, LockIcon, PlayIcon } from "../ui/icons";
 import { MIN_PASSWORD_LENGTH } from "@imello/core";
 import { displayPin } from "@imello/core";
 import { exportKeysToFile, importKeysFromFile, listDevices, revokeDevice, WrongPassphraseError, type DeviceInfo } from "@imello/core/messaging";
@@ -188,7 +189,7 @@ export function SettingsScreen() {
 
       {(unprotected || protectMsg) && (
         <Card className="protect-card">
-          <h2>🔐 {t("protect.title")}</h2>
+          <h2><LockIcon />{t("protect.title")}</h2>
           {protectMsg ? (
             <p className="notice" role="status">{protectMsg}</p>
           ) : (
@@ -220,7 +221,7 @@ export function SettingsScreen() {
       <AppearancePanel />
 
       <Card>
-        <h2>🔔 {t("notify.title")}</h2>
+        <h2><BellIcon />{t("notify.title")}</h2>
         {notificationsSupported() ? (
           <>
             <div className="segmented" role="radiogroup" aria-label={t("notify.title")}>
@@ -268,7 +269,7 @@ export function SettingsScreen() {
                     <input type="radio" name="ping-tone" checked={tone === v} onChange={() => { setPingSound(v); setTone(v); previewPing(v); }} />
                     <span>{t(`sounds.tone.${v}`)}</span>
                   </label>
-                  <button type="button" className="btn btn-ghost small" onClick={() => previewPing(v)} aria-label={`${t("sounds.preview")}: ${t(`sounds.tone.${v}`)}`}>▶ {t("sounds.preview")}</button>
+                  <button type="button" className="btn btn-ghost small" onClick={() => previewPing(v)} aria-label={`${t("sounds.preview")}: ${t(`sounds.tone.${v}`)}`}><PlayIcon /> {t("sounds.preview")}</button>
                 </div>
               ))}
             </fieldset>
@@ -298,7 +299,7 @@ export function SettingsScreen() {
       </Card>
 
       <Card>
-        <h2>💾 {t("backup.title")}</h2>
+        <h2><ArchiveIcon />{t("backup.title")}</h2>
         <p className="muted">{t("backup.body")}</p>
         <form className="stack" onSubmit={(e) => { e.preventDefault(); void makeBackup(); }}>
           <Field label={t("backup.pass")} type="password" value={bkPass} onChange={(e) => setBkPass(e.target.value)} autoComplete="new-password" dir="ltr" hint={t("backup.passHint")} />

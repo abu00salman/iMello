@@ -170,6 +170,8 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
   const typing = room?.currentState.getMembers().filter((m) => m.typing && m.userId !== client.getUserId()) ?? [];
   const [shake, setShake] = useState(false);
   const [pingLeft, setPingLeft] = useState(() => pingCooldownLeft(roomId));
+  const [pingPicker, setPingPicker] = useState(false);
+  const [pingChoice, setPingChoice] = useState<PingSound>(pingSound);
   const seenLive = useRef<string | null>(null);
   const armed = useRef(false);
   useEffect(() => {
@@ -349,8 +351,6 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
     void send(body);
   }
 
-  const [pingPicker, setPingPicker] = useState(false);
-  const [pingChoice, setPingChoice] = useState<PingSound>(pingSound);
   function sendPing(sound: PingSound = pingChoice) {
     if (!encrypted || pingCooldownLeft(roomId) > 0) return;
     markPingSent(roomId);

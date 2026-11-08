@@ -72,11 +72,11 @@
           "color": "#1F64AC",
           "sounds": [
             "./assets/sounds/incoming.wav",
-            "./assets/sounds/ping-taps.wav",
-            "./assets/sounds/ping-knock.wav",
-            "./assets/sounds/ping-bell.wav",
-            "./assets/sounds/ping-chirp.wav",
-            "./assets/sounds/ping-drum.wav"
+            "./assets/sounds/ping_taps.wav",
+            "./assets/sounds/ping_knock.wav",
+            "./assets/sounds/ping_bell.wav",
+            "./assets/sounds/ping_chirp.wav",
+            "./assets/sounds/ping_drum.wav"
           ]
         }
       ]

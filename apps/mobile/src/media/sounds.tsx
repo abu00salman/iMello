@@ -9,16 +9,16 @@ const sources: Record<SoundName, number> = {
   incoming: require("../../assets/sounds/incoming.wav"),
   tick: require("../../assets/sounds/tick.wav"),
   sent: require("../../assets/sounds/sent.wav"),
-  ping: require("../../assets/sounds/ping-taps.wav"),
+  ping: require("../../assets/sounds/ping_taps.wav"),
   group: require("../../assets/sounds/group.wav"),
 };
 
 const pingSources: Record<PingSound, number> = {
-  taps: require("../../assets/sounds/ping-taps.wav"),
-  knock: require("../../assets/sounds/ping-knock.wav"),
-  bell: require("../../assets/sounds/ping-bell.wav"),
-  chirp: require("../../assets/sounds/ping-chirp.wav"),
-  drum: require("../../assets/sounds/ping-drum.wav"),
+  taps: require("../../assets/sounds/ping_taps.wav"),
+  knock: require("../../assets/sounds/ping_knock.wav"),
+  bell: require("../../assets/sounds/ping_bell.wav"),
+  chirp: require("../../assets/sounds/ping_chirp.wav"),
+  drum: require("../../assets/sounds/ping_drum.wav"),
 };
 
 const players = new Map<SoundName, AudioPlayer>();

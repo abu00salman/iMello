@@ -99,28 +99,28 @@ addPluck(taps, 164.81, 0.02, 0.18, 0.45, 12);
 addPluck(taps, 659.25, 0.02, 0.16, 0.7, 10);
 addPluck(taps, 659.25, 0.14, 0.16, 0.62, 10);
 addPluck(taps, 830.61, 0.3, 0.42, 0.75, 6);
-writeWav(path.join(dir, "ping-taps.wav"), taps);
+writeWav(path.join(dir, "ping_taps.wav"), taps);
 
 const knock = silence(0.5);
 for (const start of [0.02, 0.17]) {
   addPluck(knock, 130.81, start, 0.14, 0.7, 16);
   addNoise(knock, start, 0.06, 0.4);
 }
-writeWav(path.join(dir, "ping-knock.wav"), knock);
+writeWav(path.join(dir, "ping_knock.wav"), knock);
 
 const bell = silence(1.05);
 addPluck(bell, 1046.5, 0.02, 0.9, 0.55, 4);
 addPluck(bell, 1567.98, 0.02, 0.7, 0.28, 4);
 addPluck(bell, 2093, 0.04, 0.5, 0.16, 5);
-writeWav(path.join(dir, "ping-bell.wav"), bell);
+writeWav(path.join(dir, "ping_bell.wav"), bell);
 
 const chirp = silence(0.45);
 [1318.51, 1567.98, 1975.53].forEach((freq, i) => addPluck(chirp, freq, 0.02 + i * 0.07, 0.12, 0.55, 18));
-writeWav(path.join(dir, "ping-chirp.wav"), chirp);
+writeWav(path.join(dir, "ping_chirp.wav"), chirp);
 
 const drum = silence(0.7);
 [0, 0.09, 0.18, 0.3].forEach((start, i) => addPluck(drum, i === 3 ? 98 : 110, 0.02 + start, 0.22, 0.8, 10));
-writeWav(path.join(dir, "ping-drum.wav"), drum);
+writeWav(path.join(dir, "ping_drum.wav"), drum);
 
 const group = silence(0.62);
 addPluck(group, 493.88, 0.02, 0.32, 0.65, 7);

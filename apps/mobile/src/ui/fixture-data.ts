@@ -14,6 +14,12 @@ export function fixtureLocale(raw: string | undefined): "en" | "ar" {
   return raw === "en" ? "en" : "ar";
 }
 
+/** `imello-preview.txt` is two words: `ar chats`. Written by the simulator job, not by a user. */
+export function parsePreviewRequest(raw: string): { lang: "en" | "ar"; screen: FixtureScreen } {
+  const [langRaw, screenRaw] = raw.trim().split(/\s+/);
+  return { lang: fixtureLocale(langRaw), screen: fixtureScreen(screenRaw) };
+}
+
 export interface FixtureRow {
   id: string;
   name: { ar: string; en: string };

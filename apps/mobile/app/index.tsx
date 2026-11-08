@@ -1,10 +1,11 @@
 import * as Clipboard from "expo-clipboard";
 import { Redirect } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import type { StringKey } from "../src/i18n/strings";
 import { usePrefs } from "../src/prefs/Prefs";
 import { useSession } from "../src/session/Session";
+import { takePreviewRequest } from "../src/ui/preview-request";
 
 const STAGE_KEY: Record<string, StringKey> = {
   asset: "stageAsset",
@@ -17,6 +18,19 @@ export default function Index() {
   const { ready, colors, font, t } = usePrefs();
   const { phase, bootStage, bootError, logs, diagnostics, retryBoot } = useSession();
   const [copied, setCopied] = useState(false);
+  const [previewHref, setPreviewHref] = useState<string | null | undefined>(undefined);
+  useEffect(() => {
+    void takePreviewRequest().then(setPreviewHref);
+  }, []);
+  if (previewHref) return <Redirect href={previewHref} />;
+  if (previewHref === undefined) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.headerBg, alignItems: "center", justifyContent: "center", padding: 32 }}>
+        <Text style={{ color: "#fff", fontFamily: font("700"), fontSize: 34 }}>iMello</Text>
+        <Text style={{ color: colors.headerSub, fontFamily: font("400"), fontSize: 16, marginTop: 8 }}>{t("comingUp")}</Text>
+      </View>
+    );
+  }
   if (phase === "error") {
     const stageName = STAGE_KEY[bootStage] ? t(STAGE_KEY[bootStage]!) : bootStage;
     return (

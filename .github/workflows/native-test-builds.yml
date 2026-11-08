@@ -164,13 +164,26 @@ jobs:
           DEVICE=$(xcrun simctl list devices | grep Booted | sed -E 's/.*\(([A-F0-9-]+)\) \(Booted\).*/\1/' | head -1)
           echo "DEVICE=$DEVICE"
           test -n "$DEVICE"
-          mkdir -p "$GITHUB_WORKSPACE/out"
-          sleep 2
+          CONTAINER=$(xcrun simctl get_app_container "$DEVICE" com.abu00salman.imello data)
+          DOCS="$CONTAINER/Documents"
+          mkdir -p "$DOCS" "$GITHUB_WORKSPACE/out"
+          # A custom-scheme URL raises “Open in iMello?” and never navigates.
+          # The app reads this file on the next launch and opens the fixture.
           capture() {
             local screen="$1"
             local file="$2"
-            xcrun simctl openurl "$DEVICE" "imello://preview?lang=ar&screen=${screen}"
-            sleep 5
+            rm -f "$DOCS/imello-preview-shown.txt"
+            printf 'ar %s\n' "$screen" > "$DOCS/imello-preview.txt"
+            xcrun simctl terminate "$DEVICE" com.abu00salman.imello || true
+            xcrun simctl launch "$DEVICE" com.abu00salman.imello
+            local shown=""
+            for _ in $(seq 1 30); do
+              shown=$(cat "$DOCS/imello-preview-shown.txt" 2>/dev/null || true)
+              if [ "$shown" = "ar $screen" ]; then break; fi
+              sleep 1
+            done
+            echo "shown=$shown"
+            test "$shown" = "ar $screen"
             xcrun simctl io "$DEVICE" screenshot "$GITHUB_WORKSPACE/out/${file}"
             test -s "$GITHUB_WORKSPACE/out/${file}"
           }

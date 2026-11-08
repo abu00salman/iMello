@@ -242,7 +242,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
             title: activity.ping ? prefsRef.current.t("pingWord") : activity.senderName || activity.roomName,
             body: activity.ping ? prefsRef.current.t("pingFrom", { name: activity.senderName }) : preview,
             data: { roomId: activity.roomId },
-            sound: soundsOn ? (activity.ping ? `ping-${pingTone}.wav` : "incoming.wav") : undefined,
+            sound: soundsOn ? (activity.ping ? `ping_${pingTone}.wav` : "incoming.wav") : undefined,
           },
           trigger: Platform.OS === "android" ? { channelId: "messages" } : null,
         });

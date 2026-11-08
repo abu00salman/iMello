@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PING_SOUNDS } from "../media/ping-tones";
-import { FIXTURE_PROFILE, FIXTURE_ROWS, FIXTURE_THREAD, fixtureLocale, fixtureScreen } from "./fixture-data";
+import { FIXTURE_PROFILE, FIXTURE_ROWS, FIXTURE_THREAD, fixtureLocale, fixtureScreen, parsePreviewRequest } from "./fixture-data";
 
 describe("layout fixture", () => {
   it("stays on the public demo cast", () => {
@@ -17,6 +17,8 @@ describe("layout fixture", () => {
     expect(fixtureScreen(undefined)).toBe("chats");
     expect(fixtureScreen("ping")).toBe("ping");
     expect(fixtureScreen("nope")).toBe("chats");
+    expect(parsePreviewRequest("ar chat")).toEqual({ lang: "ar", screen: "chat" });
+    expect(parsePreviewRequest("en signin")).toEqual({ lang: "en", screen: "signin" });
   });
 
   it("offers the same five Ping choices as the web client", () => {

@@ -39,6 +39,22 @@ export function isPin(username: string): boolean {
   return PIN_RE.test(username);
 }
 
+const MEMORABLE_PATTERNS = ["aabb", "abab", "abba"] as const;
+
+/** New codes people can say: 1122, 1212, or 1221. Stored lowercase. */
+export function generateMemorablePin(randomInt: (max: number) => number): string {
+  const pattern = MEMORABLE_PATTERNS[randomInt(MEMORABLE_PATTERNS.length)]!;
+  const a = randomInt(10);
+  let b = randomInt(9);
+  if (b >= a) b += 1;
+  const digits = [...pattern].map((slot) => String(slot === "a" ? a : b)).join("");
+  return `${PIN_PREFIX}${digits}`;
+}
+
+export function isMemorablePin(pin: string): boolean {
+  return /^mell-(\d)\1(\d)\2$/.test(pin) || /^mell-(\d)(\d)\1\2$/.test(pin) || /^mell-(\d)(\d)\2\1$/.test(pin);
+}
+
 /** Password a device generates for itself when the user starts without choosing one. */
 export const DEVICE_SECRET_MIN_LENGTH = 32;
 

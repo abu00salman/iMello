@@ -22,8 +22,8 @@ import { navigate } from "../lib/router";
 import { useCalls } from "../lib/calls";
 import { useClientVersion, useSession } from "../lib/session";
 import { AttachmentView, formatDuration, imageSize, useVoiceRecorder } from "../ui/attachments";
-import { PING_COOLDOWN_MS, PING_MARKER, isPingBody, markPingSent, pingCooldownLeft } from "../lib/ping";
-import { playPing, playSent, playTick } from "../lib/sounds";
+import { PING_COOLDOWN_MS, isPingBody, markPingSent, pingBody, pingCooldownLeft, pingSoundId } from "../lib/ping";
+import { playPing, playSent, playTick, pingSound, PING_SOUNDS, previewPing, type PingSound } from "../lib/sounds";
 import { Avatar, Button, EmptyState, LockBadge, Ltr, avatarColor } from "../ui/components";
 import { prettyName } from "../lib/names";
 import { EmojiPicker } from "../ui/emoji";
@@ -170,6 +170,8 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
   const typing = room?.currentState.getMembers().filter((m) => m.typing && m.userId !== client.getUserId()) ?? [];
   const [shake, setShake] = useState(false);
   const [pingLeft, setPingLeft] = useState(() => pingCooldownLeft(roomId));
+  const [pingPicker, setPingPicker] = useState(false);
+  const [pingChoice, setPingChoice] = useState<PingSound>(pingSound);
   const seenLive = useRef<string | null>(null);
   const armed = useRef(false);
   useEffect(() => {
@@ -189,7 +191,7 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
     seenLive.current = key;
     if (isPingBody(last.body)) {
       setShake(true);
-      playPing();
+      playPing(pingSoundId(last.body));
       navigator.vibrate?.([90, 70, 140]);
       const timer = setTimeout(() => setShake(false), 420);
       return () => clearTimeout(timer);
@@ -349,11 +351,12 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
     void send(body);
   }
 
-  function sendPing() {
+  function sendPing(sound: PingSound = pingChoice) {
     if (!encrypted || pingCooldownLeft(roomId) > 0) return;
     markPingSent(roomId);
     setPingLeft(PING_COOLDOWN_MS);
-    void sendText(client, roomId, PING_MARKER).catch(() => setError(t("chat.status.failed")));
+    setPingPicker(false);
+    void sendText(client, roomId, pingBody(sound)).catch(() => setError(t("chat.status.failed")));
   }
 
   function openFile(camera: boolean) {
@@ -464,6 +467,17 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
       ) : (
       <>
       <div className="composer-dock">
+      {pingPicker && (
+        <div className="ping-sheet" role="dialog" aria-label={t("sounds.pingTone")}>
+          {PING_SOUNDS.map((id) => (
+            <div className="ping-tone" key={id}>
+              <button type="button" className={`btn btn-ghost ${pingChoice === id ? "on" : ""}`} onClick={() => setPingChoice(id)} aria-pressed={pingChoice === id}>{t(`sounds.tone.${id}`)}</button>
+              <button type="button" className="btn btn-ghost" onClick={() => previewPing(id)} aria-label={`${t("sounds.preview")}: ${t(`sounds.tone.${id}`)}`}>{t("sounds.preview")}</button>
+            </div>
+          ))}
+          <button type="button" className="btn btn-primary" onClick={() => sendPing(pingChoice)}>{t("chat.ping")}</button>
+        </div>
+      )}
       <div className="composer">
         <input
           ref={fileInput}
@@ -501,7 +515,7 @@ function Conversation({ client, roomId }: { client: MatrixClient; roomId: string
       </div>
       {emojiOpen && <EmojiPicker id="emoji-panel" label={t("chat.emoji")} onPick={insertEmoji} />}
       <div className="actionbar" role="toolbar" aria-label={t("chat.actions")}>
-        <button type="button" className="ab ab-ping" onClick={sendPing} disabled={!encrypted || pingLeft > 0} aria-label={pingLeft > 0 ? t("chat.pingWait") : t("chat.ping")}>
+        <button type="button" className="ab ab-ping" onClick={() => { setPingChoice(pingSound()); setPingPicker((open) => !open); }} disabled={!encrypted || pingLeft > 0} aria-expanded={pingPicker} aria-label={pingLeft > 0 ? t("chat.pingWait") : t("chat.ping")}>
           {pingLeft > 0 && (
             <svg className="ping-ring" viewBox="0 0 36 36" aria-hidden="true" ref={(el) => el?.style.setProperty("--dash", String((pingLeft / PING_COOLDOWN_MS) * 94))}>
               <circle cx="18" cy="18" r="15" />

@@ -34,7 +34,7 @@ export default tseslint.config(
     rules: { "@typescript-eslint/no-require-imports": "off" },
   },
   {
-    files: ["scripts/**", "**/scripts/**", "tests/**", "services/api/src/migrate.ts", "**/*.test.ts"],
+    files: ["scripts/**", "**/scripts/**", "tests/**", "services/api/src/migrate.ts", "services/api/src/remap-code.ts", "**/*.test.ts"],
     rules: { "no-console": "off" },
   },
 );

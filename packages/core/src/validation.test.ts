@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractInviteToken, normalizeDisplayName, normalizePin, validatePassword, validateUsername } from "./validation";
+import { extractInviteToken, generateMemorablePin, isMemorablePin, normalizeDisplayName, normalizePin, validatePassword, validateUsername } from "./validation";
 
 describe("validation", () => {
   it("validates usernames", () => {
@@ -24,6 +24,18 @@ describe("validation", () => {
     expect(normalizePin("Mell-1122")).toBe("mell-1122");
     expect(normalizePin("mell-44771")).toBeNull();
     expect(normalizePin("hello")).toBeNull();
+  });
+  it("issues memorable 4-digit codes", () => {
+    let n = 0;
+    const randomInt = (max: number) => {
+      n += 1;
+      return n % max;
+    };
+    const pin = generateMemorablePin(randomInt);
+    expect(pin).toMatch(/^mell-\d{4}$/);
+    expect(isMemorablePin(pin)).toBe(true);
+    expect(isMemorablePin("mell-1122")).toBe(true);
+    expect(isMemorablePin("mell-447729")).toBe(false);
   });
   it("validates passwords", () => {
     expect(validatePassword("short")).toBe("too_short");

@@ -8,7 +8,12 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 html, body { max-width: 100%; overflow-x: clip; }
 /* The page behind the fixed shell never scrolls; only lists inside it do. */
 html:has(.shell), html:has(.shell) body { height: 100%; overflow: hidden; overscroll-behavior: none; }
-.messages, .conv-list, .page, .list-pane { overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
+.messages, .conv-list, .page, .list-pane, .content {
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+.page { overflow-y: auto; max-height: 100%; }
 body {
   font-family: var(--im-font-ui);
   letter-spacing: var(--im-tracking-body);
@@ -283,7 +288,15 @@ h1, h2, .conv-title strong, .call-card h2, .auth-brand h1, .code-value, .tabbar-
 .msg.is-ping .meta { color: var(--im-k-ping-text); opacity: .8; width: 100%; }
 
 /* ── Composer + action bar ────────────────────────────────────────────── */
-.composer-dock { flex: none; background: var(--im-color-surface); }
+.composer-dock { position: relative; flex: none; background: var(--im-color-surface); }
+.ping-sheet {
+  position: absolute; inset-inline: 8px; bottom: calc(100% + 8px); z-index: 6;
+  background: var(--im-color-surface); color: var(--im-color-text);
+  border: 1px solid var(--im-color-separator); border-radius: 12px; padding: 10px;
+  box-shadow: var(--im-shadow-2); display: flex; flex-direction: column; gap: 6px;
+}
+.ping-tone { display: flex; align-items: center; gap: 8px; }
+.ping-tone .btn { min-height: 36px; }
 .composer {
   background: var(--im-color-surface); border: 0; border-top: 1px solid var(--im-color-separator);
   border-radius: 0; margin: 0; box-shadow: none;
@@ -383,7 +396,9 @@ h1, h2, .conv-title strong, .call-card h2, .auth-brand h1, .code-value, .tabbar-
    Also applied via html[data-layout="phone"] for iOS desktop-site mode,
    where the layout viewport is ~980px and a width query does not match. */
 @media (max-width: 820px), ((hover: none) and (pointer: coarse)) {
-  .shell { flex-direction: column-reverse; }
+  .shell { flex-direction: column; }
+  .content { order: 1; min-height: 0; overflow-y: auto; }
+  .tabbar { order: 2; }
   .tabbar {
     position: relative; width: 100%; flex-direction: row; justify-content: stretch;
     height: calc(var(--im-k-tabbar-h) + env(safe-area-inset-bottom));
@@ -403,7 +418,9 @@ h1, h2, .conv-title strong, .call-card h2, .auth-brand h1, .code-value, .tabbar-
   .page, .conv-list { padding-bottom: 0; }
   .bubble { max-width: 82%; }
 }
-html[data-layout="phone"] .shell { flex-direction: column-reverse; }
+html[data-layout="phone"] .shell { flex-direction: column; }
+html[data-layout="phone"] .content { order: 1; min-height: 0; overflow-y: auto; }
+html[data-layout="phone"] .tabbar { order: 2; }
 html[data-layout="phone"] .tabbar {
   position: relative; width: 100%; flex-direction: row; justify-content: stretch;
   height: calc(var(--im-k-tabbar-h) + env(safe-area-inset-bottom));

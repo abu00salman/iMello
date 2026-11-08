@@ -171,7 +171,10 @@ input:focus, textarea:focus { border-color: var(--color-accent); outline: none; 
 
 /* ── Responsive: phone layout with bottom tab bar ─────────────────────── */
 @media (max-width: 760px) {
-  .shell { flex-direction: column-reverse; }
+  /* column, not column-reverse: WebKit reverses scroll inside column-reverse. */
+  .shell { flex-direction: column; }
+  .content { order: 1; }
+  .tabbar { order: 2; }
   .tabbar { width: 100%; flex-direction: row; justify-content: space-around; padding: 0.25rem 0.25rem calc(0.25rem + env(safe-area-inset-bottom)); border-inline-end: 0; border-top: 1px solid var(--color-border); }
   .tabbar-brand { display: none; }
   .tab { flex-direction: column; gap: 0.1rem; font-size: 0.68rem; padding: 0.35rem 0.25rem; flex: 1; }

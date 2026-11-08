@@ -13,9 +13,9 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1F64AC",
+      "backgroundColor": "#F7F8FB",
       "dark": {
-        "backgroundColor": "#173B63"
+        "backgroundColor": "#0E1015"
       }
     },
     "ios": {
@@ -23,6 +23,7 @@
       "supportsTablet": true,
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true,
+        "CFBundleLocalizations": ["en", "ar"],
         "NSMicrophoneUsageDescription": "iMello uses the microphone to record voice messages. Recordings are encrypted before they leave your phone.",
         "NSCameraUsageDescription": "iMello uses the camera for video calls and when you choose to send a photo.",
         "NSPhotoLibraryUsageDescription": "iMello lets you choose photos to send. Photos are encrypted before they leave your phone."
@@ -61,15 +62,27 @@
       "expo-router",
       "expo-secure-store",
       "expo-localization",
+      "expo-font",
+      "expo-audio",
+      "expo-image-picker",
+      "expo-camera",
       [
         "expo-notifications",
         {
-          "color": "#3D7FE0"
+          "color": "#1F64AC",
+          "sounds": [
+            "./assets/sounds/incoming.wav",
+            "./assets/sounds/ping-taps.wav",
+            "./assets/sounds/ping-knock.wav",
+            "./assets/sounds/ping-bell.wav",
+            "./assets/sounds/ping-chirp.wav",
+            "./assets/sounds/ping-drum.wav"
+          ]
         }
       ]
     ],
     "extra": {
-      "supportsRTL": false,
+      "supportsRTL": true,
       "apiUrl": "https://imello-api.abu00salman.com",
       "forcesRTL": false,
       "webUrl": "https://abu00salman.github.io/iMello/app/"

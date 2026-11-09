@@ -48,7 +48,15 @@ function chatDay(date: Date, locale: Locale, t: (key: MessageKey) => string): st
 }
 
 export function ChatsScreen({ roomId }: { roomId?: string }) {
-  const { client, me } = useSession();
+  const { client, me, api } = useSession();
+  const [requests, setRequests] = useState(0);
+  useEffect(() => {
+    let live = true;
+    const check = () => void api.contactRequests().then((r) => live && setRequests(r.incoming.length), () => undefined);
+    check();
+    const id = setInterval(check, 30_000);
+    return () => { live = false; clearInterval(id); };
+  }, [api]);
   const { t } = usePrefs();
   const version = useClientVersion(client);
   const [query, setQuery] = useState("");
@@ -66,11 +74,14 @@ export function ChatsScreen({ roomId }: { roomId?: string }) {
           name={me?.displayName || me?.pin || "?"}
           userId={me?.userId ?? "me"}
           trailing={
-            <a className="bar-action" href="#/contacts" aria-label={t("chats.new")} title={t("chats.new")}>
+            <a className="bar-action" href="#/contacts" aria-label={t("chats.addPerson")} title={t("chats.addPerson")}>
               <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" d="M12 5v14M5 12h14" /></svg>
             </a>
           }
         />
+        {requests > 0 && (
+          <a className="protect-banner req-banner" href="#/contacts" data-testid="requests-banner">{t("chats.requestsWaiting", { count: requests })}</a>
+        )}
         {me?.credential === "device" && (
           <a className="protect-banner" href="#/settings"><LockIcon />{t("protect.banner")}</a>
         )}

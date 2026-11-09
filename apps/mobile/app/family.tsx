@@ -1,12 +1,12 @@
 import { ApiError, MIN_PASSWORD_LENGTH, validateUsername, type Family, type GuardianApproval } from "@imello/core";
 import * as Clipboard from "expo-clipboard";
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { FAMILY_MEMBER_LIMIT, FAMILY_MEMBER_WARN } from "../../src/rpc/format";
-import { usePrefs } from "../../src/prefs/Prefs";
-import { useSession } from "../../src/session/Session";
-import { Avatar, Field, Header, PrimaryButton } from "../../src/ui/chrome";
+import { FAMILY_MEMBER_LIMIT, FAMILY_MEMBER_WARN } from "../src/rpc/format";
+import { usePrefs } from "../src/prefs/Prefs";
+import { useSession } from "../src/session/Session";
+import { Avatar, Field, Header, Icon, IconButton, PrimaryButton } from "../src/ui/chrome";
 
 export default function FamilyScreen() {
   const { colors, font, t, locale } = usePrefs();
@@ -30,7 +30,7 @@ export default function FamilyScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.grouped }}>
-      <Header title={t("familyTitle")} subtitle={me?.displayName} avatar={{ name: me?.displayName || t("family"), id: me?.userId ?? "family" }} />
+      <Header leading={<IconButton label={t("back")} onPress={() => router.back()}><Icon ios="chevron.backward" android="arrow_back" color="#fff" mirror /></IconButton>} title={t("familyTitle")} subtitle={me?.displayName} />
       <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }}>
         {error ? <Text style={{ color: colors.statusFailed, fontFamily: font("500") }}>{error}</Text> : null}
         {biggest >= FAMILY_MEMBER_WARN ? (

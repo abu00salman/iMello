@@ -30,7 +30,8 @@ test("capture", async ({ browser }) => {
   await register(a, "Mona");
   await register(b, "Omar");
 
-  await a.getByRole("link", { name: "Contacts" }).click();
+  await a.getByRole("link", { name: "Settings" }).click();
+  await a.getByRole("link", { name: /Add people/ }).click();
   await a.getByRole("button", { name: "Invite someone" }).click();
   const link = await a.getByTestId("invite-link").inputValue();
   await a.screenshot({ path: out("contacts-invite") });
@@ -62,7 +63,8 @@ test("capture", async ({ browser }) => {
   await expect(a.getByTestId("message").first()).toBeVisible();
   await a.screenshot({ path: out("chat-desktop-arabic-rtl") });
 
-  await a.getByRole("link", { name: "العائلة" }).click();
+  await a.getByRole("link", { name: "الإعدادات" }).click();
+  await a.getByRole("link", { name: /مساحة العائلة/ }).click();
   await a.getByLabel("اسم العائلة").fill("عائلة منى");
   await a.getByRole("button", { name: "أنشئ مساحة عائلية" }).click();
   await expect(a.getByText("عائلة منى")).toBeVisible();

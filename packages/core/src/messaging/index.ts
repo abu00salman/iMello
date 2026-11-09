@@ -216,6 +216,23 @@ async function createDirectRoom(client: MatrixClient, otherUserId: string): Prom
   return roomId;
 }
 
+/** Create a private, encrypted group conversation with a name and invite the chosen people. */
+export async function createGroupChat(client: MatrixClient, name: string, userIds: string[]): Promise<string> {
+  const title = name.trim().slice(0, 64);
+  if (!title || userIds.length === 0) throw new Error("group_needs_name_and_people");
+  const { room_id: roomId } = await client.createRoom({
+    preset: Preset.PrivateChat,
+    name: title,
+    invite: [...new Set(userIds)],
+    initial_state: [
+      { type: EventType.RoomEncryption, state_key: "", content: { algorithm: MEGOLM_ALGORITHM } },
+      { type: EventType.RoomHistoryVisibility, state_key: "", content: { history_visibility: "invited" } },
+      { type: EventType.RoomGuestAccess, state_key: "", content: { guest_access: "forbidden" } },
+    ],
+  });
+  return roomId;
+}
+
 // m.direct is a read-modify-write of one account-data blob: serialise updates per client so two
 // quick calls can't overwrite each other (that lost entries and led to duplicate chats).
 const directQueue = new WeakMap<MatrixClient, Promise<unknown>>();
@@ -405,6 +422,12 @@ export function conversations(client: MatrixClient): ConversationSummary[] {
     .filter(dedupeByPerson(client));
 }
 
+function isNamedGroup(room: Room): boolean {
+  if (room.getDMInviter()) return false;
+  const name = room.currentState.getStateEvents(EventType.RoomName, "")?.getContent()?.name;
+  return typeof name === "string" && name.trim().length > 0;
+}
+
 /**
  * One row per person. If several one-to-one rooms exist with the same person (from earlier
  * duplicate creation), keep the joined, most recently active one; a pending invite from someone
@@ -417,6 +440,8 @@ function dedupeByPerson(client: MatrixClient) {
     const room = client.getRoom(c.roomId);
     const people = room?.getMembers().filter((m) => m.membership === "join" || m.membership === "invite").length ?? 0;
     if (!c.otherUserId || people > 2) return true;
+    // A named group is never merged into a one-to-one conversation (an invite only shows the inviter so far).
+    if (room && isNamedGroup(room)) return true;
     if (c.membership === "invite" && all.some((x) => x !== c && x.otherUserId === c.otherUserId && x.membership === "join")) return false;
     if (seen.has(c.otherUserId)) return false;
     // Prefer a joined room over an invite that sorted earlier.

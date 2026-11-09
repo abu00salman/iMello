@@ -238,5 +238,18 @@
   "sounds.tone.knock": "طرق الباب",
   "sounds.tone.bell": "جرس",
   "sounds.tone.chirp": "زقزقة",
-  "sounds.tone.drum": "طبل"
+  "sounds.tone.drum": "طبل",
+  "chats.addPerson": "أضف شخصًا أو أنشئ مجموعة",
+  "chats.requestsWaiting": "{count} طلبات إضافة بانتظارك — اضغط للمراجعة",
+  "settings.group.contacts": "جهات الاتصال والدعوات",
+  "settings.row.contacts": "إضافة أشخاص، الدعوات والطلبات",
+  "settings.group.family": "العائلة وحماية الأطفال",
+  "settings.row.family": "مساحة العائلة، الأطفال والموافقات",
+  "group.new": "مجموعة جديدة",
+  "group.name": "اسم المجموعة",
+  "group.pick": "اخترت {count}. حدّد الأشخاص لإضافتهم.",
+  "group.create": "أنشئ المجموعة",
+  "group.needs": "اكتب اسم المجموعة واختر شخصًا واحدًا على الأقل.",
+  "group.failed": "ما قدرنا ننشئ المجموعة. حاول مرة ثانية.",
+  "contacts.child": "حساب طفل"
 }

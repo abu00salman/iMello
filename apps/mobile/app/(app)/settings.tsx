@@ -12,12 +12,25 @@ export default function Settings() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.grouped }}>
       <Header title={t("settings")} subtitle={me?.displayName} avatar={{ name: me?.displayName || "iMello", id: me?.userId ?? "me" }} />
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
-        <Row label={t("appearance")} onPress={() => router.push("/appearance")} />
-        <Row label={t("backup")} onPress={() => router.push("/backup")} />
+      <ScrollView contentContainerStyle={{ padding: 16, gap: 6, paddingBottom: 32 }}>
+        <Section title={t("secProfile")} />
+        <Row label={t("codeTitle")} detail={me?.pin ?? undefined} onPress={() => router.push("/code")} />
+        {me?.kind !== "child" ? (
+          <>
+            <Section title={t("contactsInvites")} />
+            <Row label={t("contacts")} onPress={() => router.push("/contacts")} />
+          </>
+        ) : null}
+        <Section title={t("secPrivacy")} />
         <Row label={t("security")} onPress={() => router.push("/security")} />
-        <Row label={t("codeTitle")} onPress={() => router.push("/code")} />
-        <View style={{ backgroundColor: colors.surface, borderRadius: 10, paddingHorizontal: 14 }}>
+        {me?.kind !== "child" ? (
+          <>
+            <Section title={t("familySafety")} />
+            <Row label={t("familyTitle")} onPress={() => router.push("/family")} />
+          </>
+        ) : null}
+        <Section title={t("secNotifications")} />
+        <View style={{ backgroundColor: colors.surface, borderRadius: 6, paddingHorizontal: 14 }}>
           <Toggle label={t("sounds")} value={sounds} onValueChange={setSounds} />
           <Text style={{ color: colors.text, fontFamily: font("600"), fontSize: 15, paddingTop: 4 }}>{t("pingTone")}</Text>
           {PING_SOUNDS.map((tone) => (
@@ -36,7 +49,14 @@ export default function Settings() {
           <Toggle label={t("preview")} value={preview} onValueChange={setPreview} />
           <Text style={{ color: colors.text3, fontFamily: font("400"), fontSize: 13, paddingBottom: 12 }}>{t("previewHint")}</Text>
         </View>
+        <Section title={t("connectedDevices")} />
+        <Row label={t("devices")} onPress={() => router.push("/security")} />
+        <Section title={t("secLook")} />
+        <Row label={t("appearance")} onPress={() => router.push("/appearance")} />
         <Row label={t("language")} detail={locale === "ar" ? t("arabic") : t("english")} onPress={() => setLocale(locale === "ar" ? "en" : "ar")} />
+        <Section title={t("recoveryBackups")} />
+        <Row label={t("backup")} onPress={() => router.push("/backup")} />
+        <Section title={t("aboutImello")} />
         <Row label={t("signOut")} danger onPress={() => void signOut()} />
         <View style={{ alignItems: "center", marginTop: 18, gap: 4 }}>
           <Text style={{ color: colors.text, fontFamily: font("700"), fontSize: 18 }}>iMello</Text>
@@ -49,10 +69,15 @@ export default function Settings() {
   );
 }
 
+function Section({ title }: { title: string }) {
+  const { colors, font } = usePrefs();
+  return <Text accessibilityRole="header" style={{ color: colors.text2, fontFamily: font("600"), fontSize: 13, paddingTop: 14, paddingBottom: 4, paddingHorizontal: 4 }}>{title}</Text>;
+}
+
 function Row({ label, detail, onPress, danger }: { label: string; detail?: string; onPress: () => void; danger?: boolean }) {
   const { colors, font } = usePrefs();
   return (
-    <Pressable onPress={onPress} style={{ minHeight: 52, backgroundColor: colors.surface, borderRadius: 10, paddingHorizontal: 14, flexDirection: "row", alignItems: "center" }}>
+    <Pressable onPress={onPress} style={{ minHeight: 52, backgroundColor: colors.surface, borderRadius: 6, paddingHorizontal: 14, flexDirection: "row", alignItems: "center" }}>
       <Text style={{ flex: 1, color: danger ? colors.statusFailed : colors.text, fontFamily: font("500"), fontSize: 16 }}>{label}</Text>
       {detail ? <Text style={{ color: colors.text3, fontFamily: font("400") }}>{detail}</Text> : null}
     </Pressable>

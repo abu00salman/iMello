@@ -238,5 +238,18 @@
   "sounds.tone.knock": "Knock",
   "sounds.tone.bell": "Bell",
   "sounds.tone.chirp": "Chirp",
-  "sounds.tone.drum": "Drum"
+  "sounds.tone.drum": "Drum",
+  "chats.addPerson": "Add a person or start a group",
+  "chats.requestsWaiting": "{count} contact requests waiting — tap to review",
+  "settings.group.contacts": "Contacts and invitations",
+  "settings.row.contacts": "Add people, invitations and requests",
+  "settings.group.family": "Family and child safety",
+  "settings.row.family": "Family space, children and approvals",
+  "group.new": "New group",
+  "group.name": "Group name",
+  "group.pick": "{count} selected. Tick the people to add.",
+  "group.create": "Create group",
+  "group.needs": "Give the group a name and choose at least one person.",
+  "group.failed": "Couldn't create the group. Try again.",
+  "contacts.child": "Child account"
 }

@@ -56,6 +56,7 @@ interface SessionApi {
   setTyping: (roomId: string, typing: boolean) => Promise<void>;
   watch: (roomId: string | null) => void;
   openDirect: (userId: string) => Promise<string>;
+  createGroup: (name: string, userIds: string[]) => Promise<string>;
   acceptInvite: (roomId: string) => Promise<void>;
   exportKeys: (passphrase: string) => Promise<string>;
   importKeys: (file: string, passphrase: string) => Promise<number>;
@@ -369,6 +370,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       void call("watch", { roomId }).catch(() => undefined);
     },
     openDirect: async (userId) => (await call<{ roomId: string }>("openDirect", { userId })).roomId,
+    createGroup: async (name, userIds) => (await call<{ roomId: string }>("createGroup", { name, userIds })).roomId,
     acceptInvite: async (roomId) => {
       await call("acceptInvite", { roomId });
     },

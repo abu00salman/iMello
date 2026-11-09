@@ -42,3 +42,16 @@ h2:has(> .sec-ic) { display: flex; align-items: center; gap: 8px; }
 
 /* ── Focus is always visible for keyboard users ───────────────────────── */
 :focus-visible { outline: 3px solid var(--im-color-primary, #1f64ac) !important; outline-offset: 2px; }
+
+/* ── Two-tab navigation and the screens reached from Settings ─────────── */
+.tabbar .tab { flex: 1 1 0; }
+.back-link { display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; margin-inline-start: -8px; color: inherit; border-radius: var(--im-k-btn-radius, 6px); }
+[dir="rtl"] .back-link svg { transform: scaleX(-1); }
+.pane-header:has(.back-link) { display: flex; align-items: center; gap: 4px; }
+.set-row { display: flex; align-items: center; justify-content: space-between; min-height: 48px; color: inherit; text-decoration: none; font-weight: 500; }
+.set-chev { font-size: 22px; color: var(--im-color-text-3, #8a909b); }
+[dir="rtl"] .set-chev { transform: scaleX(-1); }
+.req-banner { border: 1px solid var(--im-color-primary, #1f64ac); background: var(--im-color-surface, #fff) !important; color: var(--im-color-primary, #1f64ac) !important; }
+.group-box { display: flex; flex-direction: column; gap: 10px; padding-bottom: 12px; margin-bottom: 8px; border-bottom: 1px solid var(--im-color-separator, rgb(0 0 0 / 0.08)); }
+.group-pick { width: 22px; height: 22px; flex-shrink: 0; accent-color: var(--im-color-primary, #1f64ac); }
+.pane-header:has(.back-link) h1 { flex: 1; text-align: start; margin: 0; }

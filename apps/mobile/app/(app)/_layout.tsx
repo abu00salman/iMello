@@ -26,18 +26,6 @@ export default function Tabs() {
       {unread > 0 ? <NativeTabs.Trigger.Badge>{String(Math.min(unread, 99))}</NativeTabs.Trigger.Badge> : null}
     </NativeTabs.Trigger>
   );
-  const contacts = (
-    <NativeTabs.Trigger name="contacts">
-      <NativeTabs.Trigger.Label>{t("contacts")}</NativeTabs.Trigger.Label>
-      <NativeTabs.Trigger.Icon sf="person.2.fill" md="group" />
-    </NativeTabs.Trigger>
-  );
-  const family = (
-    <NativeTabs.Trigger name="family">
-      <NativeTabs.Trigger.Label>{t("family")}</NativeTabs.Trigger.Label>
-      <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
-    </NativeTabs.Trigger>
-  );
   const settings = (
     <NativeTabs.Trigger name="settings">
       <NativeTabs.Trigger.Label>{t("settings")}</NativeTabs.Trigger.Label>
@@ -47,8 +35,6 @@ export default function Tabs() {
   return (
     <NativeTabs key={mirror ? "mirror" : "system"} {...bar}>
       {mirror ? settings : chats}
-      {mirror ? family : contacts}
-      {mirror ? contacts : family}
       {mirror ? chats : settings}
     </NativeTabs>
   );

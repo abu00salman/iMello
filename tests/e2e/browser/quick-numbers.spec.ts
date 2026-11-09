@@ -30,13 +30,15 @@ test("Start now → add by number → accept → encrypted chat → protect acco
   await expect(noor.page.getByRole("link", { name: /Protect your account/ })).toBeVisible();
 
   // Noor adds Fahad by number.
-  await noor.page.getByRole("link", { name: "Contacts" }).click();
+  await noor.page.getByRole("link", { name: "Settings" }).click();
+  await noor.page.getByRole("link", { name: /Add people/ }).click();
   await noor.page.getByTestId("pin-input").fill(fahad.pin.replace(/mell-/i, ""));
   await noor.page.getByRole("button", { name: "Add", exact: true }).click();
   await expect(noor.page.getByText("Request sent.")).toBeVisible();
 
   // Fahad sees the request and accepts.
-  await fahad.page.getByRole("link", { name: "Contacts" }).click();
+  await fahad.page.getByRole("link", { name: "Settings" }).click();
+  await fahad.page.getByRole("link", { name: /Add people/ }).click();
   const request = fahad.page.getByTestId("incoming-request").filter({ hasText: "Noor wants to add you" });
   await expect(request).toBeVisible({ timeout: 30_000 });
   await expect(request).toContainText(noor.pin);

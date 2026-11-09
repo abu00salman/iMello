@@ -1,6 +1,6 @@
 import { displayPin } from "@imello/core";
 import { ApiError, extractInviteToken, normalizePin, type Contact, type ContactRequest, type Invite, type InvitePreview } from "@imello/core";
-import { startDirectChat } from "@imello/core/messaging";
+import { createGroupChat, startDirectChat } from "@imello/core/messaging";
 import QRCode from "qrcode";
 import { useCallback, useEffect, useState } from "react";
 import { usePrefs } from "../lib/prefs";
@@ -22,6 +22,23 @@ export function ContactsScreen({ initialToken }: { initialToken?: string }) {
   const [copied, setCopied] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [incoming, setIncoming] = useState<ContactRequest[]>([]);
+  const [grouping, setGrouping] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [groupName, setGroupName] = useState("");
+
+  async function makeGroup() {
+    if (!client) return;
+    if (!groupName.trim() || picked.length === 0) return setError(t("group.needs"));
+    setBusy(true);
+    try {
+      const roomId = await createGroupChat(client, groupName, picked);
+      navigate({ name: "chats", roomId });
+    } catch {
+      setError(t("group.failed"));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const load = useCallback(
     () =>
@@ -135,7 +152,7 @@ export function ContactsScreen({ initialToken }: { initialToken?: string }) {
 
   return (
     <div className="page">
-      <header className="pane-header"><h1>{t("contacts.title")}</h1></header>
+      <header className="pane-header"><a className="back-link" href="#/settings" aria-label={t("common.back")}><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="m15 5-7 7 7 7" /></svg></a><h1>{t("contacts.title")}</h1></header>
       {message && <p className="notice" role="status">{message}</p>}
       {error && <p className="error" role="alert">{error}</p>}
 
@@ -218,16 +235,31 @@ export function ContactsScreen({ initialToken }: { initialToken?: string }) {
       </div>
 
       <Card>
+        {contacts.some((c) => c.status === "accepted") && (
+          <div className="group-box">
+            <Button variant={grouping ? "ghost" : "secondary"} onClick={() => { setGrouping((g) => !g); setPicked([]); }}>{grouping ? t("common.cancel") : t("group.new")}</Button>
+            {grouping && (
+              <div className="stack">
+                <input type="text" value={groupName} maxLength={64} placeholder={t("group.name")} aria-label={t("group.name")} onChange={(e) => setGroupName(e.target.value)} />
+                <p className="muted small">{t("group.pick", { count: picked.length })}</p>
+                <Button onClick={() => void makeGroup()} busy={busy} disabled={!groupName.trim() || picked.length === 0}>{t("group.create")}</Button>
+              </div>
+            )}
+          </div>
+        )}
         {contacts.length === 0 ? (
           <EmptyState icon="👋">{t("contacts.empty")}</EmptyState>
         ) : (
           <ul className="contact-list" role="list">
             {contacts.map((c) => (
               <li key={c.userId} className="contact-row">
+                {grouping && c.status === "accepted" && (
+                  <input type="checkbox" className="group-pick" aria-label={c.displayName} checked={picked.includes(c.userId)} onChange={() => setPicked((p) => (p.includes(c.userId) ? p.filter((x) => x !== c.userId) : [...p, c.userId]))} />
+                )}
                 <Avatar name={c.displayName} id={c.userId} size={44} />
                 <span className="contact-main">
                   <strong>{c.displayName}</strong>
-                  <small className="muted">{c.status === "pending_guardian" ? t("contacts.pendingGuardian") : c.kind === "child" ? "👧" : ""}</small>
+                  <small className="muted">{c.status === "pending_guardian" ? t("contacts.pendingGuardian") : c.kind === "child" ? t("contacts.child") : ""}</small>
                 </span>
                 {c.status === "accepted" && <Button onClick={() => void message_(c)}>{t("contacts.message")}</Button>}
                 <Button variant="ghost" onClick={() => void block(c)}>{t("contacts.block")}</Button>

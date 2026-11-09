@@ -33,7 +33,8 @@ test("two independent browser sessions exchange end-to-end encrypted messages", 
   const bob = await registerViaUi(ctxB, "Bob", problems);
 
   // Alice creates a private invite link.
-  await alice.getByRole("link", { name: "Contacts" }).click();
+  await alice.getByRole("link", { name: "Settings" }).click();
+  await alice.getByRole("link", { name: /Add people/ }).click();
   await alice.getByRole("button", { name: "Invite someone" }).click();
   const link = await alice.getByTestId("invite-link").inputValue();
   expect(link).toMatch(/#\/i\/[A-Za-z0-9_-]{43}$/);

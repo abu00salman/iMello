@@ -35,7 +35,7 @@ export function FixtureView({ locale, screen }: { locale: "en" | "ar"; screen: F
       {screen === "signin" ? <SignInPreview locale={locale} /> : null}
       {screen === "chats" ? (
         <View style={{ flexDirection: "row", backgroundColor: colors.tabBg, paddingBottom: insets.bottom + 6, paddingTop: 8 }}>
-          {(["chats", "contacts", "family", "settings"] as const).map((tab) => (
+          {(["chats", "settings"] as const).map((tab) => (
             <View key={tab} style={{ flex: 1, alignItems: "center", gap: 2 }}>
               <Text style={{ color: tab === "chats" ? "#fff" : colors.tabText, fontFamily: font("600"), fontSize: 12 }}>{text(tab)}</Text>
             </View>

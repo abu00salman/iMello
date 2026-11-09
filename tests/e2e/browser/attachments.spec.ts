@@ -24,10 +24,12 @@ test("photos, documents and voice messages are sent encrypted and shown in the c
   const ali = await startNow(browser, "Ali", problems);
 
   // Connect by number and open a chat.
-  await sara.page.getByRole("link", { name: "Contacts" }).click();
+  await sara.page.getByRole("link", { name: "Settings" }).click();
+  await sara.page.getByRole("link", { name: /Add people/ }).click();
   await sara.page.getByTestId("pin-input").fill(ali.pin);
   await sara.page.getByRole("button", { name: "Add", exact: true }).click();
-  await ali.page.getByRole("link", { name: "Contacts" }).click();
+  await ali.page.getByRole("link", { name: "Settings" }).click();
+  await ali.page.getByRole("link", { name: /Add people/ }).click();
   await ali.page.getByTestId("incoming-request").getByRole("button", { name: "Accept" }).click({ timeout: 30_000 });
   await ali.page.getByRole("button", { name: "Message" }).click();
   await expect(ali.page.getByText("End-to-end encrypted")).toBeVisible();

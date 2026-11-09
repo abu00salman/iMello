@@ -38,7 +38,8 @@ test("parent creates a child account; Kids Mode; guardian approves a trusted adu
 
   // 1–3. Parent creates an account, a Family Space and a child account.
   await register(parent, "Dad", `dad.${run}`);
-  await parent.getByRole("link", { name: "Family" }).click();
+  await parent.getByRole("link", { name: "Settings" }).click();
+  await parent.getByRole("link", { name: /Family space/ }).click();
   await parent.getByLabel("Family name").fill("Our Family");
   await parent.getByRole("button", { name: "Create a Family Space" }).click();
   await expect(parent.getByRole("heading", { name: /Our Family/ })).toBeVisible();
@@ -52,7 +53,7 @@ test("parent creates a child account; Kids Mode; guardian approves a trusted adu
   // Child signs in on their own device: Kids Mode with a big card for Dad.
   await signIn(child, `lina.${run}`);
   await expect(child.getByRole("heading", { name: "Hi Lina! 👋" })).toBeVisible();
-  await expect(child.getByRole("link", { name: "Contacts" })).toHaveCount(0); // no stranger-facing contact tools
+  await expect(child.getByRole("link", { name: /Add people/ })).toHaveCount(0); // no stranger-facing contact tools
   await child.getByRole("button", { name: "Dad" }).click();
   await expect(child.getByText("End-to-end encrypted")).toBeVisible();
   const hi = `Hi Dad ${randomBytes(3).toString("hex")}`;
@@ -71,14 +72,16 @@ test("parent creates a child account; Kids Mode; guardian approves a trusted adu
 
   // 4. A trusted adult's invite reaches the child but needs the guardian's approval.
   await register(aunt, "Aunt Sara", `sara.${run}`);
-  await aunt.getByRole("link", { name: "Contacts" }).click();
+  await aunt.getByRole("link", { name: "Settings" }).click();
+  await aunt.getByRole("link", { name: /Add people/ }).click();
   await aunt.getByRole("button", { name: "Invite someone" }).click();
   const link = await aunt.getByTestId("invite-link").inputValue();
   await child.goto(link.replace(/^https?:\/\/[^/]+/, ""));
   await child.getByRole("button", { name: "Continue" }).click();
   await expect(child.getByText("Waiting for guardian approval.").first()).toBeVisible();
 
-  await parent.getByRole("link", { name: "Family" }).click();
+  await parent.getByRole("link", { name: "Settings" }).click();
+  await parent.getByRole("link", { name: /Family space/ }).click();
   const approval = parent.getByTestId("approval").filter({ hasText: "Aunt Sara wants to connect with Lina" });
   await expect(approval).toBeVisible();
   await approval.getByRole("button", { name: "Approve" }).click();

@@ -1,15 +1,18 @@
 import { ApiError, extractInviteToken, type Contact, type ContactRequest } from "@imello/core";
-import { normalizeImelloCode } from "../../src/rpc/code";
+import { normalizeImelloCode } from "../src/rpc/code";
 import { useFocusEffect, router } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { FlatList, Pressable, Text, TextInput, View } from "react-native";
-import { usePrefs } from "../../src/prefs/Prefs";
-import { useSession } from "../../src/session/Session";
-import { Avatar, Header, Icon, IconButton } from "../../src/ui/chrome";
+import { usePrefs } from "../src/prefs/Prefs";
+import { useSession } from "../src/session/Session";
+import { Avatar, Header, Icon, IconButton } from "../src/ui/chrome";
 
 export default function Contacts() {
   const { colors, font, t, rtl } = usePrefs();
-  const { api, me, openDirect } = useSession();
+  const { api, me, openDirect, createGroup } = useSession();
+  const [grouping, setGrouping] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [groupName, setGroupName] = useState("");
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [incoming, setIncoming] = useState<ContactRequest[]>([]);
   const [query, setQuery] = useState("");
@@ -49,12 +52,23 @@ export default function Contacts() {
     }
   }
 
+  async function makeGroup() {
+    if (!groupName.trim() || picked.length === 0) return setNote(t("groupNeeds"));
+    try {
+      const roomId = await createGroup(groupName, picked);
+      setGrouping(false); setPicked([]); setGroupName("");
+      router.replace(`/chat/${encodeURIComponent(roomId)}`);
+    } catch {
+      setNote(t("groupFailed"));
+    }
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Header
-        title={me?.displayName || t("contacts")}
+        leading={<IconButton label={t("back")} onPress={() => router.back()}><Icon ios="chevron.backward" android="arrow_back" color="#fff" mirror /></IconButton>}
+        title={t("contacts")}
         subtitle={me?.pin ?? undefined}
-        avatar={{ name: me?.displayName || "iMello", id: me?.userId ?? "me" }}
         trailing={
           <IconButton label={t("codeTitle")} onPress={() => router.push("/code")}>
             <Icon ios="qrcode" android="qr_code" color="#fff" />
@@ -85,7 +99,21 @@ export default function Contacts() {
         data={filtered}
         keyExtractor={(item) => item.contactId}
         ListHeaderComponent={
-          incoming.length ? (
+          <View>
+            <Pressable accessibilityRole="button" onPress={() => { setGrouping((g) => !g); setPicked([]); setNote(null); }} style={{ minHeight: 52, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, borderBottomWidth: 0.5, borderBottomColor: colors.separator }}>
+              <Icon ios="person.3.fill" android="group_add" color={colors.primary} />
+              <Text style={{ flex: 1, color: colors.primary, fontFamily: font("600"), fontSize: 16 }}>{grouping ? t("cancel") : t("newGroup")}</Text>
+            </Pressable>
+            {grouping ? (
+              <View style={{ padding: 14, gap: 10, borderBottomWidth: 0.5, borderBottomColor: colors.separator }}>
+                <TextInput value={groupName} onChangeText={setGroupName} placeholder={t("groupName")} placeholderTextColor={colors.text3} maxLength={64} style={{ height: 44, borderRadius: 6, borderWidth: 1, borderColor: colors.separatorStrong, backgroundColor: colors.surface, paddingHorizontal: 12, color: colors.text, fontFamily: font("400"), writingDirection: rtl ? "rtl" : "ltr" }} />
+                <Text style={{ color: colors.text2, fontFamily: font("400") }}>{t("groupPick", { count: picked.length })}</Text>
+                <Pressable accessibilityRole="button" onPress={() => void makeGroup()} style={{ height: 44, borderRadius: 6, backgroundColor: picked.length && groupName.trim() ? colors.primary : colors.separatorStrong, alignItems: "center", justifyContent: "center" }}>
+                  <Text style={{ color: "#fff", fontFamily: font("600"), fontSize: 16 }}>{t("createGroup")}</Text>
+                </Pressable>
+              </View>
+            ) : null}
+          {incoming.length ? (
             <View>
               <Text style={{ color: colors.primary, fontFamily: font("700"), paddingHorizontal: 14, paddingVertical: 6 }}>{t("requests")}</Text>
               {incoming.map((req) => (
@@ -97,7 +125,8 @@ export default function Contacts() {
                 </View>
               ))}
             </View>
-          ) : undefined
+          ) : null}
+          </View>
         }
         ListEmptyComponent={<Text style={{ textAlign: "center", color: colors.text2, fontFamily: font("400"), margin: 24 }}>{t("noContacts")}</Text>}
         renderItem={({ item, index }) => {
@@ -110,6 +139,7 @@ export default function Contacts() {
               <Pressable
                 onPress={() => {
                   if (item.status !== "accepted") return;
+                  if (grouping) return setPicked((p) => (p.includes(item.userId) ? p.filter((x) => x !== item.userId) : [...p, item.userId]));
                   void openDirect(item.userId).then((roomId) => router.push(`/chat/${encodeURIComponent(roomId)}`));
                 }}
                 style={{ minHeight: 64, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 12 }}
@@ -119,6 +149,7 @@ export default function Contacts() {
                   <Text style={{ color: colors.text, fontFamily: font("500"), fontSize: 16 }}>{item.displayName}</Text>
                   <Text style={{ color: item.status === "accepted" ? colors.avail : colors.text2, fontFamily: font("400"), fontSize: 13 }}>{sub}</Text>
                 </View>
+                {grouping && item.status === "accepted" ? <Icon ios={picked.includes(item.userId) ? "checkmark.circle.fill" : "circle"} android={picked.includes(item.userId) ? "check_circle" : "radio_button_unchecked"} color={colors.primary} /> : null}
               </Pressable>
             </View>
           );

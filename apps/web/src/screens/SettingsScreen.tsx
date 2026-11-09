@@ -187,6 +187,16 @@ export function SettingsScreen() {
         {temporary && <p className="notice">{t("auth.temporarySessionHint")}</p>}
       </Card>
 
+      {me?.kind !== "child" && (
+        <Card>
+          <h2>{t("settings.group.contacts")}</h2>
+          <a className="set-row" href="#/contacts">
+            <span>{t("settings.row.contacts")}</span>
+            <span className="set-chev" aria-hidden="true">›</span>
+          </a>
+        </Card>
+      )}
+
       {(unprotected || protectMsg) && (
         <Card className="protect-card">
           <h2><LockIcon />{t("protect.title")}</h2>
@@ -211,14 +221,25 @@ export function SettingsScreen() {
       )}
 
       <Card>
-        <h2>{t("settings.language")}</h2>
-        <div className="segmented" role="radiogroup" aria-label={t("settings.language")}>
-          <button role="radio" aria-checked={locale === "en"} onClick={() => setLocale("en")} lang="en">English</button>
-          <button role="radio" aria-checked={locale === "ar"} onClick={() => setLocale("ar")} lang="ar">العربية</button>
+        <h2>{t("settings.security")}</h2>
+        <LockBadge label={t("chat.encrypted")} />
+        <p className="muted small">{t("security.verifyNote")}</p>
+        <div className="row wrap">
+          <Button variant="secondary" onClick={() => void exportData()}>{t("settings.exportData")}</Button>
+          <Button variant="secondary" onClick={() => void confirmSignOut()}>{t("auth.signOut")}</Button>
+          {me?.kind === "adult" && <Button variant="danger" onClick={() => void deleteAccount()}>{t("settings.deleteAccount")}</Button>}
         </div>
       </Card>
 
-      <AppearancePanel />
+      {me?.kind !== "child" && (
+        <Card>
+          <h2>{t("settings.group.family")}</h2>
+          <a className="set-row" href="#/family">
+            <span>{t("settings.row.family")}</span>
+            <span className="set-chev" aria-hidden="true">›</span>
+          </a>
+        </Card>
+      )}
 
       <Card>
         <h2><BellIcon />{t("notify.title")}</h2>
@@ -298,6 +319,16 @@ export function SettingsScreen() {
         </ul>
       </Card>
 
+      <AppearancePanel />
+
+      <Card>
+        <h2>{t("settings.language")}</h2>
+        <div className="segmented" role="radiogroup" aria-label={t("settings.language")}>
+          <button role="radio" aria-checked={locale === "en"} onClick={() => setLocale("en")} lang="en">English</button>
+          <button role="radio" aria-checked={locale === "ar"} onClick={() => setLocale("ar")} lang="ar">العربية</button>
+        </div>
+      </Card>
+
       <Card>
         <h2><ArchiveIcon />{t("backup.title")}</h2>
         <p className="muted">{t("backup.body")}</p>
@@ -311,17 +342,6 @@ export function SettingsScreen() {
         </form>
         <input ref={restoreInput} type="file" accept=".txt,text/plain" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void restore(f); }} />
         {bkMsg && <p className="notice" role="status">{bkMsg}</p>}
-      </Card>
-
-      <Card>
-        <h2>{t("settings.security")}</h2>
-        <LockBadge label={t("chat.encrypted")} />
-        <p className="muted small">{t("security.verifyNote")}</p>
-        <div className="row wrap">
-          <Button variant="secondary" onClick={() => void exportData()}>{t("settings.exportData")}</Button>
-          <Button variant="secondary" onClick={() => void confirmSignOut()}>{t("auth.signOut")}</Button>
-          {me?.kind === "adult" && <Button variant="danger" onClick={() => void deleteAccount()}>{t("settings.deleteAccount")}</Button>}
-        </div>
       </Card>
 
       <Card>

@@ -33,7 +33,8 @@ test("bbm screens", async ({ browser }) => {
   await shot(a, "01-sign-in");
   await register(a, "Mona");
   await register(b, "Omar");
-  await a.getByRole("link", { name: "Contacts" }).click();
+  await a.getByRole("link", { name: "Settings" }).click();
+  await a.getByRole("link", { name: /Add people/ }).click();
   await a.getByRole("button", { name: "Invite someone" }).click();
   const link = await a.getByTestId("invite-link").inputValue();
   await b.goto(link.replace(/^https?:\/\/[^/]+/, ""));
@@ -66,7 +67,8 @@ test("bbm screens", async ({ browser }) => {
   await b.keyboard.press("Enter");
   await a.waitForTimeout(1500);
   await shot(a, "05-chat-list-unread");
-  await a.getByRole("link", { name: "Contacts" }).click();
+  await a.getByRole("link", { name: "Settings" }).click();
+  await a.getByRole("link", { name: /Add people/ }).click();
   await shot(a, "06-contacts");
   await a.getByRole("link", { name: "Settings" }).click();
   await shot(a, "07-settings");

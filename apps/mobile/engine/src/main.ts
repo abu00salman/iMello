@@ -25,6 +25,7 @@ import {
   setTyping,
   signOut as matrixSignOut,
   startDirectChat,
+  createGroupChat,
   startSecureClient,
   WrongPassphraseError,
   type ChatMessage,
@@ -434,6 +435,12 @@ async function openDirect(params: { userId: string }): Promise<{ roomId: string 
   return { roomId };
 }
 
+async function newGroup(params: { name: string; userIds: string[] }): Promise<{ roomId: string }> {
+  const roomId = await createGroupChat(requireClient(), params.name, params.userIds);
+  schedule();
+  return { roomId };
+}
+
 async function join(params: { roomId: string }): Promise<{ ok: true }> {
   await acceptInvite(requireClient(), params.roomId);
   schedule();
@@ -504,6 +511,7 @@ const handlers: Record<string, (params: never) => Promise<unknown>> = {
   markRead,
   setTyping: typing,
   openDirect,
+  createGroup: newGroup,
   acceptInvite: join,
   exportKeys: backup,
   importKeys: restore,

@@ -1,5 +1,5 @@
-import { router } from "expo-router";
-import { useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import { FlatList, Modal, Pressable, Text, TextInput, View } from "react-native";
 import { formatStamp, type Receipt } from "../../src/rpc/format";
 import type { WireRoom } from "../../src/rpc/wire";
@@ -24,7 +24,11 @@ function preview(room: WireRoom, tr: ReturnType<typeof usePrefs>["t"]): { text: 
 export default function Chats() {
   const prefs = usePrefs();
   const { colors, font, t, locale, status, setStatus } = prefs;
-  const { rooms, me } = useSession();
+  const { rooms, me, api } = useSession();
+  const [requests, setRequests] = useState(0);
+  useFocusEffect(useCallback(() => {
+    void api.contactRequests().then((r) => setRequests(r.incoming.length), () => undefined);
+  }, [api]));
   const [query, setQuery] = useState("");
   const [editor, setEditor] = useState(false);
   const [draft, setDraft] = useState(status.message);
@@ -48,8 +52,8 @@ export default function Chats() {
         }}
         trailing={
           <View style={{ flexDirection: "row" }}>
-            <IconButton label={t("message")} onPress={() => router.push("/(app)/contacts")}>
-              <Icon ios="square.and.pencil" android="edit" color="#fff" />
+            <IconButton label={t("contactsInvites")} onPress={() => router.push("/contacts")}>
+              <Icon ios="plus" android="add" color="#fff" />
             </IconButton>
             <IconButton label={t("codeTitle")} onPress={() => router.push("/code")}>
               <Icon ios="qrcode" android="qr_code" color="#fff" />
@@ -64,6 +68,12 @@ export default function Chats() {
         placeholderTextColor={colors.text3}
         style={{ margin: 10, height: 40, borderRadius: 6, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.separator, paddingHorizontal: 12, color: colors.text, fontFamily: font("400"), writingDirection: locale === "ar" ? "rtl" : "ltr" }}
       />
+      {requests > 0 ? (
+        <Pressable accessibilityRole="button" onPress={() => router.push("/contacts")} style={{ marginHorizontal: 10, marginBottom: 6, minHeight: 44, borderRadius: 6, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.primary, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <Icon ios="person.badge.plus" android="person_add" color={colors.primary} />
+          <Text style={{ flex: 1, color: colors.primary, fontFamily: font("600") }}>{t("requestsWaiting", { count: requests })}</Text>
+        </Pressable>
+      ) : null}
       <FlatList
         data={shown}
         keyExtractor={(item) => item.roomId}

@@ -65,7 +65,7 @@ export function FamilyScreen() {
   if (!isAdult) {
     return (
       <div className="page">
-        <header className="pane-header"><h1>{t("family.title")}</h1></header>
+        <header className="pane-header"><a className="back-link" href="#/settings" aria-label={t("common.back")}><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="m15 5-7 7 7 7" /></svg></a><h1>{t("family.title")}</h1></header>
         {families.map((f) => <FamilyCard key={f.familyId} f={f} />)}
         {families.length === 0 && <EmptyState icon="🏡">{t("family.title")}</EmptyState>}
       </div>
@@ -74,7 +74,7 @@ export function FamilyScreen() {
 
   return (
     <div className="page">
-      <header className="pane-header"><h1>{t("family.title")}</h1></header>
+      <header className="pane-header"><a className="back-link" href="#/settings" aria-label={t("common.back")}><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="m15 5-7 7 7 7" /></svg></a><h1>{t("family.title")}</h1></header>
       {error && <p className="error" role="alert">{error}</p>}
 
       <Card>
@@ -148,7 +148,7 @@ function FamilyCard({ f, children }: { f: Family; children?: React.ReactNode }) 
   const { t } = usePrefs();
   return (
     <Card className="family-card">
-      <h2>🏡 {f.name}</h2>
+      <h2>{f.name}</h2>
       <h3>{t("family.members")}</h3>
       <ul className="member-chips" role="list">
         {f.members.map((m) => (

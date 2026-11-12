@@ -4,13 +4,13 @@
 #                                  <base>sw.js   the service worker, kept at the site root so push
 #                                                subscriptions registered before the landing page existed keep working
 #
-#   scripts/assemble-pages.sh /Wanas/ site
+#   scripts/assemble-pages.sh /iMello/ site
 #
 # API/homeserver URLs come from the environment (VITE_API_URL, VITE_HOMESERVER_URL), as for the app build.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-BASE="${1:?usage: assemble-pages.sh <base, e.g. /Wanas/> <empty output dir>}"
-OUT="${2:?usage: assemble-pages.sh <base, e.g. /Wanas/> <empty output dir>}"
+BASE="${1:?usage: assemble-pages.sh <base, e.g. /iMello/> <empty output dir>}"
+OUT="${2:?usage: assemble-pages.sh <base, e.g. /iMello/> <empty output dir>}"
 case "$BASE" in /|/*/) ;; *) echo "base must start and end with / (got: $BASE)" >&2; exit 1 ;; esac
 if [[ -e "$OUT" ]]; then echo "$OUT already exists; give an empty/new folder" >&2; exit 1; fi
 

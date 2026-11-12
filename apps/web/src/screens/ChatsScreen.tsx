@@ -2,6 +2,9 @@ import { LockIcon } from "../ui/icons";
 import { formatTime, type Locale } from "@imello/localization";
 import {
   acceptInvite,
+  editMessage,
+  redactEvent,
+  sendReaction,
   conversations,
   isRoomEncrypted,
   NotEncryptedError,
@@ -564,6 +567,30 @@ const MessageRow = memo(
     const ping = isPingBody(m.body);
     const failed = m.isOwn && m.state === "failed";
     const status = !m.isOwn || ping ? null : m.state === "failed" ? "failed" : m.state === "sending" ? "sending" : read ? "read" : "delivered";
+    const [menu, setMenu] = useState(false);
+    const [editing, setEditing] = useState(false);
+    const [draft, setDraft] = useState("");
+    const [actionError, setActionError] = useState(false);
+    const canAct = !m.decryptionFailed && !ping && !m.deleted && m.state === "sent" && m.id.startsWith("$");
+    const canEdit = canAct && m.isOwn && !m.attachment && !!m.body;
+    const run = (job: Promise<unknown>) => { setActionError(false); job.catch(() => setActionError(true)); };
+    const react = (key: string) => {
+      setMenu(false);
+      const mine = m.reactions.find((x) => x.key === key)?.myEventId;
+      run(mine ? redactEvent(client, m.roomId, mine) : sendReaction(client, m.roomId, m.id, key));
+    };
+    if (m.deleted) {
+      return (
+        <div className="msg-wrap">
+          {day && <div className="day-sep"><span>{day}</span></div>}
+          <div className={`msg ${m.isOwn ? "own" : "theirs"} ${continued ? "cont" : ""}`} data-testid="message">
+            <div className="bubble is-deleted"><span className="body muted">{t("chat.deleted")}</span>
+              <div className="meta"><time><Ltr>{formatTime(new Date(m.timestamp), locale)}</Ltr></time></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="msg-wrap">
         {day && <div className="day-sep"><span>{day}</span></div>}
@@ -591,10 +618,17 @@ const MessageRow = memo(
               </div>
             ) : m.attachment ? (
               <AttachmentView client={client} info={m.attachment} />
+            ) : editing ? (
+              <form className="edit-form" onSubmit={(e) => { e.preventDefault(); if (draft.trim() && draft.trim() !== m.body) run(editMessage(client, m.roomId, m.id, draft)); setEditing(false); }}>
+                <textarea dir="auto" value={draft} rows={Math.min(6, draft.split("\n").length + 1)} onChange={(e) => setDraft(e.target.value)} aria-label={t("chat.edit")} autoFocus
+                  onKeyDown={(e) => { if (e.key === "Escape") setEditing(false); if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} />
+                <div className="row"><Button type="submit">{t("common.save")}</Button><Button type="button" variant="ghost" onClick={() => setEditing(false)}>{t("common.cancel")}</Button></div>
+              </form>
             ) : (
               <span dir="auto" className="body">{m.decryptionFailed ? t("chat.unableToDecrypt") : m.body}</span>
             )}
             <div className="meta">
+              {m.edited && <span className="edited">{t("chat.edited")}</span>}
               <time><Ltr>{formatTime(new Date(m.timestamp), locale)}</Ltr></time>
               {status && (
                 <span className={`ks ${status === "read" ? "r" : status === "delivered" ? "d" : status === "failed" ? "failed" : "sent"}`} aria-label={t(status === "read" ? "chat.status.read" : status === "delivered" ? "chat.status.delivered" : status === "failed" ? "chat.status.failed" : "chat.status.sent")}>
@@ -603,7 +637,36 @@ const MessageRow = memo(
               )}
             </div>
             {failed && <div className="conv-preview is-failed">{t("chat.notSent")}</div>}
+            {actionError && <div className="conv-preview is-failed" role="alert">{t("common.error")}</div>}
+            {m.reactions.length > 0 && (
+              <div className="reactions" role="group" aria-label={t("chat.reactions")}>
+                {m.reactions.map((x) => (
+                  <button key={x.key} type="button" className={`reaction ${x.myEventId ? "mine" : ""}`} onClick={() => canAct && react(x.key)} aria-pressed={!!x.myEventId} aria-label={`${x.key} ${x.count}`}>
+                    <span>{x.key}</span><bdi>{x.count}</bdi>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+          {menu && canAct && (
+            <div className="msg-menu" role="menu" onKeyDown={(e) => e.key === "Escape" && setMenu(false)}>
+              <div className="quick-reacts">
+                {QUICK_REACTIONS.map((k) => (
+                  <button key={k} type="button" role="menuitem" className="qr" onClick={() => react(k)} aria-label={k}>{k}</button>
+                ))}
+              </div>
+              <div className="menu-actions">
+                <button type="button" role="menuitem" onClick={() => { setMenu(false); onReply(m); }}>{t("chat.reply")}</button>
+                {canEdit && <button type="button" role="menuitem" onClick={() => { setMenu(false); setDraft(m.body ?? ""); setEditing(true); }}>{t("chat.edit")}</button>}
+                {m.isOwn && <button type="button" role="menuitem" className="danger" onClick={() => { setMenu(false); if (window.confirm(t("chat.deleteConfirm"))) run(redactEvent(client, m.roomId, m.id)); }}>{t("chat.delete")}</button>}
+              </div>
+            </div>
+          )}
+          {canAct && (
+            <button className="more-btn" onClick={() => setMenu((v) => !v)} aria-label={t("chat.msgActions")} aria-expanded={menu} aria-haspopup="menu">
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.8" fill="currentColor" /><circle cx="12" cy="12" r="1.8" fill="currentColor" /><circle cx="19" cy="12" r="1.8" fill="currentColor" /></svg>
+            </button>
+          )}
           {!m.decryptionFailed && !ping && (
             <button className="reply-btn" onClick={() => onReply(m)} aria-label="Reply"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 8V4l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11Z" fill="currentColor" /></svg></button>
           )}
@@ -627,8 +690,14 @@ const MessageRow = memo(
     a.m.body === b.m.body &&
     a.m.decryptionFailed === b.m.decryptionFailed &&
     a.m.timestamp === b.m.timestamp &&
-    a.m.attachment?.file.url === b.m.attachment?.file.url,
+    a.m.attachment?.file.url === b.m.attachment?.file.url &&
+    a.m.edited === b.m.edited &&
+    a.m.deleted === b.m.deleted &&
+    reactionKey(a.m) === reactionKey(b.m),
 );
+
+const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
+const reactionKey = (m: ChatMessage) => m.reactions.map((x) => `${x.key}${x.count}${x.myEventId ? "*" : ""}`).join("|");
 
 function CheckIcon() {
   return <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;

@@ -44,18 +44,18 @@ No monthly cost. The Mac must stay on and awake; uptime depends on home power/in
 
 ## GitHub Pages layout (landing page + app)
 
-`abu00salman.github.io/Wanas/` serves a **landing page** (`apps/landing`, plain static files; `node apps/landing/build.mjs`
-regenerates `index.html`), and the **web app lives at `/Wanas/app/`**. `scripts/assemble-pages.sh <base> <out>` builds both
+`abu00salman.github.io/iMello/` serves a **landing page** (`apps/landing`, plain static files; `node apps/landing/build.mjs`
+regenerates `index.html`), and the **web app lives at `/iMello/app/`**. `scripts/assemble-pages.sh <base> <out>` builds both
 (the deploy workflow calls it). Things that depend on this:
 
-- Links people already have keep working: `boot.js` forwards `/Wanas/#/…` (invite links, notification clicks) to
-  `/Wanas/app/#/…`; the Home Screen app (standalone), the native iMello app (user agent `iMelloApp`) and anyone who has
+- Links people already have keep working: `boot.js` forwards `/iMello/#/…` (invite links, notification clicks) to
+  `/iMello/app/#/…`; the Home Screen app (standalone), the native iMello app (user agent `iMelloApp`) and anyone who has
   already used the app in this browser (`localStorage imello.returning`) skip the landing page. `?landing` always shows it.
-- The service worker stays at `/Wanas/sw.js` (scope `/Wanas/`), as before, so existing push subscriptions survive; the app
+- The service worker stays at `/iMello/sw.js` (scope `/iMello/`), as before, so existing push subscriptions survive; the app
   registers it via `VITE_SW_BASE` (set by `assemble-pages.sh`).
-- The native app's `extra.webUrl` is `https://abu00salman.github.io/Wanas/app/` (older builds point at `/Wanas/` and are
+- The native app's `extra.webUrl` is `https://abu00salman.github.io/iMello/app/` (older builds point at `/iMello/` and are
   forwarded by the user-agent rule).
-- Rollback: re-run the previous commit's "Deploy web to GitHub Pages" workflow (it publishes the app at `/Wanas/` again).
+- Rollback: re-run the previous commit's "Deploy web to GitHub Pages" workflow (it publishes the app at `/iMello/` again).
 
 ## Quick path for abu00salman.com (one VPS + Cloudflare DNS + GitHub Pages)
 
@@ -68,7 +68,7 @@ regenerates `index.html`), and the **web app lives at `/Wanas/app/`**. `scripts/
 1. Create an Ubuntu 24.04 VPS (2–4 vCPU, 4–8 GB RAM). Add the two A records.
 2. On the VPS as root:
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/abu00salman/Wanas/claude/imello-messenger-dev-12zxqe/scripts/install-server.sh | bash -s -- --domain abu00salman.com
+   curl -fsSL https://raw.githubusercontent.com/abu00salman/iMello/claude/imello-messenger-dev-12zxqe/scripts/install-server.sh | bash -s -- --domain abu00salman.com
    ```
 3. GitHub → Settings → Secrets and variables → Actions → **Variables**: `IMELLO_API_URL=https://imello-api.abu00salman.com`,
    `IMELLO_HOMESERVER_URL=https://imello-matrix.abu00salman.com`, and (if using the custom domain) `IMELLO_PAGES_BASE=/`.

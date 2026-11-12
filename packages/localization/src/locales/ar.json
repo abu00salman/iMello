@@ -251,5 +251,13 @@
   "group.create": "أنشئ المجموعة",
   "group.needs": "اكتب اسم المجموعة واختر شخصًا واحدًا على الأقل.",
   "group.failed": "ما قدرنا ننشئ المجموعة. حاول مرة ثانية.",
-  "contacts.child": "حساب طفل"
+  "contacts.child": "حساب طفل",
+  "chat.deleted": "تم حذف هذه الرسالة",
+  "chat.edited": "معدّلة",
+  "chat.edit": "تعديل",
+  "chat.delete": "حذف",
+  "chat.reply": "رد",
+  "chat.deleteConfirm": "تحذف هذه الرسالة عند الجميع؟",
+  "chat.reactions": "التفاعلات",
+  "chat.msgActions": "خيارات الرسالة"
 }

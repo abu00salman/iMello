@@ -43,7 +43,7 @@ export default defineConfig(({ mode }) => {
   const connect = [env.VITE_API_URL ?? "http://localhost:8787", env.VITE_HOMESERVER_URL ?? "http://localhost:8008"];
   const metaCsp = env.VITE_CSP_META === "true";
   return {
-    // Sub-path hosting (e.g. GitHub Pages project sites: VITE_BASE=/Wanas/).
+    // Sub-path hosting (e.g. GitHub Pages project sites: VITE_BASE=/iMello/).
     base: env.VITE_BASE ?? "/",
     plugins: [
       react(),

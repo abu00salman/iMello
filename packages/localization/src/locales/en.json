@@ -251,5 +251,13 @@
   "group.create": "Create group",
   "group.needs": "Give the group a name and choose at least one person.",
   "group.failed": "Couldn't create the group. Try again.",
-  "contacts.child": "Child account"
+  "contacts.child": "Child account",
+  "chat.deleted": "This message was deleted",
+  "chat.edited": "edited",
+  "chat.edit": "Edit",
+  "chat.delete": "Delete",
+  "chat.reply": "Reply",
+  "chat.deleteConfirm": "Delete this message for everyone?",
+  "chat.reactions": "Reactions",
+  "chat.msgActions": "Message actions"
 }

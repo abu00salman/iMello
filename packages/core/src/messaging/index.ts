@@ -340,37 +340,91 @@ export interface ChatMessage {
   replyTo: string | null;
   /** Photo, file or voice message (always end-to-end encrypted). */
   attachment: AttachmentInfo | null;
+  /** Emoji reactions, grouped by emoji (m.annotation relations, encrypted like the messages). */
+  reactions: Reaction[];
+  /** The text was changed after sending (m.replace); `body` is the latest version. */
+  edited: boolean;
+  /** The sender deleted this message (redaction). */
+  deleted: boolean;
+}
+
+export interface Reaction {
+  key: string;
+  count: number;
+  /** My own reaction event, so tapping again removes it. */
+  myEventId: string | null;
+}
+
+type RelatesTo = { rel_type?: string; event_id?: string; key?: string; "m.in_reply_to"?: { event_id?: string } };
+
+function relatesTo(ev: MatrixEvent): RelatesTo | undefined {
+  return ev.getContent()["m.relates_to"] as RelatesTo | undefined;
 }
 
 export function toChatMessage(client: MatrixClient, ev: MatrixEvent): ChatMessage | null {
   const type = ev.getType();
   if (type !== EventType.RoomMessage && type !== EventType.RoomMessageEncrypted) return null;
-  const decryptionFailed = ev.isDecryptionFailure();
-  if (!decryptionFailed && ev.getType() !== EventType.RoomMessage) return null; // still decrypting
-  const content = ev.getContent();
-  const status = ev.status;
-  return {
+  const base = {
     id: ev.getId() ?? ev.getTxnId() ?? "",
     txnId: ev.getTxnId() ?? ev.getUnsigned().transaction_id ?? null,
     roomId: ev.getRoomId() ?? "",
     sender: ev.getSender() ?? "",
-    body: decryptionFailed ? null : typeof content.body === "string" ? content.body : null,
     timestamp: ev.getTs(),
     isOwn: ev.getSender() === client.getUserId(),
     encrypted: ev.isEncrypted(),
+    reactions: [] as Reaction[],
+    edited: false,
+  };
+  if (ev.isRedacted()) {
+    return { ...base, body: null, decryptionFailed: false, state: "sent", replyTo: null, attachment: null, deleted: true };
+  }
+  const decryptionFailed = ev.isDecryptionFailure();
+  if (!decryptionFailed && ev.getType() !== EventType.RoomMessage) return null; // still decrypting
+  const rel = relatesTo(ev);
+  if (rel?.rel_type === "m.replace") return null; // an edit: folded into the original below
+  const content = ev.getContent();
+  const status = ev.status;
+  return {
+    ...base,
+    body: decryptionFailed ? null : typeof content.body === "string" ? content.body : null,
     decryptionFailed,
     state: status === "not_sent" ? "failed" : status && status !== "sent" ? "sending" : "sent",
-    replyTo: (content["m.relates_to"] as { "m.in_reply_to"?: { event_id?: string } } | undefined)?.["m.in_reply_to"]?.event_id ?? null,
+    replyTo: rel?.["m.in_reply_to"]?.event_id ?? null,
     attachment: decryptionFailed ? null : parseAttachment(content),
+    deleted: false,
   };
 }
 
 export function roomMessages(client: MatrixClient, roomId: string): ChatMessage[] {
   const room = client.getRoom(roomId);
   if (!room) return [];
+  const me = client.getUserId();
   const seen = new Set<string>();
   const out: ChatMessage[] = [];
   const events = [...room.getLiveTimeline().getEvents(), ...room.getPendingEvents()];
+  // Relations first: reactions and edits that point at messages in this window.
+  const reactions = new Map<string, Map<string, { count: number; mine: string | null; senders: Set<string> }>>();
+  const edits = new Map<string, { ts: number; body: string; sender: string }>();
+  for (const ev of events) {
+    if (ev.isRedacted() || ev.isDecryptionFailure()) continue;
+    const rel = relatesTo(ev);
+    if (!rel?.event_id) continue;
+    if (ev.getType() === EventType.Reaction && rel.rel_type === "m.annotation" && rel.key) {
+      const byKey = reactions.get(rel.event_id) ?? new Map();
+      const entry = byKey.get(rel.key) ?? { count: 0, mine: null, senders: new Set<string>() };
+      const sender = ev.getSender() ?? "";
+      if (entry.senders.has(sender)) continue; // one reaction per person per emoji
+      entry.senders.add(sender);
+      entry.count += 1;
+      if (sender === me) entry.mine = ev.getId() ?? null;
+      byKey.set(rel.key, entry);
+      reactions.set(rel.event_id, byKey);
+    } else if (ev.getType() === EventType.RoomMessage && rel.rel_type === "m.replace") {
+      const next = ev.getContent()["m.new_content"] as { body?: unknown } | undefined;
+      const prev = edits.get(rel.event_id);
+      if (typeof next?.body === "string" && (!prev || prev.ts <= ev.getTs())) edits.set(rel.event_id, { ts: ev.getTs(), body: next.body, sender: ev.getSender() ?? "" });
+    }
+  }
   for (const ev of events) {
     const msg = toChatMessage(client, ev);
     if (!msg) continue;
@@ -379,9 +433,43 @@ export function roomMessages(client: MatrixClient, roomId: string): ChatMessage[
     if (seen.has(key) || seen.has(`id:${msg.id}`)) continue;
     seen.add(key);
     seen.add(`id:${msg.id}`);
+    const edit = edits.get(msg.id);
+    // Only the original sender may edit; anything else is ignored.
+    if (edit && !msg.deleted && edit.sender === msg.sender) {
+      msg.body = edit.body;
+      msg.edited = true;
+    }
+    const r = reactions.get(msg.id);
+    if (r && !msg.deleted) msg.reactions = [...r].map(([k, v]) => ({ key: k, count: v.count, myEventId: v.mine }));
     out.push(msg);
   }
   return out.sort((a, b) => a.timestamp - b.timestamp);
+}
+
+/** React to a message with an emoji (encrypted in encrypted rooms). */
+export async function sendReaction(client: MatrixClient, roomId: string, eventId: string, key: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await client.sendEvent(roomId, EventType.Reaction as any, { "m.relates_to": { rel_type: "m.annotation", event_id: eventId, key } } as any);
+}
+
+/** Remove my reaction (or delete my message): a redaction. */
+export async function redactEvent(client: MatrixClient, roomId: string, eventId: string): Promise<void> {
+  await client.redactEvent(roomId, eventId);
+}
+
+/** Change the text of one of my messages (m.replace; older clients see "* new text"). */
+export async function editMessage(client: MatrixClient, roomId: string, eventId: string, body: string): Promise<void> {
+  if (!(await isRoomEncrypted(client, roomId))) throw new NotEncryptedError(roomId);
+  const text = body.trim();
+  if (!text) throw new Error("empty_edit");
+  const content = {
+    msgtype: MsgType.Text,
+    body: `* ${text}`,
+    "m.new_content": { msgtype: MsgType.Text, body: text },
+    "m.relates_to": { rel_type: "m.replace", event_id: eventId },
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await client.sendMessage(roomId, content as any);
 }
 
 export interface ConversationSummary {

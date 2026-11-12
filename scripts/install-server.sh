@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # iMello one-command server install (Ubuntu 22.04/24.04, run as root on a fresh VPS).
 #
-#   curl -fsSL https://raw.githubusercontent.com/abu00salman/Wanas/claude/imello-messenger-dev-12zxqe/scripts/install-server.sh \
+#   curl -fsSL https://raw.githubusercontent.com/abu00salman/iMello/claude/imello-messenger-dev-12zxqe/scripts/install-server.sh \
 #     | bash -s -- --domain abu00salman.com
 #
 # Creates: imello-api.<domain> (policy API) and imello-matrix.<domain> (homeserver), with automatic HTTPS.

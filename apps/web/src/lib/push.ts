@@ -30,8 +30,8 @@ export function needsHomeScreen(): boolean {
 
 export function registerServiceWorker(locale: string) {
   if (!("serviceWorker" in navigator)) return;
-  // When the app lives in a sub-folder (/Wanas/app/) under a landing page, the service worker stays at the
-  // site root (/Wanas/sw.js) so existing registrations and push subscriptions keep working.
+  // When the app lives in a sub-folder (/iMello/app/) under a landing page, the service worker stays at the
+  // site root (/iMello/sw.js) so existing registrations and push subscriptions keep working.
   const swBase = (import.meta.env.VITE_SW_BASE as string | undefined) || import.meta.env.BASE_URL;
   void navigator.serviceWorker
     .register(`${swBase}sw.js`, { scope: swBase, updateViaCache: "none" })

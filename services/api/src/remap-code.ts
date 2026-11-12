@@ -2,10 +2,10 @@
  * Attach a short iMello Code to ONE existing account without changing who they are.
  *
  * Dry-run (prints the SQL, writes nothing):
- *   DATABASE_URL=... pnpm --filter @imello/api exec tsx src/remap-code.ts mell-872864 Mell-1122
+ *   DATABASE_URL=... pnpm --filter @imello/api exec tsx src/remap-code.ts mell-872864 w1122
  *
  * Apply only after reading that plan:
- *   DATABASE_URL=... pnpm --filter @imello/api exec tsx src/remap-code.ts mell-872864 Mell-1122 --apply
+ *   DATABASE_URL=... pnpm --filter @imello/api exec tsx src/remap-code.ts mell-872864 w1122 --apply
  *
  * The Matrix username stays mell-872864, so history and the old sign-in keep working.
  * Mell-1122 becomes an alias in accounts.code. If that code is already taken, nothing is written.

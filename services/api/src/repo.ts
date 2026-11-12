@@ -20,7 +20,7 @@ export interface AccountRow {
   status: "active" | "deactivated";
   locale: string;
   credential: "password" | "device";
-  /** Short iMello Code (mell-1122), if any. */
+  /** Short iMello Code (w1122), if any. */
   code: string | null;
   created_at: Date;
 }
@@ -73,7 +73,7 @@ export async function insertAccount(
 ): Promise<void> {
   await db.query(
     "INSERT INTO accounts (user_id, username, display_name, kind, locale, credential, code) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-    [a.userId, a.username, a.displayName, a.kind, a.locale, a.credential ?? "password", /^mell-\d{4}$/.test(a.username) ? a.username : null],
+    [a.userId, a.username, a.displayName, a.kind, a.locale, a.credential ?? "password", /^w\d{4}$/.test(a.username) ? a.username : null],
   );
 }
 

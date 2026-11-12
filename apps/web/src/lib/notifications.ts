@@ -5,10 +5,10 @@
  * Message text is shown only if the user turns on "Show message preview".
  *
  * Delivery:
- *  - inside the iMello app (native WebView shell) → posted to the native side, which shows a system
+ *  - inside the Wanas app (native WebView shell) → posted to the native side, which shows a system
  *    notification (expo-notifications);
  *  - in a browser → the Web Notifications API, when permission is granted.
- * Notifications fire while iMello is open or recently backgrounded. Closed-app push needs a push
+ * Notifications fire while Wanas is open or recently backgrounded. Closed-app push needs a push
  * gateway (see docs/ROADMAP.md).
  */
 import { parseAttachment, type MatrixClient } from "@imello/core/messaging";
@@ -89,7 +89,7 @@ function viewing(roomId: string): boolean {
 
 /**
  * Watch for new incoming messages. Returns an unsubscribe function.
- * Also keeps the unread count in the page title, e.g. "(3) iMello".
+ * Also keeps the unread count in the page title, e.g. "(3) Wanas".
  */
 export function watchMessages(client: MatrixClient, texts: Texts): () => void {
   const me = client.getUserId();
@@ -98,7 +98,7 @@ export function watchMessages(client: MatrixClient, texts: Texts): () => void {
 
   const updateTitle = () => {
     const unread = client.getRooms().reduce((n, r) => n + (r.getUnreadNotificationCount() ?? 0), 0);
-    document.title = unread > 0 ? `(${unread}) iMello` : "iMello";
+    document.title = unread > 0 ? `(${unread}) Wanas` : "Wanas";
     if (inApp()) window.ReactNativeWebView!.postMessage(JSON.stringify({ type: "badge", count: unread }));
   };
 
@@ -125,7 +125,7 @@ export function watchMessages(client: MatrixClient, texts: Texts): () => void {
       : att
         ? att.voice ? texts.voice : att.kind === "image" ? texts.photo : `${texts.file}: ${att.name}`
         : String(content.body ?? "").slice(0, 140);
-    show(previewEnabled() ? sender : "iMello", body, roomId);
+    show(previewEnabled() ? sender : "Wanas", body, roomId);
   };
 
   const onTimeline = (ev: MatrixEvent, _room: Room | undefined, toStart: boolean | undefined, _removed: boolean, data: { liveEvent?: boolean }) => {

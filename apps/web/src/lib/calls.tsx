@@ -164,7 +164,7 @@ export function CallsProvider({ children }: { children: ReactNode }) {
       try {
         const c = await (withVideo ? startVideoCall(client, roomId) : startVoiceCall(client, roomId));
         attach(c);
-        // Ring the other person's devices even if iMello is closed there (content-free push).
+        // Ring the other person's devices even if Wanas is closed there (content-free push).
         const other = otherMemberId(client, roomId);
         if (other) void api.ring(other, roomId, withVideo).catch(() => undefined);
       } catch {

@@ -1,6 +1,6 @@
 /**
- * Background notifications (Web Push) — work while iMello is closed:
- *  - iPhone/iPad: only for iMello added to the Home Screen (iOS 16.4+), after allowing notifications;
+ * Background notifications (Web Push) — work while Wanas is closed:
+ *  - iPhone/iPad: only for Wanas added to the Home Screen (iOS 16.4+), after allowing notifications;
  *  - Android Chrome and desktop browsers: in the browser too.
  * Not available inside the native app shell (WKWebView/Android WebView have no Push API).
  *
@@ -30,8 +30,8 @@ export function needsHomeScreen(): boolean {
 
 export function registerServiceWorker(locale: string) {
   if (!("serviceWorker" in navigator)) return;
-  // When the app lives in a sub-folder (/iMello/app/) under a landing page, the service worker stays at the
-  // site root (/iMello/sw.js) so existing registrations and push subscriptions keep working.
+  // When the app lives in a sub-folder (/Wanas/app/) under a landing page, the service worker stays at the
+  // site root (/Wanas/sw.js) so existing registrations and push subscriptions keep working.
   const swBase = (import.meta.env.VITE_SW_BASE as string | undefined) || import.meta.env.BASE_URL;
   void navigator.serviceWorker
     .register(`${swBase}sw.js`, { scope: swBase, updateViaCache: "none" })
@@ -110,7 +110,7 @@ export async function ensureBackgroundPush(client: MatrixClient, api: ImelloApiC
     await client.setPusher({
       kind: "http",
       app_id: APP_ID,
-      app_display_name: "iMello",
+      app_display_name: "Wanas",
       device_display_name: opts.deviceName,
       pushkey,
       lang: opts.locale,

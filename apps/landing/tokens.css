@@ -1,6 +1,6 @@
 /* Copied from RS design/mockups/tokens.css (v0.3.1, source of truth) for the landing page. Only change: the
    mockup-only @font-face rules (TTF paths) are removed; the landing page declares its own woff2 faces in style.css. */
-/* iMello Design Tokens v0.3 — RS Design (Random Selection)
+/* Wanas Design Tokens v0.3 — RS Design (Random Selection)
    Naming: --im-<category>-<role>[-<variant>]  (mirrors design-system.md §12 and §14)
    v0.1/v0.2 screens: :root = light, [data-theme="dark"] = dark (legacy "Mello iOS" direction, Coral palette).
    v0.3 "Classic structure" direction (design-system.md §14): two user-selectable THEMES x two MODES
@@ -61,7 +61,7 @@
   --im-color-error:#C62828;   --im-color-error-tint:#FDE3E3;
   --im-color-info:#12807A;
 
-  /* Message status. D = accepted by the iMello server (status.delivered.semantics = server_accepted, CEO 4 Nov 2026) — design-system.md §8.4 */
+  /* Message status. D = accepted by the Wanas server (status.delivered.semantics = server_accepted, CEO 4 Nov 2026) — design-system.md §8.4 */
   --im-status-sending:#6B7280;
   --im-status-sent:#6B7280;
   --im-status-delivered:#5B6270;

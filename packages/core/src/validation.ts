@@ -1,6 +1,6 @@
 export const USERNAME_RE = /^[a-z0-9][a-z0-9._-]{1,30}[a-z0-9]$/;
 export const RESERVED_USERNAMES = new Set([
-  "admin", "administrator", "root", "support", "help", "security", "imello", "system",
+  "admin", "administrator", "root", "support", "help", "security", "imello", "wanas", "system",
   "moderator", "official", "staff", "abuse", "noreply", "postmaster", "guardian", "service",
 ]);
 
@@ -9,30 +9,33 @@ export type UsernameProblem = "length" | "characters" | "reserved";
 export function validateUsername(username: string): UsernameProblem | null {
   if (username.length < 3 || username.length > 32) return "length";
   if (!USERNAME_RE.test(username)) return "characters";
-  if (RESERVED_USERNAMES.has(username) || username.startsWith("imello") || username.startsWith(PIN_PREFIX)) return "reserved";
+  if (RESERVED_USERNAMES.has(username) || username.startsWith("imello") || username.startsWith("wanas") || username.startsWith("mell-") || /^w\d/.test(username)) return "reserved";
   return null;
 }
 
 /**
- * iMello Codes: `mell-` + digits. They are the account's username, so they never change once given.
- * New accounts get a short 4-digit code (mell-1122); older 6-digit codes (mell-447729) keep working.
+ * Wanas Codes: `w` + 4 digits (w1122). The code is what people share. New accounts use it as their
+ * Matrix username; older accounts keep their username (mell-1122 / mell-447729) and carry the code beside it.
+ * Older spellings are still accepted when typed.
  */
-export const PIN_PREFIX = "mell-";
+export const PIN_PREFIX = "w";
 export const PIN_DIGITS = 4;
-export const PIN_RE = /^mell-(\d{4}|\d{6})$/;
+export const PIN_RE = /^(w\d{4}|mell-\d{4}|mell-\d{6})$/;
 
-/** How a code is shown to people: "Mell-1122". (Stored and matched in lower case.) */
+/** How a code is shown to people: "w1122". Old 6-digit numbers without a code show as "Mell-447729". */
 export function displayPin(pin: string): string {
-  return pin.replace(/\bmell-(\d{4}|\d{6})\b/gi, "Mell-$1");
+  return pin.replace(/\bmell-(\d{4})\b/gi, "w$1").replace(/\bmell-(\d{6})\b/gi, "Mell-$1");
 }
 
-/** Accept what people actually type: "MELL-447 729", "mell447729", "447729", "٤٤٧٧٢٩" (Arabic-Indic digits). */
+/** Accept what people actually type: "w1122", "W 1122", "1122", "Mell-1122", "mell447729", "٤٤٧٧٢٩" (Arabic-Indic digits). */
 export function normalizePin(input: string): string | null {
   const western = input.replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660)).replace(/[\u06f0-\u06f9]/g, (d) => String(d.charCodeAt(0) - 0x06f0));
   const compact = western.toLowerCase().replace(/[\s_-]/g, "");
-  const digits = compact.startsWith("mell") ? compact.slice(4) : compact;
-  if (!/^\d+$/.test(digits) || (digits.length !== 4 && digits.length !== 6)) return null;
-  return `${PIN_PREFIX}${digits}`;
+  const digits = compact.startsWith("mell") ? compact.slice(4) : compact.startsWith("w") ? compact.slice(1) : compact;
+  if (!/^\d+$/.test(digits)) return null;
+  if (digits.length === 4) return `${PIN_PREFIX}${digits}`;
+  if (digits.length === 6 && !compact.startsWith("w")) return `mell-${digits}`;
+  return null;
 }
 
 export function isPin(username: string): boolean {
@@ -52,7 +55,7 @@ export function generateMemorablePin(randomInt: (max: number) => number): string
 }
 
 export function isMemorablePin(pin: string): boolean {
-  return /^mell-(\d)\1(\d)\2$/.test(pin) || /^mell-(\d)(\d)\1\2$/.test(pin) || /^mell-(\d)(\d)\2\1$/.test(pin);
+  return /^w(\d)\1(\d)\2$/.test(pin) || /^w(\d)(\d)\1\2$/.test(pin) || /^w(\d)(\d)\2\1$/.test(pin);
 }
 
 /** Password a device generates for itself when the user starts without choosing one. */

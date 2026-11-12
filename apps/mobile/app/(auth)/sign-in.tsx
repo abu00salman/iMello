@@ -96,7 +96,7 @@ export default function SignIn() {
           <View style={{ width: 10, height: 28, borderRadius: 5, backgroundColor: "#fff" }} />
           <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: "#F2B640", marginTop: 4 }} />
         </View>
-        <Text style={{ fontFamily: font("700"), fontSize: 32, color: colors.text }}>iMello</Text>
+        <Text style={{ fontFamily: font("700"), fontSize: 32, color: colors.text }}>Wanas</Text>
         <Text style={{ fontFamily: font("400"), fontSize: 16, color: colors.text2 }}>{t("tagline")}</Text>
       </View>
       {down ? <Text style={{ color: colors.statusFailed, fontFamily: font("400"), textAlign: "center" }}>{t("serverDown")}</Text> : null}

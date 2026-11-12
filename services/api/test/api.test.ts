@@ -126,11 +126,12 @@ beforeEach(async () => {
 
 describe("migrations", () => {
   it("roll back and re-apply cleanly", async () => {
+    expect(await migrateDown(DATABASE_URL)).toBe("005_w_codes");
     expect(await migrateDown(DATABASE_URL)).toBe("004_short_codes");
     expect(await migrateDown(DATABASE_URL)).toBe("003_push");
     expect(await migrateDown(DATABASE_URL)).toBe("002_quick_accounts");
     expect(await migrateDown(DATABASE_URL)).toBe("001_init");
-    expect(await migrateUp(DATABASE_URL)).toEqual(["001_init", "002_quick_accounts", "003_push", "004_short_codes"]);
+    expect(await migrateUp(DATABASE_URL)).toEqual(["001_init", "002_quick_accounts", "003_push", "004_short_codes", "005_w_codes"]);
     expect(await migrateUp(DATABASE_URL)).toEqual([]);
   });
 });
@@ -333,7 +334,7 @@ describe("Start now (iMello numbers) and contact requests", () => {
 
   it("creates an account with a mell-xxxxxx number and a device credential", async () => {
     const u = await quick("Mona");
-    expect(u.pin).toMatch(/^mell-\d{4}$/);
+    expect(u.pin).toMatch(/^w\d{4}$/);
     expect(isMemorablePin(u.pin)).toBe(true);
     expect((await as(u).get("/v1/me")).json()).toMatchObject({ pin: u.pin, credential: "device", displayName: "Mona", kind: "adult" });
     // The homeserver received the device secret as the password.
@@ -342,13 +343,14 @@ describe("Start now (iMello numbers) and contact requests", () => {
 
   it("older 6-digit numbers get a short code: shown as their number, usable to add them and to sign in", async () => {
     const old = await quick("Old");
-    await db.query("UPDATE accounts SET username = 'mell-872864', code = 'mell-1122' WHERE user_id = $1", [old.userId]);
-    expect((await as(old).get("/v1/me")).json().pin).toBe("mell-1122");
+    await db.query("UPDATE accounts SET username = 'mell-872864', code = 'w1122' WHERE user_id = $1", [old.userId]);
+    expect((await as(old).get("/v1/me")).json().pin).toBe("w1122");
     const resolve = (code: string) => app.inject({ method: "POST", url: "/v1/auth/resolve", payload: { code } }).then((r) => r.json().username);
+    expect(await resolve("w1122")).toBe("mell-872864");
     expect(await resolve("Mell-1122")).toBe("mell-872864");
     expect(await resolve("mell-872864")).toBe("mell-872864");
     const friend = await quick("Friend");
-    expect((await as(friend).post("/v1/contact-requests", { pin: "Mell-1122" })).json().status).toBe("sent");
+    expect((await as(friend).post("/v1/contact-requests", { pin: "w1122" })).json().status).toBe("sent");
     expect((await as(old).get("/v1/contact-requests")).json().incoming[0]).toMatchObject({ userId: friend.userId, pin: friend.pin });
   });
 

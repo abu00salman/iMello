@@ -329,7 +329,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     refreshMe,
     async signIn(username, password, temporary) {
       const { homeserverUrl } = await api.config();
-      const user = normalizePin(username) ?? username.trim().toLowerCase();
+      const pin = normalizePin(username);
+      // A short code (w1122) can belong to an older account whose username is different.
+      const user = pin ? await api.resolveCode(pin).then((r) => r.username, () => pin) : username.trim().toLowerCase();
       await call("signIn", { homeserverUrl, username: user, password, temporary });
     },
     async register(input, temporary) {

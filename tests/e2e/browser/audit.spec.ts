@@ -8,7 +8,7 @@ async function quick(p: Page, name: string) {
   await p.goto("/");
   await p.getByLabel("Your name (optional)").fill(name);
   await p.getByRole("button", { name: "Start now" }).click();
-  await expect(p.getByRole("navigation", { name: "iMello" })).toBeVisible({ timeout: 60_000 });
+  await expect(p.getByRole("navigation", { name: "Wanas" })).toBeVisible({ timeout: 60_000 });
 }
 async function measure(p: Page, label: string) {
   const r = await p.evaluate(() => {
@@ -39,7 +39,7 @@ test("audit", async ({ browser }) => {
   await b.getByRole("link", { name: "Settings" }).click();
   await b.getByRole("link", { name: /Add people/ }).click();
   await measure(b, "03-contacts");
-  await b.getByTestId("pin-input").fill(pin.replace(/mell-/i, ""));
+  await b.getByTestId("pin-input").fill(pin.replace(/^(w|mell-)/i, ""));
   await b.getByRole("button", { name: "Add", exact: true }).click();
   await a.getByRole("link", { name: "Chats" }).click();
   await expect(a.getByTestId("requests-banner")).toBeVisible({ timeout: 40_000 });

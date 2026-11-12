@@ -11,7 +11,7 @@ export default function Settings() {
   const { me, signOut } = useSession();
   return (
     <View style={{ flex: 1, backgroundColor: colors.grouped }}>
-      <Header title={t("settings")} subtitle={me?.displayName} avatar={{ name: me?.displayName || "iMello", id: me?.userId ?? "me" }} />
+      <Header title={t("settings")} subtitle={me?.displayName} avatar={{ name: me?.displayName || "Wanas", id: me?.userId ?? "me" }} />
       <ScrollView contentContainerStyle={{ padding: 16, gap: 6, paddingBottom: 32 }}>
         <Section title={t("secProfile")} />
         <Row label={t("codeTitle")} detail={me?.pin ?? undefined} onPress={() => router.push("/code")} />
@@ -59,7 +59,7 @@ export default function Settings() {
         <Section title={t("aboutImello")} />
         <Row label={t("signOut")} danger onPress={() => void signOut()} />
         <View style={{ alignItems: "center", marginTop: 18, gap: 4 }}>
-          <Text style={{ color: colors.text, fontFamily: font("700"), fontSize: 18 }}>iMello</Text>
+          <Text style={{ color: colors.text, fontFamily: font("700"), fontSize: 18 }}>Wanas</Text>
           <Text style={{ color: colors.text3, fontFamily: font("400") }}>{t("version")} 1.0.0</Text>
           <Text style={{ color: colors.text3, fontFamily: font("400") }}>{t("developed")}</Text>
           <Text style={{ color: colors.text3, fontFamily: font("400"), textAlign: "center", marginTop: 8 }}>{t("lockNote")}</Text>

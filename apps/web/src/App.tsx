@@ -82,7 +82,7 @@ function Shell({ route }: { route: Route }) {
   return (
     <div className={`shell ${isChild ? "kids" : ""}`}>
       <a href="#main" className="skip-link">Skip to content</a>
-      <nav className="tabbar" aria-label="iMello">
+      <nav className="tabbar" aria-label="Wanas">
         <div className="tabbar-brand"><Logo size={32} /><span>{t("app.name")}</span></div>
 
         {nav.map((n) => {

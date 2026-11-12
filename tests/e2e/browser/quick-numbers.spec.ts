@@ -8,10 +8,10 @@ async function startNow(browser: Browser, name: string, problems: string[]) {
   await page.goto("/");
   await page.getByLabel("Your name (optional)").fill(name);
   await page.getByRole("button", { name: "Start now" }).click();
-  await expect(page.getByRole("navigation", { name: "iMello" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("navigation", { name: "Wanas" })).toBeVisible({ timeout: 60_000 });
   await page.getByRole("link", { name: "Settings" }).click();
   const pin = (await page.getByTestId("my-pin").textContent())!.trim();
-  expect(pin).toMatch(/^Mell-\d{4}$/);
+  expect(pin).toMatch(/^w\d{4}$/);
   return { page, pin };
 }
 
@@ -32,7 +32,7 @@ test("Start now → add by number → accept → encrypted chat → protect acco
   // Noor adds Fahad by number.
   await noor.page.getByRole("link", { name: "Settings" }).click();
   await noor.page.getByRole("link", { name: /Add people/ }).click();
-  await noor.page.getByTestId("pin-input").fill(fahad.pin.replace(/mell-/i, ""));
+  await noor.page.getByTestId("pin-input").fill(fahad.pin.replace(/^(w|mell-)/i, ""));
   await noor.page.getByRole("button", { name: "Add", exact: true }).click();
   await expect(noor.page.getByText("Request sent.")).toBeVisible();
 
@@ -66,10 +66,10 @@ test("Start now → add by number → accept → encrypted chat → protect acco
   await expect(fahad.page.getByText("Your account is protected.")).toBeVisible();
   await fahad.page.getByRole("button", { name: "Sign out", exact: true }).click();
   await fahad.page.getByRole("button", { name: "Sign in" }).click();
-  await fahad.page.getByLabel("iMello Code or username").fill(fahad.pin.toUpperCase());
+  await fahad.page.getByLabel("Wanas Code or username").fill(fahad.pin.toUpperCase());
   await fahad.page.getByLabel("Password").fill(password);
   await fahad.page.getByRole("button", { name: "Sign in" }).last().click();
-  await expect(fahad.page.getByRole("navigation", { name: "iMello" })).toBeVisible({ timeout: 60_000 });
+  await expect(fahad.page.getByRole("navigation", { name: "Wanas" })).toBeVisible({ timeout: 60_000 });
   await openChatWith(fahad.page, "Noor");
   await expect(fahad.page.getByText("End-to-end encrypted")).toBeVisible();
 

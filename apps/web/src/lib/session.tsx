@@ -59,7 +59,7 @@ interface SessionState {
   notice: string | null;
   signIn: (username: string, password: string, temporary: boolean) => Promise<void>;
   register: (input: { username: string; password: string; displayName: string; locale: "en" | "ar" }, temporary: boolean) => Promise<void>;
-  /** "Start now": create an account with a generated iMello number, no password needed. */
+  /** "Start now": create an account with a generated Wanas number, no password needed. */
   quickStart: (displayName: string, locale: "en" | "ar") => Promise<void>;
   /** Replace the device-only secret with a password the user chooses. */
   protectAccount: (newPassword: string) => Promise<void>;
@@ -79,7 +79,7 @@ export function deviceName(): string {
   const ua = navigator.userAgent;
   const browser = /Edg\//.test(ua) ? "Edge" : /Firefox\//.test(ua) ? "Firefox" : /Chrome\//.test(ua) ? "Chrome" : /Safari\//.test(ua) ? "Safari" : "Browser";
   const os = /iPhone|iPad/.test(ua) ? "iOS" : /Android/.test(ua) ? "Android" : /Mac OS X/.test(ua) ? "macOS" : /Windows/.test(ua) ? "Windows" : /Linux/.test(ua) ? "Linux" : "";
-  return `iMello Web · ${browser}${os ? ` on ${os}` : ""}`;
+  return `Wanas Web · ${browser}${os ? ` on ${os}` : ""}`;
 }
 
 export function SessionProvider({ children }: { children: ReactNode }) {
@@ -219,7 +219,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(
     async (username: string, password: string, isTemporary: boolean) => {
       const { homeserverUrl } = await apiRef.current.config();
-      // Accept an iMello number in any common spelling (mell-447729, 447729, MELL 447 729, Arabic digits).
+      // Accept a Wanas number in any common spelling (mell-447729, 447729, MELL 447 729, Arabic digits).
       const pin = normalizePin(username);
       const user = pin ? await apiRef.current.resolveCode(pin).then((r) => r.username, () => pin) : username.trim().toLowerCase();
       const session = await loginWithPassword(homeserverUrl, user, password, deviceName() + (isTemporary ? " (temporary)" : ""));

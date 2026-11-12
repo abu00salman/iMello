@@ -168,7 +168,7 @@ export function ContactsScreen({ initialToken }: { initialToken?: string }) {
           <input
             value={pinInput}
             onChange={(e) => setPinInput(e.target.value)}
-            placeholder="Mell-1122"
+            placeholder="w1122"
             aria-label={t("contacts.addByNumber")}
             dir="ltr"
             inputMode="text"

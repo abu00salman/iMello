@@ -1,6 +1,6 @@
 // Extends app.json. Build-time overrides:
 //   IMELLO_API_URL  – policy API (kept for future native screens)
-//   IMELLO_WEB_URL  – the iMello web client the app hosts
+//   IMELLO_WEB_URL  – the Wanas web client the app hosts
 module.exports = ({ config }) => ({
   ...config,
   extra: {

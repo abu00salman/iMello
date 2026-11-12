@@ -12,7 +12,7 @@ async function startNow(browser: Browser, name: string, problems: string[]) {
   await page.goto("/");
   await page.getByLabel("Your name (optional)").fill(name);
   await page.getByRole("button", { name: "Start now" }).click();
-  await expect(page.getByRole("navigation", { name: "iMello" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("navigation", { name: "Wanas" })).toBeVisible({ timeout: 60_000 });
   await page.getByRole("link", { name: "Settings" }).click();
   const pin = (await page.getByTestId("my-pin").textContent())!.trim();
   return { page, pin };

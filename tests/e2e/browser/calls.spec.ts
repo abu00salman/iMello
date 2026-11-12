@@ -6,7 +6,7 @@ async function startNow(browser: Browser, name: string) {
   await page.goto("/");
   await page.getByLabel("Your name (optional)").fill(name);
   await page.getByRole("button", { name: "Start now" }).click();
-  await expect(page.getByRole("navigation", { name: "iMello" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("navigation", { name: "Wanas" })).toBeVisible({ timeout: 60_000 });
   await page.getByRole("link", { name: "Settings" }).click();
   const pin = (await page.getByTestId("my-pin").textContent())!.trim();
   return { page, pin };
@@ -17,7 +17,7 @@ async function pair(browser: Browser) {
   const b = await startNow(browser, "Majed");
   await a.page.getByRole("link", { name: "Settings" }).click();
   await a.page.getByRole("link", { name: /Add people/ }).click();
-  await a.page.getByTestId("pin-input").fill(b.pin.replace(/mell-/i, ""));
+  await a.page.getByTestId("pin-input").fill(b.pin.replace(/^(w|mell-)/i, ""));
   await a.page.getByRole("button", { name: "Add", exact: true }).click();
   await b.page.getByRole("link", { name: "Settings" }).click();
   await b.page.getByRole("link", { name: /Add people/ }).click();

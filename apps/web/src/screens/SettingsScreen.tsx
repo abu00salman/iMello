@@ -156,7 +156,7 @@ export function SettingsScreen() {
     const password = await accountPassword(t("settings.deleteAccountConfirm"));
     if (!password) return;
     try {
-      // 1) Remove iMello policy data (immediately isolates the account), 2) deactivate on the homeserver and erase.
+      // 1) Remove Wanas policy data (immediately isolates the account), 2) deactivate on the homeserver and erase.
       await api.deleteMe();
       await client.deactivateAccount({ type: "m.login.password", identifier: { type: "m.id.user", user: client.getSafeUserId() }, password } as never, true);
       await forget();

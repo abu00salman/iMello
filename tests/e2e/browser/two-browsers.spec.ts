@@ -21,7 +21,7 @@ async function registerViaUi(context: BrowserContext, name: string, problems: st
   await page.getByLabel("Username").fill(`${name.toLowerCase()}.${run}`);
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Create account" }).last().click();
-  await expect(page.getByRole("navigation", { name: "iMello" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("navigation", { name: "Wanas" })).toBeVisible({ timeout: 60_000 });
   return page;
 }
 
@@ -84,7 +84,7 @@ test("two independent browser sessions exchange end-to-end encrypted messages", 
 
   // Reloading restores the session from encrypted IndexedDB and can still decrypt history.
   await bob.reload();
-  await expect(bob.getByRole("navigation", { name: "iMello" })).toBeVisible({ timeout: 60_000 });
+  await expect(bob.getByRole("navigation", { name: "Wanas" })).toBeVisible({ timeout: 60_000 });
   await bob.getByRole("link", { name: /Alice/ }).first().click();
   await expect(bob.getByTestId("message").filter({ hasText: reply })).toBeVisible();
 

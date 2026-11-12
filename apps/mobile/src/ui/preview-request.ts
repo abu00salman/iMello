@@ -5,7 +5,7 @@ const REQUEST = "imello-preview.txt";
 
 /**
  * The simulator writes Documents/imello-preview.txt (`ar chats`) and relaunches.
- * A custom-scheme URL was showing iOS “Open in iMello?” and never reached the screen.
+ * A custom-scheme URL was showing iOS “Open in Wanas?” and never reached the screen.
  * The file is removed as soon as it is read. It never signs anyone in.
  */
 export async function takePreviewRequest(): Promise<string | null> {

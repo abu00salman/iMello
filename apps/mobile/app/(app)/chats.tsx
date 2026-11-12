@@ -41,9 +41,9 @@ export default function Chats() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Header
-        title={me?.displayName || "iMello"}
+        title={me?.displayName || "Wanas"}
         subtitle={line}
-        avatar={{ name: me?.displayName || "iMello", id: me?.userId ?? "me" }}
+        avatar={{ name: me?.displayName || "Wanas", id: me?.userId ?? "me" }}
         dot={status.availability === "busy" ? colors.busy : colors.avail}
         onPress={() => {
           setDraft(status.message);

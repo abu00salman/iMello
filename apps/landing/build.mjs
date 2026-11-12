@@ -3,7 +3,7 @@
 import { writeFileSync } from "node:fs";
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 /* "mell-" tokens are LTR islands: without isolation the trailing hyphen is a neutral and flips to "-mell" in Arabic (QA RS-021 B1). */
-const mell = (s) => s.replace(/mell-(\d*)/g, '<bdi dir="ltr">mell-$1</bdi>');
+const mell = (s) => s.replace(/\bw(\d{4})\b/g, '<bdi dir="ltr">w$1</bdi>');
 const L = (ar, en) => `<span data-l="ar">${mell(esc(ar))}</span><span data-l="en">${mell(esc(en))}</span>`;
 
 /* Our own line icons (24 grid, 1.75 stroke). Presentation attributes only, so the CSP needs no inline styles. */
@@ -25,9 +25,9 @@ const P = {
 const icon = (k, cls = "ic") => `<svg class="${cls}" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k]}</svg>`;
 
 const sheets = [
-  { cls: "s1", ic: "chat", video: true, ar: ["رسائل مشفّرة", "نص وصور وملفات وتسجيلات صوتية، تُشفَّر على جهازك قبل ما تطلع. السيرفر يحفظ نصًا مشفّرًا فقط."], en: ["Encrypted chats", "Text, photos, files and voice notes are encrypted on your device before they leave. The server only ever stores ciphertext."], alt: ["محادثة حقيقية في آي ميلو", "A real chat in iMello"] },
+  { cls: "s1", ic: "chat", video: true, ar: ["رسائل مشفّرة", "نص وصور وملفات وتسجيلات صوتية، تُشفَّر على جهازك قبل ما تطلع. السيرفر يحفظ نصًا مشفّرًا فقط."], en: ["Encrypted chats", "Text, photos, files and voice notes are encrypted on your device before they leave. The server only ever stores ciphertext."], alt: ["محادثة حقيقية في ونس", "A real chat in Wanas"] },
   { cls: "s2", ic: "call", img: "call.jpg", w: 640, h: 1066, ar: ["مكالمات صوت وفيديو", "اتصل بأهلك صوت أو فيديو من نفس المحادثة. الصوت والصورة يمرّون بين الجهازين مباشرة."], en: ["Voice and video calls", "Call family by voice or video from the same chat. Audio and picture go straight between the two devices."], alt: ["شاشة مكالمة واردة", "An incoming call"] },
-  { cls: "s3", ic: "hash", img: "settings.jpg", w: 640, h: 1066, ar: ["رقمك بدل رقم الجوال", "تاخذ رقمًا مثل mell-482913 تشاركه مع أهلك وأصحابك. ما نطلب رقم جوال ولا إيميل."], en: ["A number, not your phone number", "You get a number like mell-482913 to share with family and friends. We never ask for a phone number or an email."], alt: ["رقمك في الإعدادات", "Your number in Settings"] },
+  { cls: "s3", ic: "hash", img: "settings.jpg", w: 640, h: 1066, ar: ["رمزك بدل رقم الجوال", "تاخذ رمزًا قصيرًا مثل w1122 تشاركه مع أهلك وأصحابك. ما نطلب رقم جوال ولا إيميل."], en: ["A code, not your phone number", "You get a short code like w1122 to share with family and friends. We never ask for a phone number or an email."], alt: ["رقمك في الإعدادات", "Your number in Settings"] },
   { cls: "s4", ic: "noads", img: "list.jpg", w: 640, h: 1066, ar: ["بدون إعلانات ولا تتبّع", "ما فيه إعلانات، ولا خلاصة عشوائية، ولا تتبّع. النسخة الاحتياطية لمفاتيحك ملف على جوالك أنت، ولا تنرفع لأي مكان."], en: ["No ads, no tracking", "No ads, no feed, no tracking. Your key backup is a file on your own phone and is never uploaded anywhere."], alt: ["قائمة المحادثات", "The chat list"] },
   { cls: "s5", ic: "kids", img: null, ar: ["وضع الأطفال", "ولي الأمر يضيف حساب الطفل ويوافق على من يتواصل معهم. الطفل ما يستقبل طلبات من الغرباء. هذا مفروض من السيرفر، مو من الواجهة بس."], en: ["Kids Mode", "A guardian creates the child's account and approves who they can talk to. Strangers can't reach a child. The server enforces it, not just the interface."], big: ["مع من توافق عليه فقط", "Only people you approve"] },
 ];
@@ -45,7 +45,7 @@ const sheetHtml = sheets.map((s) => `
     </article>`).join("");
 
 const slip = [
-  ["أول مرة", "The first time", [["تضغط «ابدأ الآن»", "Tap “Start now”", "بدون تسجيل", "no sign-up"], ["تاخذ رقمك mell-", "You get your mell- number", "فورًا", "instantly"]]],
+  ["أول مرة", "The first time", [["تضغط «ابدأ الآن»", "Tap “Start now”", "بدون تسجيل", "no sign-up"], ["تاخذ رمزك w1122", "You get your w1122 code", "فورًا", "instantly"]]],
   ["تضيف أهلك", "Add your people", [["تشارك رقمك أو تكتب رقمهم", "Share your number or type theirs", "ضغطة", "one tap"], ["هم يقبلون الطلب", "They accept the request", "منهم", "on their side"]]],
   ["بعدها", "Then", [["تراسلهم نص وصور وصوت ومكالمات", "Message, send photos and voice, call", "مشفّرة", "encrypted"], ["تحمي حسابك بكلمة سر", "Protect your account with a password", "اختياري", "optional"], ["تحفظ نسخة مفاتيحك على جوالك", "Save a key backup on your phone", "اختياري", "optional"]]],
 ];
@@ -55,8 +55,8 @@ const slipHtml = slip.map(([ha, he, rows]) => `
 
 const faq = [
   ["lock", "الأمان", "Security", "هل رسائلي مشفّرة فعلًا؟", "Are my messages really encrypted?",
-    "نعم: الرسائل والصور والملفات والتسجيلات تُشفَّر من طرف إلى طرف، والسيرفر ما يشوف إلا نصًا مشفّرًا. لكن آي ميلو لسا نسخة تجريبية، وما راجعه طرف أمني مستقل بعد. لا تعتمد عليه في اتصالات عالية الخطورة.",
-    "Yes: messages, photos, files and voice notes are end-to-end encrypted, and the server only sees ciphertext. But iMello is still a preview and hasn't had an independent security review. Don't rely on it for high-risk communication."],
+    "نعم: الرسائل والصور والملفات والتسجيلات تُشفَّر من طرف إلى طرف، والسيرفر ما يشوف إلا نصًا مشفّرًا. لكن ونس لسا نسخة تجريبية، وما راجعه طرف أمني مستقل بعد. لا تعتمد عليه في اتصالات عالية الخطورة.",
+    "Yes: messages, photos, files and voice notes are end-to-end encrypted, and the server only sees ciphertext. But Wanas is still a preview and hasn't had an independent security review. Don't rely on it for high-risk communication."],
   ["phone", "الجوال", "Phone", "وش يصير لو ضاع جوالي؟", "What if I lose my phone?",
     "لو ما حطيت كلمة سر لحسابك، الحساب مربوط بالجهاز وينفقد معه. احمِ حسابك بكلمة سر من الإعدادات، واحفظ نسخة المفاتيح على جوالك: الرسائل القديمة ما ترجع بدونها.",
     "If you haven't set a password, the account is tied to the device and is lost with it. Protect your account from Settings and keep a key backup on your phone: old messages can't come back without it."],
@@ -81,7 +81,7 @@ const faqHtml = faq.map(([ic, ta, te, qa, qe, aa, ae], i) => `
 
 const facts = [
   ["lock", "مشفّرة", "Encrypted", "الرسائل والصور والملفات والتسجيلات تُشفَّر على جهازك قبل ما تطلع.", "Messages, photos, files and voice notes are encrypted on your device before they leave."],
-  ["hash", "بدون جوال", "No phone number", "رقمك mell- من 6 أرقام يغنيك عن رقم الجوال والإيميل.", "A six-digit mell- number replaces your phone number and email."],
+  ["hash", "بدون جوال", "No phone number", "رمز قصير مثل w1122 يغنيك عن رقم الجوال والإيميل.", "A short code like w1122 replaces your phone number and email."],
   ["noads", "بدون إعلانات", "No ads", "ولا تتبّع، ولا خلاصة عشوائية.", "No tracking and no random feed."],
   ["kids", "وضع الأطفال", "Kids Mode", "ولي الأمر يوافق على من يتواصل معهم الطفل.", "A guardian approves who a child can talk to."],
 ];
@@ -98,14 +98,14 @@ const html = `<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="boot.js"></script>
-<title>آي ميلو — خلّك قريب من اللي تحبهم | iMello</title>
-<meta name="description" content="آي ميلو: تطبيق مراسلة للعائلة. رسائل وصور ومكالمات مشفّرة من طرف إلى طرف، رقم mell- بدل رقم الجوال، ووضع للأطفال بموافقة ولي الأمر. بدون إعلانات ولا تتبّع.">
+<title>ونس — خلّك قريب من اللي تحبهم | Wanas</title>
+<meta name="description" content="ونس: تطبيق مراسلة للعائلة. رسائل وصور ومكالمات مشفّرة من طرف إلى طرف، رمز قصير بدل رقم الجوال، ووضع للأطفال بموافقة ولي الأمر. بدون إعلانات ولا تتبّع.">
 <meta name="theme-color" content="#1F64AC" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#173B63" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
 <meta property="og:type" content="website">
-<meta property="og:title" content="آي ميلو — Stay Close. Feel Connected.">
+<meta property="og:title" content="ونس — Stay Close. Feel Connected.">
 <meta property="og:description" content="مراسلة عائلية مشفّرة، بدون رقم جوال، بدون إعلانات.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -117,7 +117,7 @@ const html = `<!DOCTYPE html>
 <a class="skip" href="#features">${L("إلى المحتوى", "Skip to content")}</a>
 <header class="top">
   <div class="top-in">
-    <a class="brand" href="#top"><img src="favicon.svg" width="36" height="36" alt=""><span>iMello</span></a>
+    <a class="brand" href="#top"><img src="favicon.svg" width="36" height="36" alt=""><span>Wanas</span></a>
     <nav class="top-nav" aria-label="Main">
       <a href="#features">${L("المزايا", "Features")}</a>
       <a href="#how">${L("كيف يشتغل", "How it works")}</a>
@@ -138,8 +138,8 @@ const html = `<!DOCTYPE html>
     <div class="card" data-rise data-d="1">
       <div class="card-head"><img class="card-logo" src="favicon.svg" width="40" height="40" alt=""><p class="card-name" id="cardname" data-ar="اسمك" data-en="Your name">اسمك</p></div>
       <div class="card-num">
-        <p class="card-label">${L("رقمك في آي ميلو", "Your iMello number")}</p>
-        <p class="number" dir="ltr" aria-live="polite">mell-<span id="num">482913</span></p>
+        <p class="card-label">${L("رقمك في ونس", "Your Wanas number")}</p>
+        <p class="number" dir="ltr" aria-live="polite">w<span id="num">1122</span></p>
       </div>
       <form class="card-form" id="cardform" autocomplete="off">
         <label class="sr" for="nm">${L("اكتب اسمك", "Type your name")}</label>
@@ -205,11 +205,11 @@ const html = `<!DOCTYPE html>
 
 <footer class="foot">
   <div class="tiles wrap">
-    <div class="tile t-state"><p class="t-big">${L("آي ميلو نسخة تجريبية: ما راجعه طرف أمني مستقل بعد.", "iMello is a preview: it hasn't had an independent security review yet.")}</p><p class="t-legal">${L("© 2026 آي ميلو. تطوير abu00salman.", "© 2026 iMello. Developed by abu00salman.")}</p></div>
+    <div class="tile t-state"><p class="t-big">${L("ونس نسخة تجريبية: ما راجعه طرف أمني مستقل بعد.", "Wanas is a preview: it hasn't had an independent security review yet.")}</p><p class="t-legal">${L("© 2026 ونس. تطوير abu00salman.", "© 2026 Wanas. Developed by abu00salman.")}</p></div>
     <nav class="tile t-nav" aria-label="Footer"><a href="#features">${L("المزايا", "Features")}</a><a href="#how">${L("كيف يشتغل", "How it works")}</a><a href="#faq">${L("أسئلة", "Questions")}</a><a href="https://abu00salman.github.io/rm/" rel="noopener">${L("عن المطوّر", "About the developer")}</a></nav>
     <div class="tile t-time"><p class="t-label">${L("الرياض", "Riyadh")}</p><p class="t-clock" id="clock" dir="ltr">--:--</p></div>
     <a class="tile t-mail" href="mailto:abu00salman@yahoo.com"><span dir="ltr">abu00salman@yahoo.com</span></a>
-    <div class="tile t-word"><p class="wordmark" dir="ltr">iMello</p><div class="theme" id="theme" role="group" aria-label="Colour theme" data-ar="ألوان الصفحة" data-en="Colour theme" data-attr="aria-label"><button type="button" class="th th-cb" data-set="classic-blue" aria-pressed="true"><span class="sw" aria-hidden="true"></span>${L("الأزرق الكلاسيكي", "Classic Blue")}</button><button type="button" class="th th-co" data-set="coral" aria-pressed="false"><span class="sw" aria-hidden="true"></span>${L("المرجاني", "Coral")}</button></div></div>
+    <div class="tile t-word"><p class="wordmark" dir="ltr">Wanas</p><div class="theme" id="theme" role="group" aria-label="Colour theme" data-ar="ألوان الصفحة" data-en="Colour theme" data-attr="aria-label"><button type="button" class="th th-cb" data-set="classic-blue" aria-pressed="true"><span class="sw" aria-hidden="true"></span>${L("الأزرق الكلاسيكي", "Classic Blue")}</button><button type="button" class="th th-co" data-set="coral" aria-pressed="false"><span class="sw" aria-hidden="true"></span>${L("المرجاني", "Coral")}</button></div></div>
     <a class="tile t-open" href="app/"><span>${L("افتح التطبيق", "Open the app")}</span>${icon("arrow", "ic t-arrow")}</a>
   </div>
 </footer>

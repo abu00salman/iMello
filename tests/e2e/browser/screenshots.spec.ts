@@ -18,7 +18,7 @@ async function register(page: Page, name: string) {
   await page.getByLabel("Username").fill(`${name.toLowerCase().replace(/\s/g, "")}.${run}`);
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Create account" }).last().click();
-  await expect(page.getByRole("navigation", { name: "iMello" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("navigation", { name: "Wanas" })).toBeVisible({ timeout: 60_000 });
 }
 
 test("capture", async ({ browser }) => {

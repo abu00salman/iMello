@@ -6,7 +6,7 @@ import { defineConfig, loadEnv } from "vite";
  * real HTTP headers in production (see public/_headers, generated at build).
  *  - no inline or third-party scripts; 'wasm-unsafe-eval' is required for the
  *    Rust crypto WebAssembly module;
- *  - connections only to this origin, the iMello API and the homeserver;
+ *  - connections only to this origin, the Wanas API and the homeserver;
  *  - the app can never be framed (clickjacking).
  */
 export function contentSecurityPolicy(connect: string[], dev = false): string {
@@ -43,7 +43,7 @@ export default defineConfig(({ mode }) => {
   const connect = [env.VITE_API_URL ?? "http://localhost:8787", env.VITE_HOMESERVER_URL ?? "http://localhost:8008"];
   const metaCsp = env.VITE_CSP_META === "true";
   return {
-    // Sub-path hosting (e.g. GitHub Pages project sites: VITE_BASE=/iMello/).
+    // Sub-path hosting (e.g. GitHub Pages project sites: VITE_BASE=/Wanas/).
     base: env.VITE_BASE ?? "/",
     plugins: [
       react(),

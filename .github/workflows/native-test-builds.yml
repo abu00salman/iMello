@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       api_url:
-        description: "iMello API URL baked into the app"
+        description: "Wanas API URL baked into the app"
         required: false
         default: ""
   push:
@@ -58,12 +58,12 @@ jobs:
       - name: Collect APK
         run: |
           mkdir -p out
-          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk out/iMello-1.0.0-test.apk
+          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk out/Wanas-1.0.0-test.apk
           ls -la out
       - uses: actions/upload-artifact@v4
         with:
-          name: iMello-android-apk
-          path: out/iMello-1.0.0-test.apk
+          name: Wanas-android-apk
+          path: out/Wanas-1.0.0-test.apk
           retention-days: 14
 
   ios:
@@ -94,8 +94,8 @@ jobs:
         working-directory: apps/mobile/ios
         run: |
           set -o pipefail
-          xcodebuild -workspace iMello.xcworkspace -scheme iMello -configuration Release \
-            -sdk iphoneos -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/iMello.xcarchive" \
+          xcodebuild -workspace Wanas.xcworkspace -scheme Wanas -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Wanas.xcarchive" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             archive > "$RUNNER_TEMP/xcodebuild.log" 2>&1 || {
               echo "::group::xcodebuild errors"
@@ -116,24 +116,24 @@ jobs:
       - name: Package unsigned IPA
         run: |
           mkdir -p "$RUNNER_TEMP/ipa/Payload" out
-          cp -R "$RUNNER_TEMP/iMello.xcarchive/Products/Applications/iMello.app" "$RUNNER_TEMP/ipa/Payload/"
-          (cd "$RUNNER_TEMP/ipa" && zip -qry "$GITHUB_WORKSPACE/out/iMello-1.0.0-unsigned.ipa" Payload)
+          cp -R "$RUNNER_TEMP/Wanas.xcarchive/Products/Applications/Wanas.app" "$RUNNER_TEMP/ipa/Payload/"
+          (cd "$RUNNER_TEMP/ipa" && zip -qry "$GITHUB_WORKSPACE/out/Wanas-1.0.0-unsigned.ipa" Payload)
           ls -la out
       - uses: actions/upload-artifact@v4
         with:
-          name: iMello-ios-unsigned-ipa
-          path: out/iMello-1.0.0-unsigned.ipa
+          name: Wanas-ios-unsigned-ipa
+          path: out/Wanas-1.0.0-unsigned.ipa
           retention-days: 14
       - name: Simulator must leave the splash
         working-directory: apps/mobile/ios
         run: |
           set -o pipefail
-          xcodebuild -workspace iMello.xcworkspace -scheme iMello -configuration Release \
+          xcodebuild -workspace Wanas.xcworkspace -scheme Wanas -configuration Release \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath "$RUNNER_TEMP/sim-dd" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             build
-          APP=$(find "$RUNNER_TEMP/sim-dd/Build/Products" -name 'iMello.app' -type d | head -1)
+          APP=$(find "$RUNNER_TEMP/sim-dd/Build/Products" -name 'Wanas.app' -type d | head -1)
           echo "APP=$APP"
           test -n "$APP"
           DEVICE=$(xcrun simctl list devices available | grep -E 'iPhone' | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
@@ -141,8 +141,8 @@ jobs:
           xcrun simctl boot "$DEVICE" || true
           xcrun simctl bootstatus "$DEVICE" -b
           xcrun simctl install "$DEVICE" "$APP"
-          xcrun simctl launch "$DEVICE" com.abu00salman.imello
-          CONTAINER=$(xcrun simctl get_app_container "$DEVICE" com.abu00salman.imello data)
+          xcrun simctl launch "$DEVICE" com.abu00salman.wanas
+          CONTAINER=$(xcrun simctl get_app_container "$DEVICE" com.abu00salman.wanas data)
           MARKER=""
           for _ in $(seq 1 30); do
             MARKER=$(find "$CONTAINER" -name imello-boot.txt -print -quit || true)
@@ -164,18 +164,18 @@ jobs:
           DEVICE=$(xcrun simctl list devices | grep Booted | sed -E 's/.*\(([A-F0-9-]+)\) \(Booted\).*/\1/' | head -1)
           echo "DEVICE=$DEVICE"
           test -n "$DEVICE"
-          CONTAINER=$(xcrun simctl get_app_container "$DEVICE" com.abu00salman.imello data)
+          CONTAINER=$(xcrun simctl get_app_container "$DEVICE" com.abu00salman.wanas data)
           DOCS="$CONTAINER/Documents"
           mkdir -p "$DOCS" "$GITHUB_WORKSPACE/out"
-          # A custom-scheme URL raises “Open in iMello?” and never navigates.
+          # A custom-scheme URL raises “Open in Wanas?” and never navigates.
           # The app reads this file on the next launch and opens the fixture.
           capture() {
             local screen="$1"
             local file="$2"
             rm -f "$DOCS/imello-preview-shown.txt"
             printf 'ar %s\n' "$screen" > "$DOCS/imello-preview.txt"
-            xcrun simctl terminate "$DEVICE" com.abu00salman.imello || true
-            xcrun simctl launch "$DEVICE" com.abu00salman.imello
+            xcrun simctl terminate "$DEVICE" com.abu00salman.wanas || true
+            xcrun simctl launch "$DEVICE" com.abu00salman.wanas
             local shown=""
             for _ in $(seq 1 30); do
               shown=$(cat "$DOCS/imello-preview-shown.txt" 2>/dev/null || true)

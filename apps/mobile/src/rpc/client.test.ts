@@ -142,11 +142,12 @@ describe("iMello Code", () => {
   it("accepts the short 4-digit code and the older 6-digit code", () => {
     expect(normalizeImelloCode("mell-447729")).toBe("mell-447729");
     expect(normalizeImelloCode("Mell-447729")).toBe("mell-447729");
-    expect(normalizeImelloCode("Mell-1122")).toBe("mell-1122");
-    expect(normalizeImelloCode("١١٢٢")).toBe("mell-1122");
+    expect(normalizeImelloCode("Mell-1122")).toBe("w1122");
+    expect(normalizeImelloCode("w1122")).toBe("w1122");
+    expect(normalizeImelloCode("١١٢٢")).toBe("w1122");
     expect(normalizeImelloCode("Mell-AB12")).toBeNull();
     expect(formatImelloCode("mell-447729")).toBe("Mell-447729");
-    expect(formatImelloCode("mell-1122")).toBe("Mell-1122");
+    expect(formatImelloCode("mell-1122")).toBe("w1122");
   });
 });
 
@@ -180,8 +181,8 @@ describe("copy", () => {
     }
   });
 
-  it("names the identifier iMello Code in both languages", () => {
-    expect(en.codeTitle).toMatch(/iMello Code/);
-    expect(ar.codeTitle).toMatch(/رمز آي ميلو/);
+  it("names the identifier Wanas Code in both languages", () => {
+    expect(en.codeTitle).toMatch(/Wanas Code/);
+    expect(ar.codeTitle).toMatch(/رمز ونس/);
   });
 });

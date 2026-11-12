@@ -1,4 +1,4 @@
-/* iMello landing: language, theme, the live number card, entrances. No libraries; the page works without this file. */
+/* Wanas landing: language, theme, the live number card, entrances. No libraries; the page works without this file. */
 (() => {
   const root = document.documentElement;
   const mq = (q) => window.matchMedia && matchMedia(q);
@@ -11,7 +11,7 @@
   };
 
   /* Language: shares the app's key so the choice carries into the app. */
-  const TITLE = { ar: "آي ميلو — خلّك قريب من اللي تحبهم | iMello", en: "iMello — Stay close. Feel connected." };
+  const TITLE = { ar: "ونس — خلّك قريب من اللي تحبهم | Wanas", en: "Wanas — Stay close. Feel connected." };
   function setLang(l) {
     root.lang = l; root.dir = l === "ar" ? "rtl" : "ltr";
     document.title = TITLE[l];
@@ -45,7 +45,7 @@
   /* The live card: your name and a sample number. Nothing is sent anywhere. */
   const num = $("#num"), cardName = $("#cardname"), nm = $("#nm"), again = $("#again");
   const ctaName = $("#cta-name");
-  const roll = () => { if (num) num.textContent = String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0"); };
+  const roll = () => { if (num) num.textContent = String(Math.floor(Math.random() * 10_000)).padStart(4, "0"); };
   roll();
   nm?.addEventListener("input", () => {
     const v = nm.value.trim();

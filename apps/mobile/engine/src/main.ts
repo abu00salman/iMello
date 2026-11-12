@@ -1,5 +1,5 @@
 /**
- * Headless iMello engine. No visible UI.
+ * Headless Wanas engine. No visible UI.
  * Runs the same matrix-js-sdk + Rust-crypto path as the web client and the e2e tests.
  */
 import {
@@ -307,7 +307,7 @@ async function signIn(params: { homeserverUrl: string; username: string; passwor
 
 function deviceName(temp: boolean): string {
   const os = /Android/i.test(navigator.userAgent) ? "Android" : "iOS";
-  return `iMello · ${os}${temp ? " (temporary)" : ""}`;
+  return `Wanas · ${os}${temp ? " (temporary)" : ""}`;
 }
 
 async function doSignOut(): Promise<{ ok: true }> {

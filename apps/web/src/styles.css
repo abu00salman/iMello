@@ -1,4 +1,4 @@
-/* iMello web styles. Colors come from @imello/ui tokens as CSS variables set at runtime.
+/* Wanas web styles. Colors come from @imello/ui tokens as CSS variables set at runtime.
    Logical properties (inline-start/end) are used throughout so RTL works automatically. */
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -187,7 +187,7 @@ input:focus, textarea:focus { border-color: var(--color-accent); outline: none; 
   .bubble { max-width: 85%; }
 }
 
-/* ── iMello numbers & Start now ───────────────────────────────────────── */
+/* ── Wanas numbers & Start now ───────────────────────────────────────── */
 .btn.big { min-height: 54px; font-size: 1.1rem; }
 .center { text-align: center; }
 .small { font-size: 0.85rem; }

@@ -1,5 +1,5 @@
 /**
- * Original iMello cues, synthesised here (no samples).
+ * Original Wanas cues, synthesised here (no samples).
  * Falling major second for messages. Ping is three wooden taps, not a two-note rise.
  * See the sound brief: E5 centre, no rising minor third, no third-party alerts.
  */

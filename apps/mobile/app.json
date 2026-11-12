@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "iMello",
-    "slug": "imello",
-    "scheme": "imello",
+    "name": "Wanas",
+    "slug": "wanas",
+    "scheme": "wanas",
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
@@ -19,14 +19,14 @@
       }
     },
     "ios": {
-      "bundleIdentifier": "com.abu00salman.imello",
+      "bundleIdentifier": "com.abu00salman.wanas",
       "supportsTablet": true,
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true,
         "CFBundleLocalizations": ["en", "ar"],
-        "NSMicrophoneUsageDescription": "iMello uses the microphone to record voice messages. Recordings are encrypted before they leave your phone.",
-        "NSCameraUsageDescription": "iMello uses the camera for video calls and when you choose to send a photo.",
-        "NSPhotoLibraryUsageDescription": "iMello lets you choose photos to send. Photos are encrypted before they leave your phone."
+        "NSMicrophoneUsageDescription": "Wanas uses the microphone to record voice messages. Recordings are encrypted before they leave your phone.",
+        "NSCameraUsageDescription": "Wanas uses the camera for video calls and when you choose to send a photo.",
+        "NSPhotoLibraryUsageDescription": "Wanas lets you choose photos to send. Photos are encrypted before they leave your phone."
       },
       "privacyManifests": {
         "NSPrivacyTracking": false,
@@ -35,10 +35,10 @@
       }
     },
     "android": {
-      "package": "com.abu00salman.imello",
+      "package": "com.abu00salman.wanas",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#3D7FE0"
+        "backgroundColor": "#1F64AC"
       },
       "allowBackup": false,
       "blockedPermissions": [
@@ -85,7 +85,7 @@
       "supportsRTL": true,
       "apiUrl": "https://imello-api.abu00salman.com",
       "forcesRTL": false,
-      "webUrl": "https://abu00salman.github.io/iMello/app/"
+      "webUrl": "https://abu00salman.github.io/Wanas/app/"
     }
   }
 }

@@ -20,7 +20,7 @@ export interface DiagnosticInput {
 /** Plain text for the copy button. No message bodies: startup has none. */
 export function formatDiagnostics(input: DiagnosticInput): string {
   const lines = [
-    "iMello engine diagnostics",
+    "Wanas engine diagnostics",
     `stage: ${input.stage}`,
     `error: ${input.message}`,
     input.assetUri ? `asset: ${input.assetUri}` : "",

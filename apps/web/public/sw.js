@@ -1,10 +1,10 @@
-/* iMello service worker: background notifications only (no offline caching yet).
+/* Wanas service worker: background notifications only (no offline caching yet).
  * Push payloads carry no message content — just the kind of alert, the room to open and an
  * unread count — so the lock screen never shows what was said or by whom (except a caller's
  * name for incoming calls, which the caller's own app sends). */
 const TEXT = {
-  ar: { app: "آي ميلو", msg: "رسالة جديدة", msgs: (n) => `${n} رسائل غير مقروءة`, call: "مكالمة صوتية واردة", video: "مكالمة فيديو واردة", tap: "اضغط للرد" },
-  en: { app: "iMello", msg: "New message", msgs: (n) => `${n} unread messages`, call: "Incoming voice call", video: "Incoming video call", tap: "Tap to answer" },
+  ar: { app: "ونس", msg: "رسالة جديدة", msgs: (n) => `${n} رسائل غير مقروءة`, call: "مكالمة صوتية واردة", video: "مكالمة فيديو واردة", tap: "اضغط للرد" },
+  en: { app: "Wanas", msg: "New message", msgs: (n) => `${n} unread messages`, call: "Incoming voice call", video: "Incoming video call", tap: "Tap to answer" },
 };
 let locale = null;
 

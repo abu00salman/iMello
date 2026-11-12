@@ -26,7 +26,7 @@ export default function Index() {
   if (previewHref === undefined) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.headerBg, alignItems: "center", justifyContent: "center", padding: 32 }}>
-        <Text style={{ color: "#fff", fontFamily: font("700"), fontSize: 34 }}>iMello</Text>
+        <Text style={{ color: "#fff", fontFamily: font("700"), fontSize: 34 }}>Wanas</Text>
         <Text style={{ color: colors.headerSub, fontFamily: font("400"), fontSize: 16, marginTop: 8 }}>{t("comingUp")}</Text>
       </View>
     );
@@ -35,7 +35,7 @@ export default function Index() {
     const stageName = STAGE_KEY[bootStage] ? t(STAGE_KEY[bootStage]!) : bootStage;
     return (
       <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 28, gap: 14, flexGrow: 1, justifyContent: "center" }}>
-        <Text style={{ color: colors.text, fontFamily: font("700"), fontSize: 28, textAlign: "center" }}>iMello</Text>
+        <Text style={{ color: colors.text, fontFamily: font("700"), fontSize: 28, textAlign: "center" }}>Wanas</Text>
         <Text style={{ color: colors.text, fontFamily: font("600"), fontSize: 18, textAlign: "center" }}>{t("engineFailed")}</Text>
         <Text style={{ color: colors.text2, fontFamily: font("400"), textAlign: "center" }}>{t("bootStage", { stage: stageName })}</Text>
         {bootError ? <Text style={{ color: colors.statusFailed, fontFamily: font("500"), textAlign: "center" }}>{bootError}</Text> : null}
@@ -60,7 +60,7 @@ export default function Index() {
   if (!ready || phase === "booting") {
     return (
       <View style={{ flex: 1, backgroundColor: colors.headerBg, alignItems: "center", justifyContent: "center", padding: 32 }}>
-        <Text style={{ color: "#fff", fontFamily: font("700"), fontSize: 34 }}>iMello</Text>
+        <Text style={{ color: "#fff", fontFamily: font("700"), fontSize: 34 }}>Wanas</Text>
         <Text style={{ color: colors.headerSub, fontFamily: font("400"), fontSize: 16, marginTop: 8 }}>{t("comingUp")}</Text>
       </View>
     );

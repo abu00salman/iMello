@@ -30,7 +30,7 @@ export function PreviewScreen({ screen }: { screen: "list" | "chat" | "appearanc
 
   return (
     <div className={`shell ${screen === "list" ? "preview-wide" : ""}`}>
-      <nav className="tabbar" aria-label="iMello">
+      <nav className="tabbar" aria-label="Wanas">
         <a href="#/preview/appearance" className={`tab tab-end ${screen === "appearance" ? "active" : ""}`} aria-label={t("nav.settings")}>
           <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
         </a>

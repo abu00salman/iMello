@@ -18,7 +18,7 @@ async function register(page: Page, name: string, username: string) {
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Create account" }).last().click();
-  await expect(page.getByRole("navigation", { name: "iMello" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("navigation", { name: "Wanas" })).toBeVisible({ timeout: 60_000 });
 }
 
 async function signIn(page: Page, username: string) {
@@ -27,7 +27,7 @@ async function signIn(page: Page, username: string) {
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in" }).last().click();
-  await expect(page.getByRole("navigation", { name: "iMello" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("navigation", { name: "Wanas" })).toBeVisible({ timeout: 60_000 });
 }
 
 test("parent creates a child account; Kids Mode; guardian approves a trusted adult", async ({ browser }) => {

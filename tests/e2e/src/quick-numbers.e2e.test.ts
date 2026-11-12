@@ -24,7 +24,7 @@ describe("Start now + add by number", () => {
 
   it("creates two accounts instantly, each with its own mell- number", async () => {
     [a, b] = await Promise.all([startNow("Noor"), startNow("Fahad")]);
-    expect(a.pin).toMatch(/^mell-\d{4}$/);
+    expect(a.pin).toMatch(/^w\d{4}$/);
     expect(b.pin).not.toBe(a.pin);
     expect(await a.api.me()).toMatchObject({ pin: a.pin, credential: "device", displayName: "Noor" });
   });
@@ -34,7 +34,7 @@ describe("Start now + add by number", () => {
   });
 
   it("A adds B by number (typed loosely), B accepts", async () => {
-    expect((await a.api.sendContactRequest(b.pin.replace("mell-", "MELL "))).status).toBe("sent");
+    expect((await a.api.sendContactRequest(b.pin.replace(/^w/, "W "))).status).toBe("sent");
     const { incoming } = await b.api.contactRequests();
     expect(incoming).toHaveLength(1);
     expect(incoming[0]).toMatchObject({ userId: a.userId, pin: a.pin, displayName: "Noor" });

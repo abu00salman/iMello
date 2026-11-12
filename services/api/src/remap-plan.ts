@@ -1,3 +1,4 @@
+import { normalizePin } from "@imello/core";
 /**
  * Plan an iMello Code alias without changing the Matrix username.
  * The account id, history, and the old number used to sign in all stay.
@@ -21,13 +22,12 @@ export interface RemapPlan {
   rollback?: string;
 }
 
-const CODE_RE = /^mell-\d{4}$/;
+const CODE_RE = /^w\d{4}$/;
 
 export function planCodeAlias(rows: readonly CodeAccount[], fromUsername: string, toCode: string): RemapPlan {
   const from = fromUsername.trim().toLowerCase();
-  const to = toCode.trim().toLowerCase().replace(/^mell/, "mell").replace(/\s+/g, "");
-  const target = to.startsWith("mell-") ? to : to.startsWith("mell") ? `mell-${to.slice(4)}` : to;
-  if (!CODE_RE.test(target)) return { ok: false, reason: "target must look like mell-1122 (4 digits)" };
+  const target = normalizePin(toCode) ?? toCode.trim().toLowerCase();
+  if (!CODE_RE.test(target)) return { ok: false, reason: "target must look like w1122 (4 digits)" };
   const owner = rows.find((row) => row.username === from);
   if (!owner) return { ok: false, reason: `no account with username ${from}` };
   const taken = rows.find((row) => row.userId !== owner.userId && (row.username === target || row.code === target));

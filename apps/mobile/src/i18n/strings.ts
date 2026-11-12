@@ -1,6 +1,21 @@
 /** Classic UI copy. Product errors that already exist in @imello/localization are reused from there. */
 
 export const en = {
+  calls: "Calls",
+  updates: "Updates",
+  callsEmpty: "No calls yet.",
+  callsNativeNote: "Calls you make on the web app or iPhone Home Screen app show here. Calling from this app isn't available yet.",
+  callMissed: "Missed",
+  callOutgoing: "Outgoing",
+  callIncoming: "Incoming",
+  callVideo: "Video",
+  callVoice: "Voice",
+  updatePlaceholder: "Share an update with your contacts…",
+  updatePost: "Post",
+  updatePrivacy: "Only your contacts · disappears after 24 hours",
+  updatesEmpty: "No updates in the last 24 hours.",
+  updateMine: "My update",
+  updateFailed: "Couldn't post. Try again.",
   newGroup: "New group",
   groupName: "Group name",
   groupPick: "{count} selected. Tap people to add them.",
@@ -190,6 +205,21 @@ export const en = {
 } as const;
 
 export const ar: { [K in keyof typeof en]: string } = {
+  calls: "المكالمات",
+  updates: "المستجدات",
+  callsEmpty: "ما فيه مكالمات بعد.",
+  callsNativeNote: "تظهر هنا المكالمات اللي تسويها من الموقع أو من تطبيق الشاشة الرئيسية في الآيفون. الاتصال من هذا التطبيق غير متوفر بعد.",
+  callMissed: "فائتة",
+  callOutgoing: "صادرة",
+  callIncoming: "واردة",
+  callVideo: "فيديو",
+  callVoice: "صوتية",
+  updatePlaceholder: "شارك جهات اتصالك بشي جديد…",
+  updatePost: "انشر",
+  updatePrivacy: "لجهات اتصالك فقط · تختفي بعد ٢٤ ساعة",
+  updatesEmpty: "ما فيه مستجدات خلال آخر ٢٤ ساعة.",
+  updateMine: "مستجداتي",
+  updateFailed: "ما قدرنا ننشر. حاول مرة ثانية.",
   newGroup: "مجموعة جديدة",
   groupName: "اسم المجموعة",
   groupPick: "اخترت {count}. اضغط على الأشخاص لإضافتهم.",

@@ -9,6 +9,7 @@ export type Route =
   | { name: "contacts" }
   | { name: "family" }
   | { name: "calls" }
+  | { name: "updates" }
   | { name: "settings" }
   | { name: "invite"; token: string }
   | { name: "preview"; screen: "list" | "chat" | "appearance" | "contacts" };
@@ -21,6 +22,7 @@ export function parseRoute(hash: string): Route {
     case "contacts":
     case "family":
     case "calls":
+    case "updates":
     case "settings":
       return { name: parts[0] };
     case "i":

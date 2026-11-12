@@ -354,12 +354,3 @@ export function SettingsScreen() {
   );
 }
 
-export function CallsScreen() {
-  const { t } = usePrefs();
-  return (
-    <div className="page">
-      <header className="pane-header"><h1>{t("calls.title")}</h1></header>
-      <Card><p className="muted">{t("calls.comingSoon")}</p></Card>
-    </div>
-  );
-}

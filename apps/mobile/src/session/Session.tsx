@@ -21,6 +21,9 @@ Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: true }),
 });
 
+export interface CallRow { callId: string; roomId: string; name: string; userId: string | null; outgoing: boolean; video: boolean; startedAt: number; answered: boolean; durationSec: number | null }
+export interface UpdateGroup { userId: string; name: string; mine: boolean; posts: { id: string; body: string; timestamp: number }[] }
+
 export type Phase = "booting" | "out" | "in" | "error";
 
 interface Activity {
@@ -57,6 +60,9 @@ interface SessionApi {
   watch: (roomId: string | null) => void;
   openDirect: (userId: string) => Promise<string>;
   createGroup: (name: string, userIds: string[]) => Promise<string>;
+  callHistory: () => Promise<CallRow[]>;
+  statusUpdates: () => Promise<UpdateGroup[]>;
+  postStatus: (text: string) => Promise<void>;
   acceptInvite: (roomId: string) => Promise<void>;
   exportKeys: (passphrase: string) => Promise<string>;
   importKeys: (file: string, passphrase: string) => Promise<number>;
@@ -373,6 +379,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     },
     openDirect: async (userId) => (await call<{ roomId: string }>("openDirect", { userId })).roomId,
     createGroup: async (name, userIds) => (await call<{ roomId: string }>("createGroup", { name, userIds })).roomId,
+    callHistory: async () => (await call<{ calls: CallRow[] }>("callHistory", {})).calls,
+    statusUpdates: async () => (await call<{ groups: UpdateGroup[] }>("statusUpdates", {})).groups,
+    postStatus: async (text) => { await call("postStatus", { text }); },
     acceptInvite: async (roomId) => {
       await call("acceptInvite", { roomId });
     },

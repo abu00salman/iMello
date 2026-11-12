@@ -26,6 +26,11 @@ import {
   signOut as matrixSignOut,
   startDirectChat,
   createGroupChat,
+  callHistory,
+  statusUpdates,
+  postStatus,
+  acceptStatusInvites,
+  expireMyStatuses,
   startSecureClient,
   WrongPassphraseError,
   type ChatMessage,
@@ -208,6 +213,8 @@ function schedule(): void {
   if (pushTimer) return;
   pushTimer = window.setTimeout(() => {
     pushTimer = 0;
+    // Status rooms are not chats: join contacts' update rooms without asking.
+    if (client) void acceptStatusInvites(client);
     pushRooms();
   }, 150);
 }
@@ -441,6 +448,29 @@ async function newGroup(params: { name: string; userIds: string[] }): Promise<{ 
   return { roomId };
 }
 
+function nameOf(c: MatrixClient, userId: string | null, fallback = ""): string {
+  if (!userId) return fallback;
+  return c.getUser(userId)?.displayName ?? userId;
+}
+
+async function calls(): Promise<{ calls: { callId: string; roomId: string; name: string; userId: string | null; outgoing: boolean; video: boolean; startedAt: number; answered: boolean; durationSec: number | null }[] }> {
+  const c = requireClient();
+  return { calls: callHistory(c).map((x) => ({ ...x, userId: x.otherUserId, name: nameOf(c, x.otherUserId, c.getRoom(x.roomId)?.name ?? "") })) };
+}
+
+async function updates(): Promise<{ groups: { userId: string; name: string; mine: boolean; posts: { id: string; body: string; timestamp: number }[] }[] }> {
+  const c = requireClient();
+  void expireMyStatuses(c);
+  return {
+    groups: statusUpdates(c).map((g) => ({ userId: g.userId, name: nameOf(c, g.userId), mine: g.userId === c.getUserId(), posts: g.posts.map((p) => ({ id: p.id, body: p.body, timestamp: p.timestamp })) })),
+  };
+}
+
+async function postUpdate(params: { text: string }): Promise<{ ok: true }> {
+  await postStatus(requireClient(), params.text);
+  return { ok: true };
+}
+
 async function join(params: { roomId: string }): Promise<{ ok: true }> {
   await acceptInvite(requireClient(), params.roomId);
   schedule();
@@ -512,6 +542,9 @@ const handlers: Record<string, (params: never) => Promise<unknown>> = {
   setTyping: typing,
   openDirect,
   createGroup: newGroup,
+  callHistory: calls,
+  statusUpdates: updates,
+  postStatus: postUpdate,
   acceptInvite: join,
   exportKeys: backup,
   importKeys: restore,

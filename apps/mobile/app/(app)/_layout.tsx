@@ -26,6 +26,18 @@ export default function Tabs() {
       {unread > 0 ? <NativeTabs.Trigger.Badge>{String(Math.min(unread, 99))}</NativeTabs.Trigger.Badge> : null}
     </NativeTabs.Trigger>
   );
+  const calls = (
+    <NativeTabs.Trigger name="calls">
+      <NativeTabs.Trigger.Label>{t("calls")}</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger.Icon sf="phone.fill" md="call" />
+    </NativeTabs.Trigger>
+  );
+  const updates = (
+    <NativeTabs.Trigger name="updates">
+      <NativeTabs.Trigger.Label>{t("updates")}</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger.Icon sf="circle.dashed.inset.filled" md="donut_large" />
+    </NativeTabs.Trigger>
+  );
   const settings = (
     <NativeTabs.Trigger name="settings">
       <NativeTabs.Trigger.Label>{t("settings")}</NativeTabs.Trigger.Label>
@@ -35,6 +47,8 @@ export default function Tabs() {
   return (
     <NativeTabs key={mirror ? "mirror" : "system"} {...bar}>
       {mirror ? settings : chats}
+      {mirror ? updates : calls}
+      {mirror ? calls : updates}
       {mirror ? chats : settings}
     </NativeTabs>
   );

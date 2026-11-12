@@ -80,6 +80,13 @@ test("audit", async ({ browser }) => {
   await expect(b.locator(".conv-name").filter({ hasText: "Family dinner" }).first()).toBeVisible({ timeout: 30_000 });
   await measure(a, "09-group-chat");
   await a.getByRole("button", { name: "Back" }).first().click();
+  await a.getByRole("link", { name: "Updates" }).click();
+  await a.getByLabel("Share an update with your contacts…").fill("Coffee at 5 ☕");
+  await a.getByRole("button", { name: "Post" }).click();
+  await expect(a.getByTestId("update-list")).toContainText("Coffee at 5");
+  await measure(a, "10-updates");
+  await a.getByRole("link", { name: "Calls" }).click();
+  await measure(a, "11-calls");
   await a.getByRole("link", { name: "Settings" }).click();
   await a.getByRole("radio", { name: "العربية" }).click();
   await measure(a, "06-settings-ar");

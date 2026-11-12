@@ -259,5 +259,19 @@
   "chat.reply": "رد",
   "chat.deleteConfirm": "تحذف هذه الرسالة عند الجميع؟",
   "chat.reactions": "التفاعلات",
-  "chat.msgActions": "خيارات الرسالة"
+  "chat.msgActions": "خيارات الرسالة",
+  "nav.updates": "المستجدات",
+  "calls.empty": "ما فيه مكالمات بعد. ابدأ مكالمة صوتية أو فيديو من داخل المحادثة.",
+  "calls.missed": "فائتة",
+  "calls.outgoing": "صادرة",
+  "calls.incoming": "واردة",
+  "calls.video": "فيديو",
+  "calls.voice": "صوتية",
+  "calls.historyNote": "تظهر المكالمات من محادثاتك على هذا الجهاز.",
+  "updates.placeholder": "شارك جهات اتصالك بشي جديد…",
+  "updates.post": "انشر",
+  "updates.privacy": "لجهات اتصالك فقط · تختفي بعد ٢٤ ساعة",
+  "updates.empty": "ما فيه مستجدات خلال آخر ٢٤ ساعة.",
+  "updates.you": "مستجداتي",
+  "updates.note": "المستجدات مشفّرة من طرف إلى طرف. اللي تضيفهم لاحقًا يشوفون فقط اللي تنشره بعد إضافتهم."
 }

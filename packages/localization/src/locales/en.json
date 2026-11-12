@@ -259,5 +259,19 @@
   "chat.reply": "Reply",
   "chat.deleteConfirm": "Delete this message for everyone?",
   "chat.reactions": "Reactions",
-  "chat.msgActions": "Message actions"
+  "chat.msgActions": "Message actions",
+  "nav.updates": "Updates",
+  "calls.empty": "No calls yet. Start a voice or video call from inside a conversation.",
+  "calls.missed": "Missed",
+  "calls.outgoing": "Outgoing",
+  "calls.incoming": "Incoming",
+  "calls.video": "Video",
+  "calls.voice": "Voice",
+  "calls.historyNote": "Calls are listed from your conversations on this device.",
+  "updates.placeholder": "Share an update with your contacts…",
+  "updates.post": "Post",
+  "updates.privacy": "Only your contacts · disappears after 24 hours",
+  "updates.empty": "No updates in the last 24 hours.",
+  "updates.you": "My update",
+  "updates.note": "Updates are end-to-end encrypted. People you add later see only what you post after that."
 }

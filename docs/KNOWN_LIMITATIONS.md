@@ -39,10 +39,10 @@ Dangerous file types are never opened automatically and warn before download. No
 
 
 
-Edit, delete, reactions, forwarding, pinning, archive, mute, disappearing messages, read-receipt display (receipts
+Forwarding, pinning, archive, mute, disappearing messages, read-receipt display (receipts
 are sent but not shown), message search beyond the conversation list filter, image compression/thumbnails, video
 recording, voice "hold to record / slide to cancel / lock" gestures (voice uses tap-to-record), location sharing, group-chat UI
-(group *rules* are enforced server-side), group calls, native-app push notifications.
+(group creation exists; no member/admin management UI yet), group calls, native-app push notifications.
 
 **Voice and video calls (1:1)** work over WebRTC (DTLS-SRTP; signalling sent inside the encrypted room). Only a
 public STUN server is configured, no TURN relay, so calls may fail on strict networks (some mobile carriers /

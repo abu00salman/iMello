@@ -33,6 +33,8 @@ import { parseAttachment, type AttachmentInfo } from "./attachments";
 export * from "./attachments";
 export * from "./keyExport";
 export * from "./calls";
+export * from "./social";
+import { isStatusRoom } from "./social";
 
 export const MEGOLM_ALGORITHM = "m.megolm.v1.aes-sha2";
 
@@ -488,7 +490,7 @@ export function conversations(client: MatrixClient): ConversationSummary[] {
   for (const [user, rooms] of Object.entries(direct)) for (const r of rooms) roomToUser.set(r, user);
   return client
     .getRooms()
-    .filter((r) => ["join", "invite"].includes(r.getMyMembership()))
+    .filter((r) => ["join", "invite"].includes(r.getMyMembership()) && !isStatusRoom(r))
     .map((room: Room) => {
       const last = lastMessage(client, room);
       const otherUserId =
